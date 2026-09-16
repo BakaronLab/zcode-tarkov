@@ -371,3 +371,92 @@ restart. The restart path (above) works. Making a bare reload self-heal would be
 an upstream behavior change and is out of scope for v0.1; it is recorded here
 rather than fixed.
 
+## 7. Empty-chat greeting anchor (Tarkov beta notice)
+
+Investigated live on ZCode 3.11.2, on the empty-chat / new-task screen.
+
+### The DOM as rendered
+
+```html
+<div data-testid="chat-empty" class="w-full">
+  <div>
+    <div aria-hidden="true">
+      <svg width="400" height="320" … stroke="currentColor">   <!-- display:none in practice -->
+      <img data-v4-draft-logo="dark" …>                        <!-- the visible Z graphic, 400x320 -->
+    </div>
+    <p data-v4-draft-greeting="true" style="--v4-draft-greeting-font-size: 30px;">
+      <span aria-hidden="true" class="… invisible absolute whitespace-nowrap text-3xl/[1.2]">…</span>
+      <span>…</span>                                           <!-- the visible greeting text -->
+    </p>
+  </div>
+</div>
+```
+
+Notes that shaped the implementation:
+
+- The greeting is **time-dependent** — observed as `上午好呀，有什么想让我帮忙的吗`
+  and later `中午好呀，要不要先休息一下`. Anything that rewrites the text would
+  have to survive that, and would have to restore the right variant on the way
+  out. CSS never touches the text, so this problem disappears entirely.
+- There are **two** spans with the same text. The first is `aria-hidden`,
+  `visibility: hidden` and `position: absolute` — ZCode keeps it purely to
+  measure the greeting's width. Hiding it with `display: none` would make that
+  measurement read zero, so the theme only makes it non-painting and leaves the
+  box in place.
+- The Z graphic is the `<img data-v4-draft-logo>` (400×320), **not** the sibling
+  `<svg>`, which is `display: none` in both themed and unthemed states. It
+  inherits `currentColor`, so it takes on the Tarkov foreground tone like every
+  other foreground element; its box and visibility are unchanged.
+
+### Candidates considered
+
+| Candidate | Verdict |
+|---|---|
+| A hashed/utility class from the rendered markup | Rejected. Would be guesswork against minified Tailwind classes. |
+| The greeting's own text content | Rejected. Time-dependent, so it is not a stable handle. |
+| `[data-testid="chat-empty"]` (the screen) | Kept as context, but it is the whole empty state, not the greeting. |
+| `p[data-v4-draft-greeting="true"]` | **Chosen.** |
+
+### Final selector
+
+```css
+p[data-v4-draft-greeting="true"]
+```
+
+### Why
+
+1. It is a **semantic `data-*` attribute** emitted by ZCode's own empty-chat
+   component — a deliberate hook, not a generated class name.
+2. It is the narrowest element that contains exactly the greeting, so the
+   replacement cannot bleed into the Z graphic or the prompt box.
+3. It carries `--v4-draft-greeting-font-size`, so the notice's type scale can
+   derive from ZCode's own value instead of hardcoding pixels.
+
+### Behavior when the selector does not match
+
+The replacement lives entirely in the Tarkov stylesheet as attribute-qualified
+rules:
+
+- On any screen without the empty-chat element (a real session open, a workspace
+  with no draft, a future ZCode that renames the attribute) **nothing matches**;
+  the stock greeting is shown and the rest of the theme is unaffected.
+- The original text is never rewritten — it is only made non-painting and
+  zero-sized — so leaving Tarkov mode removes the rules and the greeting returns
+  byte for byte. There is no restore path that can fail, and no risk of a
+  permanent DOM edit.
+- Nothing in the block is global: every rule starts with the `p[data-v4-draft-…]`
+  anchor.
+
+### Live verification
+
+Verified on an isolated ZCode 3.11.2 instance driven through the real
+`dist/cli.js`, cycling **Tarkov → Native → Monet → Tarkov** and then reset:
+32 assertions, all passing. Specifically — the `::before` / `::after` content
+matched the intended wording exactly; line 1 rendered at 25.5px/700 against line
+2 at 13.5px/400 (both derived from ZCode's own 30px variable); the rendered
+greeting box grew from 36px to 61px and stayed inside its 672px container; the
+span text was byte-identical after every switch; the Z graphic kept its 400×320
+box in all states; and the injected stylesheet carried no greeting rule at all
+in Native and Monet.
+
+

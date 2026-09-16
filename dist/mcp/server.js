@@ -144735,6 +144735,14 @@ var TARKOV_PALETTE = {
 };
 var ACCENT_RGB2 = "224, 121, 48";
 var MUTED_RGB = "139, 135, 124";
+var TARKOV_GREETING = {
+  line1: "\u6CE8\u610F\uFF01\u8FD9\u662F\u201CZCode\u201D\u7684Beta\u6D4B\u8BD5\u7248\u672C\u3002",
+  line2: "Beta \u6D4B\u8BD5\u7248\u672C\u4E0D\u4EE3\u8868\u672C\u4EA7\u54C1\u7684\u6700\u7EC8\u8D28\u91CF\u3002\u611F\u8C22\u60A8\u7684\u7406\u89E3\u548C\u652F\u6301\uFF0C\u795D\u4F60\u597D\u8FD0\uFF01"
+};
+function cssString(value) {
+  const escaped = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, "\\a ");
+  return `"${escaped}"`;
+}
 function rgba(rgb, alpha) {
   if (alpha >= 1)
     return `rgb(${rgb})`;
@@ -144884,6 +144892,49 @@ ${itemActive} {
 /* Tarkov: progress and switch read as hardware-ish, not pill-shaped. */
 [data-slot="progress-indicator"] { background-color: var(--tarkov-accent); }
 [data-slot="switch"][data-state="checked"] { background-color: var(--color-primary); }
+
+/* Tarkov: the empty-chat beta notice.
+ *
+ * Anchor: p[data-v4-draft-greeting="true"] \u2014 a semantic data attribute emitted by
+ * ZCode's own empty-chat component (verified live; see docs/zcode-dom-notes.md).
+ * No hashed class names are involved.
+ *
+ * The original greeting text is never rewritten. It is only made non-painting
+ * and zero-sized, so this is purely presentational: dropping the stylesheet \u2014
+ * which is exactly what leaving Tarkov mode does \u2014 restores the real greeting
+ * byte for byte, with no restore path that could fail.
+ *
+ * The element only mounts on the empty-chat screen, so opening a real session
+ * simply stops matching; if ZCode ever renames the attribute, nothing matches
+ * and the stock greeting is shown. Both are fail-soft by construction.
+ */
+p[data-v4-draft-greeting="true"] {
+  font-size: 0;
+  line-height: 0;
+}
+p[data-v4-draft-greeting="true"] > span {
+  /* Non-painting, but the boxes survive: ZCode keeps an aria-hidden absolute
+     span purely to measure the greeting, and hiding it entirely would make that
+     measurement read zero. */
+  visibility: hidden;
+}
+p[data-v4-draft-greeting="true"]::before {
+  content: ${cssString(TARKOV_GREETING.line1)};
+  display: block;
+  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.85);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-foreground, #e8d9c8);
+}
+p[data-v4-draft-greeting="true"]::after {
+  content: ${cssString(TARKOV_GREETING.line2)};
+  display: block;
+  margin-top: calc(var(--v4-draft-greeting-font-size, 30px) * 0.26);
+  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.45);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-foreground-subtle, #8b877c);
+}
 
 /* Deliberately NOT styled: code blocks, success/warning/destructive states,
    git/diff colors. Readability and semantics outrank the theme. */
