@@ -1,8 +1,8 @@
 // Packages the two distributable bundles into packages/:
-//   zcode-beautify-plugin-v<version>.zip  — ready-made plugin for ZCode users
-//                                           (AI reads INSTALL-FOR-AI.md to install)
-//   skill-pack-v<version>.zip             — AI skill for building the same capability
-//                                           for any Electron app
+//   zcode-tarkov-plugin-v<version>.zip  — ready-made plugin for ZCode users
+//                                         (README.md is the install guide)
+//   skill-pack-v<version>.zip           — AI skill for building the same capability
+//                                         for any Electron app
 // Run via `npm run package`. Zip entry names use forward slashes only (ZCode
 // rejects backslashes/absolute paths in plugin zips).
 import { createRequire } from "node:module";
@@ -19,7 +19,7 @@ fs.mkdirSync(outDir, { recursive: true });
 
 // --- plugin zip: single wrapping folder, minimal installable set -------------
 const pluginFiles = [
-  "INSTALL-FOR-AI.md",
+  "THIRD_PARTY_NOTICES.md",
   "marketplace.json",
   ".zcode-plugin/plugin.json",
   "commands/beautify.md",
@@ -38,10 +38,10 @@ for (const rel of pluginFiles) {
   if (!fs.existsSync(full)) {
     throw new Error(`missing file for plugin package: ${rel}`);
   }
-  const zipPath = `zcode-beautify-plugin-v${version}/${rel.split(path.sep).join("/")}`;
+  const zipPath = `zcode-tarkov-plugin-v${version}/${rel.split(path.sep).join("/")}`;
   pluginZip.addFile(zipPath, fs.readFileSync(full));
 }
-const pluginOut = path.join(outDir, `zcode-beautify-plugin-v${version}.zip`);
+const pluginOut = path.join(outDir, `zcode-tarkov-plugin-v${version}.zip`);
 fs.writeFileSync(pluginOut, pluginZip.toBuffer());
 
 // --- skill pack zip: the skill-pack/ folder as-is -----------------------------

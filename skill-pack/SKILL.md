@@ -1,7 +1,7 @@
 ---
 name: electron-beautify
 description: Beautify any Electron desktop app with a wallpaper layer and Material Design 3 (Monet) dynamic color, injected over the Chrome DevTools Protocol. Use when the user wants to set a background image in an Electron app, re-color its UI from a picture, or build such a tool. Works generically for any Electron app (ZCode, VS Code forks, chat clients, editors) — no app-specific plugin system required.
-version: 0.3.1
+version: 0.1.0
 ---
 
 # Electron Beautify over CDP

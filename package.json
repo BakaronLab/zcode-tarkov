@@ -15,6 +15,7 @@
     "dev": "tsc -p tsconfig.json --watch",
     "bundle": "npm run build && node scripts/bundle.mjs",
     "test": "tsc -p tsconfig.test.json && node --test \"tests/**/*.test.mjs\"",
+    "test:lifecycle": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-lifecycle.ps1",
     "package": "node scripts/package.mjs"
   },
   "keywords": [
@@ -34,6 +35,10 @@
     "skills",
     ".zcode-plugin",
     "README.md",
+    "README.zh-CN.md",
+    "CHANGELOG.md",
+    "THIRD_PARTY_NOTICES.md",
+    "licenses",
     "LICENSE"
   ],
   "dependencies": {

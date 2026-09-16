@@ -1,4 +1,4 @@
-# electron-beautify skill pack (v0.3.1)
+# electron-beautify skill pack (v0.1.0)
 
 A self-contained skill for AI coding agents: beautify **any Electron desktop
 app** with a wallpaper layer and Material Design 3 (Monet) dynamic color over
