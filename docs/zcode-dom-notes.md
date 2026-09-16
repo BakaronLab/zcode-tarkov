@@ -328,6 +328,26 @@ the CDP port. The user's instance (16 processes) was untouched throughout.
   restored, panel re-injected with the Tarkov skin, reserved padding back to
   `56px`.
 
+### Fail-soft behavior, exercised live
+
+The "anchor missing" branches were driven directly in the live renderer by
+stubbing the anchor lookup, so the paths are empirically exercised rather than
+merely asserted to exist. 19 assertions, all passing:
+
+- **`#root` missing**: the script does not throw, sets no banner, sets no
+  `data-zct-banner` and reserves no padding — and still installs its handle, so
+  the observer stays armed and a later appearance of the anchor is picked up.
+- **`#root` present but empty** (app not mounted): same — no throw, no banner,
+  no reserved padding.
+- **anchor restored** (positive control): the banner appears exactly once, is
+  `body.firstChild`, reserves `56px`, and renders the shipped wording, the
+  hexagon (`clip-path: polygon(...)`) and the orange band `rgba(224,121,48,0.92)`.
+- **teardown**: removes the node, the attribute, the style element and the
+  handle.
+
+No fatal error is raised, nothing blocks ZCode's loading, the theme CSS is
+independent of the banner succeeding, and the fallback poll is bounded.
+
 ## 6. Known pre-existing behavior: a bare renderer reload drops the theme
 
 Reloading the renderer (`Page.reload`) without restarting the app loses the
