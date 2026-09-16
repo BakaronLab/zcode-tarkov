@@ -1,1 +1,42 @@
-?? evidence/
+# Repo cleanliness evidence for the playtest candidate.
+#
+# At freeze time (before any deployment artefact was written),
+# 'git status --porcelain' produced NO output -> the working tree was clean.
+#
+# A first capture in this file recorded '?? evidence/' — that was a capture-order
+# artefact (the evidence directory had just been created by the capture itself),
+# not repository dirt. Corrected here.
+
+product candidate (last commit touching src/ or dist/) : c5099b286195ca79c36227c1544084d810143e18
+deployment commit (docs + evidence only)               : 7b8aeaf213c64e8f2679b39bdb496fcf2972a4ba  (before this correction)
+branch                                                 : main
+
+working tree: clean, except for this file while it was being regenerated.
+Verification command:  git status --porcelain
+Expected result after committing this correction: no output.
+
+files changed by the deployment commit that are under src/ or dist/:
+  (none — no product source was modified for deployment)
+
+full file list of the deployment commit:
+  docs/OWNER_PLAYTEST.md
+  evidence/owner-playtest-prep/README.md
+  evidence/owner-playtest-prep/after-config.json
+  evidence/owner-playtest-prep/after-installed_plugins.json
+  evidence/owner-playtest-prep/after-known_marketplaces.json
+  evidence/owner-playtest-prep/after-plugin-registration.json
+  evidence/owner-playtest-prep/after-plugins-list.json
+  evidence/owner-playtest-prep/after-plugins-list.txt
+  evidence/owner-playtest-prep/before-config.json
+  evidence/owner-playtest-prep/before-known_marketplaces.json
+  evidence/owner-playtest-prep/candidate-sha.txt
+  evidence/owner-playtest-prep/final-config.json
+  evidence/owner-playtest-prep/launcher-after.txt
+  evidence/owner-playtest-prep/launcher-apply.ps1
+  evidence/owner-playtest-prep/launcher-before.txt
+  evidence/owner-playtest-prep/launcher-dry-run.txt
+  evidence/owner-playtest-prep/launcher-enumerate.ps1
+  evidence/owner-playtest-prep/launcher-revert.ps1
+  evidence/owner-playtest-prep/recovery-and-service.txt
+  evidence/owner-playtest-prep/recovery.txt
+  evidence/owner-playtest-prep/repo-status.txt
