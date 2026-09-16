@@ -145501,7 +145501,7 @@ async function repairLaunchers(opts) {
   }
   const encoded = Buffer.from(psScript(opts.port, dryRun), "utf16le").toString("base64");
   try {
-    const { stdout } = await execFileAsync2("powershell", ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded], { maxBuffer: 8 * 1024 * 1024, timeout: 12e4 });
+    const { stdout } = await execFileAsync2("powershell", ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded], { maxBuffer: 8 * 1024 * 1024, timeout: 12e4, windowsHide: true });
     const trimmed = stdout.trim();
     if (!trimmed)
       return { supported: true, dryRun, fixes: [] };

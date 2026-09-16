@@ -116,7 +116,13 @@ const execFileAsync = promisify(execFile);
 export async function isZcodeProcessRunning(): Promise<boolean> {
   try {
     if (process.platform === "win32") {
-      const { stdout } = await execFileAsync("tasklist", ["/NH", "/FI", "IMAGENAME eq ZCode.exe"]);
+      // windowsHide is not decoration: without it Windows opens a console window
+      // for `tasklist`, and the resident service calls this on a timer whenever
+      // CDP is unreachable — i.e. exactly while the user is waiting for the
+      // theme to appear, so the window flashes every few seconds.
+      const { stdout } = await execFileAsync("tasklist", ["/NH", "/FI", "IMAGENAME eq ZCode.exe"], {
+        windowsHide: true,
+      });
       return stdout.toLowerCase().includes("zcode.exe");
     }
     const name = process.platform === "darwin" ? "ZCode" : "zcode";
@@ -193,7 +199,7 @@ export async function launchZcode(port: number): Promise<LaunchResult> {
 async function killZcode(): Promise<boolean> {
   try {
     if (process.platform === "win32") {
-      await execFileAsync("taskkill", ["/F", "/IM", "ZCode.exe"]);
+      await execFileAsync("taskkill", ["/F", "/IM", "ZCode.exe"], { windowsHide: true });
     } else {
       await execFileAsync("pkill", ["-x", process.platform === "darwin" ? "ZCode" : "zcode"]);
     }

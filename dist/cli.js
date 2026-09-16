@@ -110518,7 +110518,9 @@ function findZcodeExecutable() {
 async function isZcodeProcessRunning() {
   try {
     if (process.platform === "win32") {
-      const { stdout: stdout2 } = await execFileAsync("tasklist", ["/NH", "/FI", "IMAGENAME eq ZCode.exe"]);
+      const { stdout: stdout2 } = await execFileAsync("tasklist", ["/NH", "/FI", "IMAGENAME eq ZCode.exe"], {
+        windowsHide: true
+      });
       return stdout2.toLowerCase().includes("zcode.exe");
     }
     const name = process.platform === "darwin" ? "ZCode" : "zcode";
@@ -110570,7 +110572,7 @@ async function launchZcode(port) {
 async function killZcode() {
   try {
     if (process.platform === "win32") {
-      await execFileAsync("taskkill", ["/F", "/IM", "ZCode.exe"]);
+      await execFileAsync("taskkill", ["/F", "/IM", "ZCode.exe"], { windowsHide: true });
     } else {
       await execFileAsync("pkill", ["-x", process.platform === "darwin" ? "ZCode" : "zcode"]);
     }
@@ -111836,7 +111838,7 @@ async function repairLaunchers(opts) {
   }
   const encoded = Buffer.from(psScript(opts.port, dryRun), "utf16le").toString("base64");
   try {
-    const { stdout } = await execFileAsync2("powershell", ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded], { maxBuffer: 8 * 1024 * 1024, timeout: 12e4 });
+    const { stdout } = await execFileAsync2("powershell", ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded], { maxBuffer: 8 * 1024 * 1024, timeout: 12e4, windowsHide: true });
     const trimmed = stdout.trim();
     if (!trimmed)
       return { supported: true, dryRun, fixes: [] };

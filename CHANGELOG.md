@@ -49,6 +49,18 @@ without reimplementing any of it.
 - No game assets are bundled. Altyn imagery, Scav voice clips and sound effects
   present in the visual reference upstream were deliberately excluded.
 
+### Fixed
+
+- The resident service flashed a console window every ~15s on Windows. While it
+  cannot reach the CDP port — i.e. whenever ZCode is running without the debug
+  flag, which is the normal state until the app is relaunched through a repaired
+  entry — `poll()` asks `tasklist` whether ZCode is alive. The spawn omitted
+  `windowsHide`, and because `serve --detach` starts the service with no console
+  of its own, Windows allocated a fresh, visible console for each probe:
+  measured A/B in that same topology, 1 visible window without the flag and 0
+  with it. `tasklist`, `taskkill` and the launcher-repair `powershell` spawn now
+  pass `windowsHide: true`.
+
 ### Verified
 
 Checked live against ZCode 3.11.2 (Windows), driving the real `dist/cli.js`

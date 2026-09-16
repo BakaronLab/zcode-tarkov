@@ -178,7 +178,7 @@ export async function repairLaunchers(opts: RepairOptions): Promise<RepairReport
     const { stdout } = await execFileAsync(
       "powershell",
       ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded],
-      { maxBuffer: 8 * 1024 * 1024, timeout: 120_000 }
+      { maxBuffer: 8 * 1024 * 1024, timeout: 120_000, windowsHide: true }
     );
     const trimmed = stdout.trim();
     if (!trimmed) return { supported: true, dryRun, fixes: [] };
