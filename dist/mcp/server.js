@@ -7878,12 +7878,12 @@ var require_bitmapimage = __commonJS({
        * @param {number} rgba Color with which to fill image, expressed as a singlenumber in the form 0xRRGGBBAA, where AA is 0x00 for transparent and any other value for opaque.
        * @return {BitmapImage} The present image to allow for chaining.
        */
-      fillRGBA(rgba) {
+      fillRGBA(rgba2) {
         const buf = this.bitmap.data;
         const bufByteWidth = this.bitmap.height * 4;
         let bi = 0;
         while (bi < bufByteWidth) {
-          buf.writeUInt32BE(rgba, bi);
+          buf.writeUInt32BE(rgba2, bi);
           bi += 4;
         }
         while (bi < buf.length) {
@@ -15214,38 +15214,38 @@ var require_bitpacker = __commonJS({
       }
       for (let y2 = 0; y2 < height; y2++) {
         for (let x2 = 0; x2 < width; x2++) {
-          let rgba = getRGBA(data, inIndex);
+          let rgba2 = getRGBA(data, inIndex);
           switch (options.colorType) {
             case constants2.COLORTYPE_COLOR_ALPHA:
             case constants2.COLORTYPE_COLOR:
               if (options.bitDepth === 8) {
-                outData[outIndex] = rgba.red;
-                outData[outIndex + 1] = rgba.green;
-                outData[outIndex + 2] = rgba.blue;
+                outData[outIndex] = rgba2.red;
+                outData[outIndex + 1] = rgba2.green;
+                outData[outIndex + 2] = rgba2.blue;
                 if (outHasAlpha) {
-                  outData[outIndex + 3] = rgba.alpha;
+                  outData[outIndex + 3] = rgba2.alpha;
                 }
               } else {
-                outData.writeUInt16BE(rgba.red, outIndex);
-                outData.writeUInt16BE(rgba.green, outIndex + 2);
-                outData.writeUInt16BE(rgba.blue, outIndex + 4);
+                outData.writeUInt16BE(rgba2.red, outIndex);
+                outData.writeUInt16BE(rgba2.green, outIndex + 2);
+                outData.writeUInt16BE(rgba2.blue, outIndex + 4);
                 if (outHasAlpha) {
-                  outData.writeUInt16BE(rgba.alpha, outIndex + 6);
+                  outData.writeUInt16BE(rgba2.alpha, outIndex + 6);
                 }
               }
               break;
             case constants2.COLORTYPE_ALPHA:
             case constants2.COLORTYPE_GRAYSCALE: {
-              let grayscale = (rgba.red + rgba.green + rgba.blue) / 3;
+              let grayscale = (rgba2.red + rgba2.green + rgba2.blue) / 3;
               if (options.bitDepth === 8) {
                 outData[outIndex] = grayscale;
                 if (outHasAlpha) {
-                  outData[outIndex + 1] = rgba.alpha;
+                  outData[outIndex + 1] = rgba2.alpha;
                 }
               } else {
                 outData.writeUInt16BE(grayscale, outIndex);
                 if (outHasAlpha) {
-                  outData.writeUInt16BE(rgba.alpha, outIndex + 2);
+                  outData.writeUInt16BE(rgba2.alpha, outIndex + 2);
                 }
               }
               break;
@@ -21149,7 +21149,7 @@ var require_UTIF = __commonJS({
           }
           UTIF2.JpegDecoder = ak;
         })();
-        UTIF2.encodeImage = function(rgba, w, h, metadata) {
+        UTIF2.encodeImage = function(rgba2, w, h, metadata) {
           var idf = {
             "t256": [w],
             "t257": [h],
@@ -21174,7 +21174,7 @@ var require_UTIF = __commonJS({
           };
           if (metadata) for (var i2 in metadata) idf[i2] = metadata[i2];
           var prfx = new Uint8Array(UTIF2.encode([idf]));
-          var img = new Uint8Array(rgba);
+          var img = new Uint8Array(rgba2);
           var data = new Uint8Array(1e3 + w * h * 4);
           for (var i2 = 0; i2 < prfx.length; i2++) data[i2] = prfx[i2];
           for (var i2 = 0; i2 < img.length; i2++) data[1e3 + i2] = img[i2];
@@ -23091,12 +23091,12 @@ var require_UTIF = __commonJS({
             }
           }
           UTIF2.decodeImage(buff, page, ifds);
-          var rgba = UTIF2.toRGBA8(page), w = page.width, h = page.height;
+          var rgba2 = UTIF2.toRGBA8(page), w = page.width, h = page.height;
           var cnv = document.createElement("canvas");
           cnv.width = w;
           cnv.height = h;
           var ctx = cnv.getContext("2d");
-          var imgd = new ImageData(new Uint8ClampedArray(rgba.buffer), w, h);
+          var imgd = new ImageData(new Uint8ClampedArray(rgba2.buffer), w, h);
           ctx.putImageData(imgd, 0, 0);
           return cnv.toDataURL();
         };
@@ -65987,6 +65987,234 @@ var StdioServerTransport = class {
 import fs4 from "node:fs";
 import path2 from "node:path";
 
+// dist/core/banner.js
+var BANNER_ID = "zcode-tarkov-banner";
+var BANNER_STYLE_ID = "zcode-tarkov-banner-style";
+var BANNER_STATE_KEY = "__zcodeTarkovBanner";
+var DEFAULT_BANNER_TEXT = {
+  line1: "ATTENTION! ZCODE TACTICAL INTERFACE ACTIVE",
+  line2: "Experimental interface. Verify your task, tool calls and working tree before deployment."
+};
+var DEFAULT_BANNER = {
+  enabled: true,
+  text1: DEFAULT_BANNER_TEXT.line1,
+  text2: DEFAULT_BANNER_TEXT.line2,
+  height: 56,
+  opacity: 0.92
+};
+var ACCENT_RGB = "224, 121, 48";
+var ACCENT = "#e07930";
+var INK = "#1c1207";
+function buildBannerCss(opts) {
+  return `
+html[data-zct-banner="1"] body { padding-top: ${opts.height}px; }
+#${BANNER_ID} {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: ${opts.height}px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px;
+  background: rgba(${ACCENT_RGB}, ${opts.opacity});
+  border-bottom: 1px solid rgba(28, 18, 7, 0.45);
+  z-index: 2147483000;
+  overflow: hidden;
+  user-select: none;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Keeps the strip draggable, matching the app's own title region. */
+  -webkit-app-region: drag;
+}
+#${BANNER_ID} .zct-banner-icon {
+  width: 34px;
+  height: 28px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${INK};
+  color: ${ACCENT};
+  font: 800 18px/1 system-ui, sans-serif;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+#${BANNER_ID} .zct-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+#${BANNER_ID} .zct-banner-line1 {
+  color: ${INK};
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.35;
+  letter-spacing: 1.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#${BANNER_ID} .zct-banner-line2 {
+  color: ${INK};
+  font-size: 12px;
+  line-height: 1.35;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+`.trim();
+}
+function buildBannerScript(opts) {
+  return `(function(){
+  var ID = ${JSON.stringify(BANNER_ID)};
+  var STYLE_ID = ${JSON.stringify(BANNER_STYLE_ID)};
+  var STATE_KEY = ${JSON.stringify(BANNER_STATE_KEY)};
+  var CSS = ${JSON.stringify(buildBannerCss(opts))};
+  var T1 = ${JSON.stringify(opts.text1)};
+  var T2 = ${JSON.stringify(opts.text2)};
+
+  var previous = window[STATE_KEY];
+  if (previous && typeof previous.destroy === 'function') {
+    try { previous.destroy(); } catch (e) {}
+  }
+
+  var observer = null;
+  var pollTimer = null;
+  var scheduled = false;
+
+  function ensureStyle() {
+    try {
+      var s = document.getElementById(STYLE_ID);
+      if (!s) {
+        s = document.createElement('style');
+        s.id = STYLE_ID;
+        (document.head || document.documentElement).appendChild(s);
+      }
+      if (s.textContent !== CSS) s.textContent = CSS;
+    } catch (e) { /* fail soft */ }
+  }
+
+  function build() {
+    var icon = document.createElement('span');
+    icon.className = 'zct-banner-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = '!';
+    var l1 = document.createElement('span');
+    l1.className = 'zct-banner-line1';
+    var l2 = document.createElement('span');
+    l2.className = 'zct-banner-line2';
+    l1.textContent = T1;
+    l2.textContent = T2;
+    var text = document.createElement('span');
+    text.className = 'zct-banner-text';
+    text.appendChild(l1);
+    text.appendChild(l2);
+    var node = document.createElement('div');
+    node.id = ID;
+    node.setAttribute('role', 'status');
+    node.appendChild(icon);
+    node.appendChild(text);
+    return node;
+  }
+
+  function tick() {
+    try {
+      var body = document.body;
+      if (!body) return;
+      // The app shell only exists once React has mounted into #root; before
+      // that there is nothing to sit above, so stay out of the way.
+      var root = document.getElementById('root');
+      if (!root || root.childElementCount === 0) { remove(); return; }
+
+      var node = document.getElementById(ID);
+      if (!node) {
+        node = build();
+        body.insertBefore(node, body.firstChild);
+      } else if (node.parentNode !== body || body.firstChild !== node) {
+        body.insertBefore(node, body.firstChild);
+      }
+      document.documentElement.setAttribute('data-zct-banner', '1');
+
+      // Conditional writes only: assigning textContent unconditionally
+      // replaces the text node, which mutates the tree, which re-triggers the
+      // observer that called us.
+      var l1 = node.querySelector('.zct-banner-line1');
+      if (l1 && l1.textContent !== T1) l1.textContent = T1;
+      var l2 = node.querySelector('.zct-banner-line2');
+      if (l2 && l2.textContent !== T2) l2.textContent = T2;
+    } catch (e) { /* fail soft */ }
+  }
+
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+    var run = function () { scheduled = false; tick(); };
+    if (typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(run);
+    else window.setTimeout(run, 50);
+  }
+
+  function remove() {
+    try {
+      var existing = document.getElementById(ID);
+      if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+      document.documentElement.removeAttribute('data-zct-banner');
+    } catch (e) { /* fail soft */ }
+  }
+
+  function destroy() {
+    try { if (observer) observer.disconnect(); } catch (e) {}
+    if (pollTimer !== null) { try { window.clearInterval(pollTimer); } catch (e) {} pollTimer = null; }
+    remove();
+    try {
+      var s = document.getElementById(STYLE_ID);
+      if (s && s.parentNode) s.parentNode.removeChild(s);
+    } catch (e) {}
+    if (window[STATE_KEY] && window[STATE_KEY].destroy === destroy) window[STATE_KEY] = null;
+  }
+
+  ensureStyle();
+  try {
+    if (typeof MutationObserver === 'function') {
+      observer = new MutationObserver(schedule);
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+    }
+  } catch (e) { observer = null; }
+
+  if (observer === null) {
+    // Short-lived fallback poll; bounded so a page that never mounts cannot
+    // leave a timer running forever.
+    var attempts = 0;
+    pollTimer = window.setInterval(function () {
+      tick();
+      attempts += 1;
+      if (attempts > 60) { try { window.clearInterval(pollTimer); } catch (e) {} pollTimer = null; }
+    }, 1000);
+  }
+
+  window[STATE_KEY] = { refresh: tick, destroy: destroy };
+  tick();
+})();`;
+}
+function buildBannerTeardownScript() {
+  return `(function(){
+  var STATE_KEY = ${JSON.stringify(BANNER_STATE_KEY)};
+  var st = window[STATE_KEY];
+  if (st && typeof st.destroy === 'function') {
+    try { st.destroy(); } catch (e) {}
+  }
+  try {
+    var n = document.getElementById(${JSON.stringify(BANNER_ID)});
+    if (n && n.parentNode) n.parentNode.removeChild(n);
+    var s = document.getElementById(${JSON.stringify(BANNER_STYLE_ID)});
+    if (s && s.parentNode) s.parentNode.removeChild(s);
+    document.documentElement.removeAttribute('data-zct-banner');
+  } catch (e) {}
+})();`;
+}
+
 // dist/core/cdp.js
 var CdpError = class extends Error {
 };
@@ -66090,6 +66318,7 @@ async function injectIntoTarget(target, payload) {
 }
 function buildBootstrapScript(payload) {
   const marker = payload.marker ?? "zcode-beautify";
+  const bannerScript = payload.banner ? buildBannerScript(payload.banner) : buildBannerTeardownScript();
   return `(function(){
   var MARKER = ${JSON.stringify(marker)};
   if (!window.__zcodeBeautify) window.__zcodeBeautify = {};
@@ -66136,7 +66365,8 @@ function buildBootstrapScript(payload) {
     localStorage.setItem(MARKER + ':css', ${JSON.stringify(payload.css)});
     localStorage.setItem(MARKER + ':wallpaper', ${JSON.stringify(payload.wallpaperDataUri ?? "")});
   } catch (e) {}
-})();`;
+})();
+${bannerScript}`;
 }
 function buildResetScript(marker = "zcode-beautify") {
   return `(function(){
@@ -66144,7 +66374,8 @@ function buildResetScript(marker = "zcode-beautify") {
   document.getElementById(${JSON.stringify(marker)} + '-wallpaper')?.remove();
   document.getElementById(${JSON.stringify(marker)} + '-backdrop')?.remove();
   if (window.__zcodeBeautify) { window.__zcodeBeautify.cssText = null; }
-})();`;
+})();
+${buildBannerTeardownScript()}`;
 }
 
 // node_modules/bmp-ts/dist/esm/header-types.js
@@ -67372,13 +67603,13 @@ tinycolor.mix = function(color1, color2, amount) {
   var rgb1 = tinycolor(color1).toRgb();
   var rgb2 = tinycolor(color2).toRgb();
   var p2 = amount / 100;
-  var rgba = {
+  var rgba2 = {
     r: (rgb2.r - rgb1.r) * p2 + rgb1.r,
     g: (rgb2.g - rgb1.g) * p2 + rgb1.g,
     b: (rgb2.b - rgb1.b) * p2 + rgb1.b,
     a: (rgb2.a - rgb1.a) * p2 + rgb1.a
   };
-  return tinycolor(rgba);
+  return tinycolor(rgba2);
 };
 tinycolor.readability = function(color1, color2) {
   var c1 = tinycolor(color1);
@@ -67842,17 +68073,17 @@ function intToRGBA(i2) {
   if (typeof i2 !== "number") {
     throw new Error("i must be a number");
   }
-  const rgba = {
+  const rgba2 = {
     r: 0,
     g: 0,
     b: 0,
     a: 0
   };
-  rgba.r = Math.floor(i2 / Math.pow(256, 3));
-  rgba.g = Math.floor((i2 - rgba.r * Math.pow(256, 3)) / Math.pow(256, 2));
-  rgba.b = Math.floor((i2 - rgba.r * Math.pow(256, 3) - rgba.g * Math.pow(256, 2)) / Math.pow(256, 1));
-  rgba.a = Math.floor((i2 - rgba.r * Math.pow(256, 3) - rgba.g * Math.pow(256, 2) - rgba.b * Math.pow(256, 1)) / Math.pow(256, 0));
-  return rgba;
+  rgba2.r = Math.floor(i2 / Math.pow(256, 3));
+  rgba2.g = Math.floor((i2 - rgba2.r * Math.pow(256, 3)) / Math.pow(256, 2));
+  rgba2.b = Math.floor((i2 - rgba2.r * Math.pow(256, 3) - rgba2.g * Math.pow(256, 2)) / Math.pow(256, 1));
+  rgba2.a = Math.floor((i2 - rgba2.r * Math.pow(256, 3) - rgba2.g * Math.pow(256, 2) - rgba2.b * Math.pow(256, 1)) / Math.pow(256, 0));
+  return rgba2;
 }
 function colorDiff(rgba1, rgba2) {
   const sq = (n2) => Math.pow(n2, 2);
@@ -68041,9 +68272,9 @@ function tiff() {
       ifds.forEach((ifd) => {
         import_utif2.default.decodeImage(data, ifd);
       });
-      const rgba = import_utif2.default.toRGBA8(page);
+      const rgba2 = import_utif2.default.toRGBA8(page);
       return {
-        data: Buffer.from(rgba),
+        data: Buffer.from(rgba2),
         width: getDimensionValue(page.t256),
         height: getDimensionValue(page.t257)
       };
@@ -144398,16 +144629,20 @@ function round2(v) {
   return Math.round(v * 100) / 100;
 }
 
+// dist/core/tokenScopes.js
+var LIGHT_SCOPES = ":root,:host,.theme-zai-light";
+var DARK_SCOPES = ".dark,.theme-zai-dark";
+
 // dist/core/tokens.js
 var LIGHT_SURFACE_TONES = { lowest: 100, low: 96, container: 94, high: 92, highest: 90 };
 var DARK_SURFACE_TONES = { lowest: 4, low: 10, container: 12, high: 17, highest: 22 };
 function buildVariableOverrides(theme, opts) {
   return `${rootBlock(theme, opts)}
-.dark{${tokenRows(theme, "dark", opts).join("")}}`;
+${DARK_SCOPES}{${tokenRows(theme, "dark", opts).join("")}}`;
 }
 function buildTransparencyOverrides(opts) {
-  return `:root,:host{${transparencyRows("light", opts).join("")}}
-.dark{${transparencyRows("dark", opts).join("")}}`;
+  return `${LIGHT_SCOPES}{${transparencyRows("light", opts).join("")}}
+${DARK_SCOPES}{${transparencyRows("dark", opts).join("")}}`;
 }
 var LIGHT_SCRIM = "255,255,255";
 var DARK_SCRIM = "18,18,22";
@@ -144434,7 +144669,7 @@ function transparencyRows(mode, opts) {
   ].filter(Boolean);
 }
 function rootBlock(theme, opts) {
-  return `:root,:host{${tokenRows(theme, "light", opts).join("")}}`;
+  return `${LIGHT_SCOPES}{${tokenRows(theme, "light", opts).join("")}}`;
 }
 function tokenRows(theme, mode, opts) {
   const s2 = mode === "light" ? theme.schemes.light : theme.schemes.dark;
@@ -144484,15 +144719,218 @@ function tokenRows(theme, mode, opts) {
   ].filter(Boolean);
 }
 
+// dist/themes/tarkov.js
+var TARKOV_PALETTE = {
+  accent: "#e07930",
+  deep: "#140d04",
+  background: "#1c1207",
+  panelRgb: "26, 18, 10",
+  panelAltRgb: "30, 20, 10",
+  raisedRgb: "42, 29, 16",
+  popoverRgb: "46, 32, 18",
+  text: "#e8d9c8",
+  highlight: "#ffd7ae",
+  warning: "#ffb27a",
+  muted: "#8b877c"
+};
+var ACCENT_RGB2 = "224, 121, 48";
+var MUTED_RGB = "139, 135, 124";
+function rgba(rgb, alpha) {
+  if (alpha >= 1)
+    return `rgb(${rgb})`;
+  const rounded = Math.round(alpha * 100) / 100;
+  return `rgba(${rgb}, ${rounded})`;
+}
+function clamp012(v) {
+  return Math.min(1, Math.max(0, v));
+}
+function tarkovTokenRows(opts) {
+  const p2 = TARKOV_PALETTE;
+  const visible = opts.wallpaperVisible;
+  const surfaceAlpha = visible ? 0.72 : 1;
+  const panelAlpha = visible ? 0.62 : 1;
+  const inputAlpha = visible ? 0.5 : 1;
+  const popoverAlpha = visible ? 0.94 : 1;
+  return [
+    // Window background is transparent only while a wallpaper is showing;
+    // otherwise it is the opaque base so nothing leaks through.
+    `--color-background:${visible ? "transparent" : p2.background};`,
+    `--color-bg:${visible ? "transparent" : p2.background};`,
+    `--color-background-alt:${rgba(p2.panelRgb, panelAlpha)};`,
+    `--color-background-win-alt:${rgba(p2.panelAltRgb, panelAlpha)};`,
+    `--color-panel:${rgba(p2.panelRgb, panelAlpha)};`,
+    `--color-sidebar:${rgba(p2.panelAltRgb, panelAlpha)};`,
+    `--color-header:${rgba(p2.panelRgb, panelAlpha)};`,
+    `--color-surface:${rgba(p2.raisedRgb, surfaceAlpha)};`,
+    `--color-surface-hover:${rgba(ACCENT_RGB2, visible ? 0.18 : 0.14)};`,
+    `--color-hover:${rgba(ACCENT_RGB2, visible ? 0.18 : 0.14)};`,
+    `--color-selected:${rgba(ACCENT_RGB2, visible ? 0.24 : 0.2)};`,
+    `--color-card:${rgba(p2.raisedRgb, surfaceAlpha)};`,
+    `--color-card-selected:${rgba(ACCENT_RGB2, visible ? 0.26 : 0.22)};`,
+    `--color-card-border:${rgba(ACCENT_RGB2, 0.3)};`,
+    `--color-popover:${rgba(p2.popoverRgb, popoverAlpha)};`,
+    `--color-popover-foreground:${p2.text};`,
+    `--color-popover-header:${rgba(p2.panelAltRgb, popoverAlpha)};`,
+    `--color-popover-border:${rgba(ACCENT_RGB2, 0.32)};`,
+    `--color-menu:${rgba(p2.popoverRgb, popoverAlpha)};`,
+    `--color-menu-hover:${rgba(ACCENT_RGB2, 0.2)};`,
+    `--color-tab:${rgba(p2.panelRgb, panelAlpha)};`,
+    `--color-tab-active:${rgba(p2.raisedRgb, surfaceAlpha)};`,
+    `--color-tab-border:${rgba(ACCENT_RGB2, 0.3)};`,
+    `--color-input:${rgba(p2.deep, inputAlpha)};`,
+    `--color-input-focused:${rgba(p2.deep, clamp012(inputAlpha + 0.2))};`,
+    `--color-input-border:${rgba(ACCENT_RGB2, 0.32)};`,
+    `--color-input-border-hover:${rgba(ACCENT_RGB2, 0.5)};`,
+    `--color-input-border-focused:${p2.accent};`,
+    `--color-foreground:${p2.text};`,
+    `--color-foreground-subtle:${p2.muted};`,
+    `--color-foreground-subtlest:${rgba(MUTED_RGB, 0.72)};`,
+    `--color-foreground-inverse:${p2.background};`,
+    `--color-primary:${p2.accent};`,
+    `--color-primary-foreground:${p2.background};`,
+    `--color-secondary:${rgba(ACCENT_RGB2, 0.16)};`,
+    `--color-accent:${p2.warning};`,
+    `--color-brand:${p2.accent};`,
+    `--color-border:${rgba(ACCENT_RGB2, 0.28)};`,
+    `--color-border-hover:${rgba(ACCENT_RGB2, 0.5)};`,
+    `--color-border-color-interactive:${rgba(ACCENT_RGB2, 0.36)};`,
+    `--color-border-color-interactive-hover:${rgba(ACCENT_RGB2, 0.6)};`,
+    `--color-border-color-interactive-active:${p2.accent};`,
+    `--divider-color:${rgba(ACCENT_RGB2, 0.2)};`,
+    `--color-find-highlight:${rgba(ACCENT_RGB2, 0.3)};`,
+    `--color-find-highlight-active:${rgba(ACCENT_RGB2, 0.5)};`,
+    `--color-tag:${rgba(ACCENT_RGB2, 0.14)};`,
+    // Inline code only gets a warm chip; the syntax palette is untouched.
+    `--color-markdown-inline-code:${rgba(ACCENT_RGB2, 0.12)};`,
+    `--color-tooltip:${rgba(p2.popoverRgb, visible ? 0.97 : 1)};`,
+    `--color-tooltip-foreground:${p2.text};`,
+    `--color-toast:${rgba(p2.popoverRgb, visible ? 0.97 : 1)};`,
+    `--color-terminal-bg:${p2.deep};`,
+    `--color-terminal-fg:${p2.text};`,
+    // Local hooks for the component skin below; not ZCode tokens.
+    `--tarkov-accent:${p2.accent};`,
+    `--tarkov-accent-soft:${rgba(ACCENT_RGB2, visible ? 0.2 : 0.16)};`,
+    `--tarkov-hover:${rgba(ACCENT_RGB2, visible ? 0.18 : 0.14)};`,
+    `--tarkov-highlight:${p2.highlight};`,
+    `--tarkov-panel-border:${rgba(ACCENT_RGB2, 0.3)};`,
+    opts.dim > 0 ? `--zcode-beautify-dim:${opts.dim / 100};` : ""
+  ].filter(Boolean);
+}
+function buildTarkovVariableOverrides(opts) {
+  const rows = tarkovTokenRows(opts).join("");
+  return `${LIGHT_SCOPES}{${rows}}
+${DARK_SCOPES}{${rows}}`;
+}
+function buildTarkovComponentCss() {
+  const containerSlots = [
+    '[data-slot="card"]',
+    '[data-slot="dialog-content"]',
+    '[data-slot="alert-dialog-content"]',
+    '[data-slot="popover-content"]',
+    '[data-slot="dropdown-menu-content"]',
+    '[data-slot="dropdown-menu-sub-content"]',
+    '[data-slot="context-menu-content"]',
+    '[data-slot="context-menu-sub-content"]',
+    '[data-slot="select-content"]',
+    '[data-slot="hover-card-content"]',
+    '[data-slot="command"]',
+    '[data-slot="tooltip-content"]'
+  ].join(",");
+  const itemSlots = [
+    '[data-slot="dropdown-menu-item"]',
+    '[data-slot="dropdown-menu-checkbox-item"]',
+    '[data-slot="dropdown-menu-radio-item"]',
+    '[data-slot="select-item"]',
+    '[data-slot="context-menu-item"]',
+    '[data-slot="command-item"]'
+  ];
+  const itemActive = itemSlots.flatMap((s2) => [
+    `${s2}:hover`,
+    `${s2}[data-highlighted]`,
+    `${s2}[data-state="checked"]`,
+    `${s2}[aria-selected="true"]`
+  ]).join(",");
+  const fieldSlots = [
+    '[data-slot="input"]',
+    '[data-slot="textarea"]',
+    '[data-slot="select-trigger"]',
+    '[data-slot="input-group"]'
+  ].join(",");
+  return `
+/* Tarkov: square off soft rounded containers (Material/rounded defaults). */
+${containerSlots} { border-radius: 4px; }
+${containerSlots} { border-color: var(--tarkov-panel-border); }
+[data-slot="button"]:not(.rounded-full) { border-radius: 3px; }
+
+/* Tarkov: fields get a thin warm border and a clear (not blown-out) focus. */
+${fieldSlots} { border-radius: 3px; border-color: var(--color-input-border); }
+${fieldSlots}:hover { border-color: var(--color-input-border-hover); }
+${fieldSlots}:focus,
+${fieldSlots}:focus-within { border-color: var(--color-input-border-focused); }
+
+/* Tarkov: active row = warm wash + thin orange left indicator (inset so the
+   indicator never shifts layout). */
+${itemActive} {
+  background-color: var(--tarkov-hover);
+  box-shadow: inset 2px 0 0 var(--tarkov-accent);
+}
+[data-slot="command-item"][data-selected="true"],
+[data-slot="tabs-trigger"][data-state="active"] { color: var(--tarkov-highlight); }
+[data-slot="tabs-trigger"][data-state="active"] {
+  box-shadow: inset 0 -2px 0 var(--tarkov-accent);
+}
+[data-slot="tabs-list"] { border-radius: 3px; }
+
+/* Tarkov: progress and switch read as hardware-ish, not pill-shaped. */
+[data-slot="progress-indicator"] { background-color: var(--tarkov-accent); }
+[data-slot="switch"][data-state="checked"] { background-color: var(--color-primary); }
+
+/* Deliberately NOT styled: code blocks, success/warning/destructive states,
+   git/diff colors. Readability and semantics outrank the theme. */
+`.trim();
+}
+
+// dist/core/colorMode.js
+var COLOR_MODES = ["monet", "tarkov", "native"];
+var DEFAULT_COLOR_MODE = "monet";
+function isColorMode(value) {
+  return typeof value === "string" && COLOR_MODES.includes(value);
+}
+function migrateColorMode(stored) {
+  if (isColorMode(stored?.colorMode))
+    return stored.colorMode;
+  if (stored && typeof stored.monet === "boolean")
+    return stored.monet ? "monet" : "native";
+  return DEFAULT_COLOR_MODE;
+}
+function legacyMonetFlag(mode) {
+  return mode === "monet";
+}
+function withColorMode(stored) {
+  const mode = migrateColorMode(stored);
+  return { ...stored, colorMode: mode, monet: legacyMonetFlag(mode) };
+}
+
 // dist/core/inject.js
 var DEFAULT_CONFIG = {
   port: 9222,
   blur: 0,
   dim: 25,
   monet: true,
+  colorMode: DEFAULT_COLOR_MODE,
   wallpaperVisible: true,
-  fit: "cover"
+  fit: "cover",
+  banner: DEFAULT_BANNER
 };
+function resolveColorMode(config2) {
+  return config2.colorMode ?? (config2.monet ? "monet" : "native");
+}
+function resolveBanner(config2) {
+  if (resolveColorMode(config2) !== "tarkov")
+    return null;
+  const banner = config2.banner ?? DEFAULT_BANNER;
+  return banner.enabled ? banner : null;
+}
 function buildPayload(config2, assets) {
   const parts = [];
   const resolved = config2.fit === "smart" ? assets?.focus.fit ?? "cover" : config2.fit === "contain" ? "contain" : "cover";
@@ -144533,15 +144971,22 @@ html, body { background: transparent !important; }
   background: rgb(0 0 0 / var(--zcode-beautify-dim, ${config2.dim / 100}));
 }`);
   }
-  if (assets) {
-    if (config2.monet) {
+  const mode = resolveColorMode(config2);
+  if (mode === "tarkov") {
+    parts.push(buildTarkovVariableOverrides({
+      dim: config2.dim,
+      wallpaperVisible: config2.wallpaperVisible
+    }));
+    parts.push(buildTarkovComponentCss());
+  } else if (mode === "monet") {
+    if (assets) {
       parts.push(buildVariableOverrides(assets.theme, {
         dim: config2.dim,
         wallpaperVisible: config2.wallpaperVisible
       }));
-    } else if (config2.wallpaperVisible) {
-      parts.push(buildTransparencyOverrides({ dim: config2.dim }));
     }
+  } else if (assets && config2.wallpaperVisible) {
+    parts.push(buildTransparencyOverrides({ dim: config2.dim }));
   }
   const wallpaperDataUri = config2.wallpaperVisible ? assets?.dataUri : void 0;
   return {
@@ -144549,7 +144994,8 @@ html, body { background: transparent !important; }
     wallpaperDataUri,
     fit: config2.wallpaperVisible ? resolved : "cover",
     focusX,
-    focusY
+    focusY,
+    banner: resolveBanner(config2)
   };
 }
 async function applyToZCode(config2, payload) {
@@ -144590,29 +145036,43 @@ import { promisify } from "node:util";
 import fs3 from "node:fs";
 import os from "node:os";
 import path from "node:path";
+var LEGACY_DATA_DIRS = ["zcode-beautify@zcode-beautify", "zcode-beautify"];
 function dataDir() {
   const override = process.env.ZCODE_BEAUTIFY_DATA_DIR;
   if (override)
     return override;
   const root = path.join(os.homedir(), ".zcode", "cli", "plugins", "data");
-  const pluginScoped = path.join(root, "zcode-beautify@zcode-beautify");
+  const pluginScoped = path.join(root, "zcode-tarkov@zcode-tarkov");
   if (fs3.existsSync(pluginScoped))
     return pluginScoped;
-  return path.join(root, "zcode-beautify");
+  const own2 = path.join(root, "zcode-tarkov");
+  if (fs3.existsSync(own2))
+    return own2;
+  for (const legacy of LEGACY_DATA_DIRS) {
+    const dir = path.join(root, legacy);
+    if (fs3.existsSync(dir))
+      return dir;
+  }
+  return own2;
 }
 function configFile() {
   return path.join(dataDir(), "config.json");
 }
-function loadConfig() {
+function readJsonFile(file2) {
   try {
-    return JSON.parse(fs3.readFileSync(configFile(), "utf8"));
+    const raw = fs3.readFileSync(file2, "utf8").replace(/^\uFEFF/, "");
+    return JSON.parse(raw);
   } catch {
-    return {};
+    return void 0;
   }
+}
+function loadConfig() {
+  const stored = readJsonFile(configFile());
+  return stored ? withColorMode(stored) : {};
 }
 function saveConfig(config2) {
   fs3.mkdirSync(dataDir(), { recursive: true });
-  fs3.writeFileSync(configFile(), JSON.stringify(config2, null, 2));
+  fs3.writeFileSync(configFile(), JSON.stringify(withColorMode(config2), null, 2));
 }
 var ZCODE_EXE_CANDIDATES = process.platform === "win32" ? [
   process.env.ZCODE_WINDOWS_APP_INSTALL_DIR ? path.join(process.env.ZCODE_WINDOWS_APP_INSTALL_DIR, "ZCode.exe") : void 0,
@@ -144622,25 +145082,30 @@ var ZCODE_EXE_CANDIDATES = process.platform === "win32" ? [
 var execFileAsync = promisify(execFile);
 
 // dist/core/session.js
+function mergedConfig(opts, stored = loadConfig()) {
+  const colorMode = opts.colorMode ?? (typeof opts.monet === "boolean" ? opts.monet ? "monet" : "native" : migrateColorMode(stored));
+  return {
+    ...DEFAULT_CONFIG,
+    ...stored,
+    port: opts.port ?? stored.port ?? DEFAULT_CONFIG.port,
+    blur: opts.blur ?? stored.blur ?? DEFAULT_CONFIG.blur,
+    dim: opts.dim ?? stored.dim ?? DEFAULT_CONFIG.dim,
+    colorMode,
+    monet: legacyMonetFlag(colorMode),
+    wallpaperVisible: opts.wallpaperVisible ?? stored.wallpaperVisible ?? DEFAULT_CONFIG.wallpaperVisible,
+    fit: opts.fit ?? stored.fit ?? DEFAULT_CONFIG.fit,
+    banner: { ...DEFAULT_CONFIG.banner, ...stored.banner ?? {} }
+  };
+}
 async function reapplyStored() {
-  const config2 = mergedConfig();
+  const config2 = mergedConfig({});
   return applyToZCode(config2, await buildPayloadFromConfig(config2));
 }
 async function applyWallpaper(imagePath, opts) {
   const abs = path2.resolve(imagePath);
   if (!fs4.existsSync(abs))
     throw new Error(`Image not found: ${abs}`);
-  const stored = loadConfig();
-  const config2 = {
-    ...DEFAULT_CONFIG,
-    ...stored,
-    port: opts.port ?? stored.port ?? DEFAULT_CONFIG.port,
-    blur: opts.blur ?? stored.blur ?? DEFAULT_CONFIG.blur,
-    dim: opts.dim ?? stored.dim ?? DEFAULT_CONFIG.dim,
-    monet: opts.monet ?? stored.monet ?? DEFAULT_CONFIG.monet,
-    wallpaperVisible: opts.wallpaperVisible ?? stored.wallpaperVisible ?? DEFAULT_CONFIG.wallpaperVisible,
-    fit: opts.fit ?? stored.fit ?? DEFAULT_CONFIG.fit
-  };
+  const config2 = mergedConfig(opts);
   fs4.mkdirSync(dataDir(), { recursive: true });
   const dest = path2.join(dataDir(), "wallpaper" + path2.extname(abs).toLowerCase());
   if (dest !== abs)
@@ -144652,17 +145117,7 @@ async function applyWallpaper(imagePath, opts) {
   return { windows, config: config2 };
 }
 async function applyColorsOnly(opts) {
-  const stored = loadConfig();
-  const config2 = {
-    ...DEFAULT_CONFIG,
-    ...stored,
-    port: opts.port ?? stored.port ?? DEFAULT_CONFIG.port,
-    blur: opts.blur ?? stored.blur ?? DEFAULT_CONFIG.blur,
-    dim: opts.dim ?? stored.dim ?? DEFAULT_CONFIG.dim,
-    monet: opts.monet ?? stored.monet ?? DEFAULT_CONFIG.monet,
-    wallpaperVisible: opts.wallpaperVisible ?? stored.wallpaperVisible ?? DEFAULT_CONFIG.wallpaperVisible,
-    fit: opts.fit ?? stored.fit ?? DEFAULT_CONFIG.fit
-  };
+  const config2 = mergedConfig(opts);
   saveConfig(config2);
   return applyToZCode(config2, await buildPayloadFromConfig(config2));
 }
@@ -144678,9 +145133,6 @@ async function buildPayloadFromConfig(config2) {
     assets = await loadWallpaper(config2.wallpaperPath);
   }
   return buildPayload(config2, assets);
-}
-function mergedConfig() {
-  return { ...DEFAULT_CONFIG, ...loadConfig(), port: loadConfig().port ?? DEFAULT_CONFIG.port };
 }
 
 // dist/core/autostart.js
@@ -144965,38 +145417,53 @@ async function repairLaunchers(opts) {
 
 // dist/mcp/server.js
 var server = new McpServer({
-  name: "zcode-beautify",
-  version: "0.3.1"
+  name: "zcode-tarkov",
+  version: "0.1.0"
 });
 server.registerTool("set_background", {
   title: "Set ZCode wallpaper",
-  description: "Set the ZCode desktop client's background wallpaper image and adapt the UI colors with Material Design 3 (Monet) dynamic color. ZCode must be running with the CDP debug port (see zcode-beautify launch).",
+  description: "Set the ZCode desktop client's background wallpaper image. The UI palette follows the current color mode: monet (Material Design 3 dynamic color from the wallpaper), tarkov (fixed Tarkov-inspired palette, unaffected by the wallpaper), or native (ZCode's own colors). ZCode must be running with the CDP debug port (see zcode-tarkov launch).",
   inputSchema: {
     image_path: external_exports.string().describe("Absolute path of the image to use as wallpaper"),
     blur: external_exports.number().min(0).max(100).optional().describe("Wallpaper blur radius in px (default 0)"),
-    dim: external_exports.number().min(0).max(100).optional().describe("Wallpaper darkening 0-100 (default 25)")
+    dim: external_exports.number().min(0).max(100).optional().describe("Wallpaper darkening 0-100 (default 25)"),
+    color_mode: external_exports.enum(["monet", "tarkov", "native"]).optional().describe("Palette to use; omit to keep the current mode")
   }
-}, async ({ image_path, blur, dim }) => {
+}, async ({ image_path, blur, dim, color_mode }) => {
   try {
-    const { windows } = await applyWallpaper(image_path, { blur, dim });
-    return { content: [{ type: "text", text: `Wallpaper applied to ${windows} window(s) with Monet-adapted colors.` }] };
+    const { windows, config: config2 } = await applyWallpaper(image_path, {
+      blur,
+      dim,
+      colorMode: color_mode
+    });
+    return {
+      content: [{ type: "text", text: `Wallpaper applied to ${windows} window(s) with the "${config2.colorMode}" palette.` }]
+    };
   } catch (err) {
     return { content: [{ type: "text", text: `Failed: ${err.message}` }], isError: true };
   }
 });
 server.registerTool("apply_options", {
   title: "Tune ZCode appearance",
-  description: "Adjust the live ZCode appearance without changing the wallpaper: blur radius, dim level, Monet dynamic colors on/off, and wallpaper visibility (translucent vs opaque surfaces). Only the provided values change; the rest keep their current setting.",
+  description: "Adjust the live ZCode appearance without changing the wallpaper: blur radius, dim level, color mode (monet | tarkov | native), and wallpaper visibility (translucent vs opaque surfaces). Only the provided values change; the rest keep their current setting.",
   inputSchema: {
     blur: external_exports.number().min(0).max(100).optional().describe("Wallpaper blur radius in px"),
     dim: external_exports.number().min(0).max(100).optional().describe("Wallpaper darkening 0-100"),
-    monet: external_exports.boolean().optional().describe("Regenerate UI colors from the wallpaper (true) or keep ZCode's original colors (false)"),
+    color_mode: external_exports.enum(["monet", "tarkov", "native"]).optional().describe("monet: derive UI colors from the wallpaper; tarkov: fixed Tarkov palette; native: keep ZCode's original colors"),
+    monet: external_exports.boolean().optional().describe("Legacy alias for color_mode (true = monet, false = native); ignored when color_mode is given"),
     wallpaper_visible: external_exports.boolean().optional().describe("Translucent surfaces showing the wallpaper (true) or opaque surfaces (false)"),
     fit: external_exports.enum(["cover", "contain", "smart"]).optional().describe("Framing: cover fills and crops, contain letterboxes with a blurred backdrop, smart analyzes the picture locally and picks the best framing + focus point")
   }
-}, async ({ blur, dim, monet, wallpaper_visible, fit }) => {
+}, async ({ blur, dim, color_mode, monet, wallpaper_visible, fit }) => {
   try {
-    const windows = await applyColorsOnly({ blur, dim, monet, wallpaperVisible: wallpaper_visible, fit });
+    const windows = await applyColorsOnly({
+      blur,
+      dim,
+      colorMode: color_mode,
+      monet,
+      wallpaperVisible: wallpaper_visible,
+      fit
+    });
     return { content: [{ type: "text", text: `Appearance updated in ${windows} window(s).` }] };
   } catch (err) {
     return { content: [{ type: "text", text: `Failed: ${err.message}` }], isError: true };
@@ -145004,7 +145471,7 @@ server.registerTool("apply_options", {
 });
 server.registerTool("refresh_theme", {
   title: "Refresh ZCode theme",
-  description: "Re-inject the stored wallpaper and Monet theme into the running ZCode client (e.g. after the app was restarted).",
+  description: "Re-inject the stored wallpaper and color mode into the running ZCode client (e.g. after the app was restarted).",
   inputSchema: {}
 }, async () => {
   try {
@@ -145067,6 +145534,7 @@ server.registerTool("recovery_status", {
       wallpaperSet: Boolean(stored.wallpaperPath),
       blur: stored.blur,
       dim: stored.dim,
+      colorMode: migrateColorMode(stored),
       monet: stored.monet,
       fit: stored.fit
     }
