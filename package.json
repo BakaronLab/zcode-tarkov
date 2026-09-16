@@ -1,25 +1,26 @@
 {
-  "name": "zcode-beautify",
-  "version": "0.3.1",
-  "description": "Open-source beautification plugin for the ZCode desktop client: custom wallpaper + Material Design 3 (Monet) dynamic theming via CDP injection, with a live settings panel.",
+  "name": "zcode-tarkov",
+  "version": "0.1.0",
+  "description": "Escape-from-Tarkov-inspired theme mode for the ZCode desktop client: fixed Tarkov palette, Monet dynamic color, and native passthrough, via CDP injection with a live settings panel.",
   "type": "module",
   "license": "MIT",
-  "author": "Logocceai",
   "engines": {
     "node": ">=20.0.0"
   },
   "bin": {
-    "zcode-beautify": "dist/cli.js"
+    "zcode-tarkov": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
     "bundle": "npm run build && node scripts/bundle.mjs",
+    "test": "tsc -p tsconfig.test.json && node --test \"tests/**/*.test.mjs\"",
     "package": "node scripts/package.mjs"
   },
   "keywords": [
     "zcode",
     "zcode-plugin",
+    "tarkov",
     "theme",
     "wallpaper",
     "material-design-3",
@@ -45,13 +46,5 @@
     "adm-zip": "^0.6.1",
     "esbuild": "^0.28.2",
     "typescript": "^5.6.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Logocceai/zcode-beautify.git"
-  },
-  "bugs": {
-    "url": "https://github.com/Logocceai/zcode-beautify/issues"
-  },
-  "homepage": "https://github.com/Logocceai/zcode-beautify#readme"
+  }
 }

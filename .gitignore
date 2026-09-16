@@ -29,6 +29,9 @@ coverage/
 screenshots/
 packages/
 
+# compiled output used only by the test runner (npm test)
+.test-build/
+
 # local scratch: CDP probe profiles, captured bundles, working notes
 experiments/
 assets/

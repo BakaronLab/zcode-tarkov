@@ -1,5 +1,54 @@
 # Changelog
 
+`zcode-tarkov` starts at v0.1.0. Entries from v0.3.1 downward are the retained
+history of the upstream project this repository was forked from,
+[zcode-beautify](https://github.com/Logocceai/zcode-beautify) (MIT).
+
+## v0.1.0
+
+First release. Adds a Tarkov UI preset to the zcode-beautify infrastructure
+without reimplementing any of it.
+
+### Added
+
+- **`colorMode: "monet" | "tarkov" | "native"`** replacing the single
+  `monet` boolean, which could not express a third state.
+- **Fixed Tarkov palette** (`src/themes/tarkov.ts`) mapped onto ZCode's semantic
+  `--color-*` tokens: accent orange `#e07930`, deep-brown surfaces, warm
+  `#e8d9c8` text, `#ffd7ae` / `#ffb27a` highlights, `#8b877c` muted text. The
+  palette is independent of the wallpaper, so swapping wallpaper cannot change
+  UI colors.
+- **Limited Tarkov component skin** built on stable shadcn `data-slot`
+  attributes and Radix state attributes: squared-off containers, thin warm
+  borders, warm hover washes, orange active indicators, clearer input focus.
+- **Beta warning banner** for Tarkov mode: translucent orange band, dark
+  hexagonal `!` badge, two configurable text lines, `MutationObserver`
+  re-attachment, guarded DOM writes, fail-soft on a missing anchor, clean
+  removal when leaving Tarkov mode.
+- **Settings-panel `UI Theme` selector** (Monet / Tarkov / Native) and a Tarkov
+  skin for the panel itself. Switching mode applies immediately and persists.
+- **`theme` CLI command** and `--theme` flags; `--no-monet` remains as an alias
+  for `--theme native`.
+- **`color_mode`** in the MCP tools, with `monet` kept as a legacy alias.
+- **60 automated tests** covering migration, per-mode payloads, palette output,
+  wallpaper visibility, banner generation/teardown, and mode-switch residue.
+
+### Changed
+
+- Injected token overrides now also target ZCode's real `.theme-zai-light` /
+  `.theme-zai-dark` scopes (verified against ZCode 3.11.2), instead of relying
+  on cascade order alone.
+- `apply` no longer forces Monet: it keeps the stored color mode unless
+  `--theme` is given.
+- Config resolution prefers a `zcode-tarkov` data directory and falls back to an
+  existing `zcode-beautify` one, so an old config is migrated rather than
+  ignored.
+
+### Security
+
+- No game assets are bundled. Altyn imagery, Scav voice clips and sound effects
+  present in the visual reference upstream were deliberately excluded.
+
 ## v0.3.1
 
 Fixes the autostart entry behind recovery mode `always` on Windows. The script

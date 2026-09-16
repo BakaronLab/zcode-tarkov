@@ -1,16 +1,15 @@
 {
-  "name": "zcode-beautify",
-  "version": "0.3.1",
-  "description": "Beautify the ZCode desktop client: import a background wallpaper and adapt the UI colors with Material Design 3 (Monet) dynamic color.",
+  "name": "zcode-tarkov",
+  "version": "0.1.0",
+  "description": "Escape-from-Tarkov-inspired theme mode for the ZCode desktop client: a fixed Tarkov palette, Monet wallpaper-derived colors, or ZCode's native colors.",
   "author": {
-    "name": "Logocceai"
+    "name": "zcode-tarkov contributors"
   },
   "license": "MIT",
-  "repository": "https://github.com/Logocceai/zcode-beautify",
   "commands": "commands",
   "skills": "skills",
   "mcpServers": {
-    "zcode-beautify": {
+    "zcode-tarkov": {
       "command": "node",
       "args": [
         "${CLAUDE_PLUGIN_ROOT}/dist/mcp/server.js"
