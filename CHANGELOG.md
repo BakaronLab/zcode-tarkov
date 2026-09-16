@@ -49,6 +49,15 @@ without reimplementing any of it.
 - No game assets are bundled. Altyn imagery, Scav voice clips and sound effects
   present in the visual reference upstream were deliberately excluded.
 
+### Verified
+
+Checked live against ZCode 3.11.2 (Windows), driving the real `dist/cli.js`
+bundle against an isolated instance started with its own runtime-data directory,
+so the user's running ZCode was never restarted or modified. 67 live assertions
+plus 71 unit tests, all passing. Coverage and the one pre-existing upstream
+limitation found (a bare renderer reload drops the theme) are recorded in
+`docs/zcode-dom-notes.md`.
+
 ## v0.3.1
 
 Fixes the autostart entry behind recovery mode `always` on Windows. The script

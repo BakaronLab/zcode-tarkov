@@ -81,7 +81,7 @@ node dist/cli.js serve --detach
 
 它按 fail-soft 原则实现：锚定在 ZCode 自带 HTML 中必然存在的 `#root`，并作为 **React 根节点的兄弟节点**插入，因此 React 永远不会在 reconcile 时覆盖它。锚点不存在时什么也不插入、不抛错。文字写入是**条件写入**且 observer 回调做了去抖，因此不会造成自触发死循环而卡住页面。切离 Tarkov 模式时会干净移除。
 
-选择器调查过程（包括为何在参考机器上无法进行实时 CDP 检查）记录在 [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md)。
+选择器调查过程（包括如何在不打扰正在运行的 ZCode 的前提下取得可测试的 CDP 会话）记录在 [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md)。
 
 ## 开发
 
@@ -96,10 +96,15 @@ npm run bundle     # build + esbuild -> 两个随仓库提交的 dist 包
 
 ## 已知限制
 
-- **尚未在真实运行的 ZCode 中验证 Tarkov 皮肤的实际渲染效果。** 参考机器上运行的 ZCode 没有开放 CDP 端口；受 ZCode 单实例锁限制无法启动第二个隔离实例；而重启 ZCode 会终止正在执行本任务的会话本身。所有选择器均取自与已安装版本完全一致的 renderer 构建产物，证据链与复验命令见 [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md)。
+- **仅重新加载渲染进程（F5 / `Page.reload`）会丢失主题，且不会自动恢复。** 这是**上游既有行为**：用基线 commit 的原始 `zcode-beautify` 复现结果完全一致。ZCode 的"自动恢复"机制正是为此存在——**重启应用**可以正确恢复（已实测），而单次页面重载不行。修复它属于改变上游行为，不在 v0.1 范围内；详见 [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md)。
+- Tarkov 组件皮肤针对的是 Radix 传送门（`dialog-content`、`dropdown-menu-content`、`select-item`、`input` 等），这些节点只有在相应界面被打开时才挂载，因此在静止的 DOM 中看不到。语义 token、警示带与设置面板均已实测；这些具体的传送门容器尚未在测试中逐个打开验证。
 - 警示带在挂载期间通过 `body { padding-top }` 预留高度，依赖 ZCode 3.11.2 的 `html,body,#root{height:100%}` + border-box 结构。
 - Tarkov 模式本身就是深色配色，不跟随 ZCode 自身的浅色/深色切换。
 - CDP 注入属于**非官方**机制，ZCode 更新可能导致失效；`reset` 始终可以恢复默认外观。
+
+## 已实测
+
+在 ZCode 3.11.2 上完成实机验证（使用独立的运行时数据目录启动一个隔离实例，全程**未重启、未修改**用户正在运行的 ZCode）：Monet / Tarkov / Native 三种载荷与切换、壁纸显示与隐藏下的行为、更换壁纸不影响固定配色、警示带的出现 / 不重复 / 六边形徽标 / 预留高度、切换模式与 reset 时的清除、设置面板的 UI Theme 选择器与 Tarkov 皮肤、配置持久化，以及**应用重启后的主题恢复**。完整结果见 [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md)。
 
 ## 许可
 

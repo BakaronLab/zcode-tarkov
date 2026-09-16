@@ -21,17 +21,23 @@ Roughly in order of value per unit of risk.
 
 ### 1. Live verification and selector hardening (do this first)
 
-The single most valuable next step: run the smoke test with a real CDP session
-and replace the derived selectors with verified ones.
+The first pass of this is **done** — see the "Live verification results" section
+of `docs/zcode-dom-notes.md`. A live CDP session was obtained via ZCode's
+`ZCODE_DESKTOP_USER_DATA_DIR` runtime override, and the token scopes, banner
+anchor, mode switching, panel and restart recovery were all confirmed live.
 
-- Start ZCode with `--remote-debugging-port` and confirm the Tarkov palette,
-  the component skin, and the banner anchor against the live tree.
-- Check the reserved-height behavior (`body { padding-top }`) against real
-  window resizing and layout.
-- Re-check token scopes after any ZCode upgrade; `.theme-zai-*` and the
-  `@layer theme` structure are version-specific facts, not guarantees.
-- Add a regression guard so a ZCode upgrade that renames a token or drops
-  `data-slot` fails loudly rather than silently half-theming.
+What remains:
+
+- Re-check token scopes and `data-slot` after any ZCode upgrade; `.theme-zai-*`,
+  the `@layer theme` split and the portal slot names are version-specific facts,
+  not guarantees.
+- Exercise the styled portal surfaces directly (`dialog-content`,
+  `dropdown-menu-content`, `select-content`, `select-item`, `input`, `command`)
+  by opening them, since they do not exist in a resting tree.
+- Add a regression guard so an upgrade that renames a token or drops `data-slot`
+  fails loudly rather than silently half-theming.
+- Decide whether to fix the pre-existing "bare renderer reload drops the theme"
+  behavior, which is documented in `docs/zcode-dom-notes.md` as upstream.
 
 ### 2. More first-party Tarkov palettes
 

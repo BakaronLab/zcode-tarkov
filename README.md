@@ -115,7 +115,7 @@ Shown **only** in Tarkov mode: a translucent orange band with a dark hexagonal `
 
 It is fail-soft by construction. It anchors on `#root` (guaranteed by ZCode's shipped HTML) and is inserted as a **sibling of the React root**, so React can never reconcile over it. If the anchor is missing, nothing is inserted and nothing throws. Text writes are conditional and the observer is debounced, so the banner cannot wedge page boot. Switching away from Tarkov mode removes it cleanly.
 
-The selector investigation — including why no live CDP inspection was possible on the reference machine — is recorded in [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md).
+The selector investigation — including how a live CDP session was obtained without disturbing a running ZCode, and the live-verified results — is recorded in [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md).
 
 ## Project structure
 
@@ -150,10 +150,15 @@ After changing anything under `src/`, run `npm run bundle` and commit the update
 
 ## Limitations
 
-- **Live in-app verification of the Tarkov skin has not been performed** on the reference machine. The running ZCode had no CDP port, a second isolated instance is refused by ZCode's single-instance lock, and relaunching would have terminated the session doing the work. Selectors were derived from the shipped renderer of the exact installed version — see [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md) for the evidence trail and the commands to re-verify over CDP.
+- **A bare renderer reload (F5 / `Page.reload`) drops the injected theme, and does not self-heal.** This is **pre-existing upstream behavior**, verified by reproducing it identically with pristine `zcode-beautify` at the base commit. ZCode's recovery modes exist precisely because the injected theme dies with the renderer: an **app restart** is restored correctly (verified live), a bare page reload is not. Fixing that would change upstream behavior and is out of scope; it is recorded in [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md).
+- The Tarkov component skin targets Radix portals (`dialog-content`, `dropdown-menu-content`, `select-item`, `input`, …) that only mount when those surfaces are opened, so they are not visible in a resting tree. The token layer, the banner and the panel were verified live; the individual styled portal surfaces were not opened during testing.
 - The banner reserves its height with `body { padding-top }` while mounted. This relies on ZCode's `html,body,#root{height:100%}` plus border-box roots, which holds in 3.11.2.
 - Tarkov mode is a dark palette by design; it does not follow ZCode's own light/dark switch.
 - Injection is an **unofficial** mechanism. A future ZCode update may break it; `reset` always restores the default appearance.
+
+## Verified
+
+Checked live against ZCode 3.11.2 (an isolated instance started with its own runtime-data directory, so the user's own ZCode was never restarted or modified): Monet / Tarkov / Native payloads and switching, wallpaper-visible and hidden behavior, the fixed palette surviving a wallpaper swap, the banner's presence, single-instance behavior, hexagon badge, reserved space, removal on mode change and on reset, the panel's UI Theme selector and Tarkov skin, config persistence, and theme restoration across an app restart. Full results in [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md).
 
 ## License
 
