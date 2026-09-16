@@ -12,12 +12,18 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { listTargets } from "./cdp.js";
+import { withColorMode } from "./colorMode.js";
 
 export interface StoredConfig extends Partial<Omit<import("./inject.js").BeautifyConfig, "port">> {
   port?: number;
 }
 
+/** Previous plugin directory names, newest first. */
+const LEGACY_DATA_DIRS = ["zcode-beautify@zcode-beautify", "zcode-beautify"];
+
 export function dataDir(): string {
+  // Env override kept under its original name: existing installs and scripts
+  // already set this, and renaming it would silently orphan their config.
   const override = process.env.ZCODE_BEAUTIFY_DATA_DIR;
   if (override) return override;
 
@@ -25,27 +31,55 @@ export function dataDir(): string {
   // ZCode resolves ${ZCODE_PLUGIN_DATA} to "<name>@<marketplace>", so a plugin
   // install and a manually run CLI would otherwise write two different configs.
   // Prefer the plugin-scoped directory when it exists.
-  const pluginScoped = path.join(root, "zcode-beautify@zcode-beautify");
+  const pluginScoped = path.join(root, "zcode-tarkov@zcode-tarkov");
   if (fs.existsSync(pluginScoped)) return pluginScoped;
 
-  return path.join(root, "zcode-beautify");
+  const own = path.join(root, "zcode-tarkov");
+  if (fs.existsSync(own)) return own;
+
+  // Fall back to a previous zcode-beautify install so an existing config (which
+  // may still hold only the legacy `monet` flag) is found and upgraded on the
+  // next save, instead of silently starting from defaults.
+  for (const legacy of LEGACY_DATA_DIRS) {
+    const dir = path.join(root, legacy);
+    if (fs.existsSync(dir)) return dir;
+  }
+
+  return own;
 }
 
 export function configFile(): string {
   return path.join(dataDir(), "config.json");
 }
 
-export function loadConfig(): StoredConfig {
+/**
+ * Reads and parses a JSON file, returning undefined instead of throwing.
+ *
+ * A leading UTF-8 BOM is stripped first: `JSON.parse` rejects it, and Windows
+ * editors (Notepad in particular) write one by default, so a hand-edited config
+ * would otherwise be silently discarded as unreadable.
+ */
+export function readJsonFile<T>(file: string): T | undefined {
   try {
-    return JSON.parse(fs.readFileSync(configFile(), "utf8")) as StoredConfig;
+    const raw = fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "");
+    return JSON.parse(raw) as T;
   } catch {
-    return {};
+    return undefined;
   }
+}
+
+export function loadConfig(): StoredConfig {
+  // Normalizing on read is what makes pre-0.1 configs (only `monet: true`)
+  // work unchanged: every consumer downstream sees a `colorMode`.
+  const stored = readJsonFile<StoredConfig>(configFile());
+  return stored ? withColorMode(stored) : {};
 }
 
 export function saveConfig(config: StoredConfig): void {
   fs.mkdirSync(dataDir(), { recursive: true });
-  fs.writeFileSync(configFile(), JSON.stringify(config, null, 2));
+  // Persist both the new mode and the legacy flag so an older build of the
+  // plugin reading the same file still resolves to an equivalent appearance.
+  fs.writeFileSync(configFile(), JSON.stringify(withColorMode(config), null, 2));
 }
 
 const ZCODE_EXE_CANDIDATES =

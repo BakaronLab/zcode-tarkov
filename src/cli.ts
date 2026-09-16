@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
- * zcode-beautify CLI
+ * zcode-tarkov CLI
  *
  *   launch   Start ZCode with the CDP debug port enabled (required once).
- *   apply    Set a wallpaper + Monet-derived colors, injecting into the running app.
- *   colors   Re-apply Monet colors only (no wallpaper change).
+ *   apply    Set a wallpaper, injecting into the running app.
+ *   colors   Re-apply the stored theme (no wallpaper change).
+ *   theme    Switch color mode: monet | tarkov | native.
  *   reset    Restore ZCode's default appearance.
  *   watch    Keep re-injecting: survives ZCode restarts while this process lives.
  *   serve    Watch mode + settings panel + local control API.
@@ -12,25 +13,29 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { applyToZCode, type BeautifyConfig } from "./core/inject.js";
+import { applyToZCode, DEFAULT_CONFIG, type BeautifyConfig } from "./core/inject.js";
 import type { ApplyOptions } from "./core/session.js";
 import { launchZcode, dataDir } from "./core/launch.js";
 import { applyWallpaper, resetAppearance } from "./core/session.js";
+import { COLOR_MODES, isColorMode } from "./core/colorMode.js";
 import { cliEntryPath, getAutostartStatus, installAutostart, uninstallAutostart, type AutostartSpec } from "./core/autostart.js";
 import { RECOVERY_MODES, applyRecoveryMode, normalizeMode, recoveryStatus } from "./core/recovery.js";
 import { repairLaunchers } from "./core/launchers.js";
 
-const USAGE = `zcode-beautify <command> [options]
+const USAGE = `zcode-tarkov <command> [options]
 
 Commands:
   launch [--port N]              Start ZCode with --remote-debugging-port=N
-  apply <image> [options]        Set wallpaper and adapt colors
+  apply <image> [options]        Set wallpaper (keeps the current color mode)
     --blur <px>                  Blur the wallpaper (default 0)
     --dim <0-100>                Darken the wallpaper (default 25)
     --fit <mode>                 cover | contain | smart (default cover)
-    --no-monet                   Keep ZCode's original colors
+    --theme <mode>               monet | tarkov | native (default: keep current)
+    --no-monet                   Alias for --theme native
     --port <N>                   CDP port (default 9222)
-  colors [--port N]              Re-apply stored theme without wallpaper change
+  colors [--port N] [--theme <mode>]
+                                 Re-apply stored theme without wallpaper change
+  theme <mode> [--port N]        Switch UI palette: monet | tarkov | native
   reset [--port N]               Remove wallpaper and color overrides
   status [--port N]              Show CDP reachability and renderer targets
   watch [--port N]               Watch mode: re-inject whenever ZCode (re)starts
@@ -42,6 +47,8 @@ Commands:
   autostart [install|uninstall]  Start the resident service at sign-in (used by mode "always")
   repair-launchers [--dry-run]   Add --remote-debugging-port to ZCode launch entries missing it
 `;
+
+const MODE_LIST = COLOR_MODES.join(" | ");
 
 function autostartSpec(cdpPort: number, apiPort = 9223): AutostartSpec {
   return { nodePath: process.execPath, cliPath: cliEntryPath(), cdpPort, apiPort };
@@ -55,6 +62,13 @@ async function main(): Promise<void> {
   };
   const has = (name: string): boolean => rest.includes(name);
   const port = Number(flag("--port") ?? 9222);
+  /** `--theme` is validated eagerly so a typo fails loudly instead of silently keeping the old mode. */
+  const themeFlag = (): ApplyOptions["colorMode"] | undefined => {
+    const raw = flag("--theme");
+    if (raw === undefined) return undefined;
+    if (!isColorMode(raw)) throw new Error(`--theme must be one of: ${MODE_LIST} (got "${raw}")`);
+    return raw;
+  };
 
   try {
     switch (cmd) {
@@ -66,7 +80,7 @@ async function main(): Promise<void> {
           console.error(
             `A ZCode instance is already running without the debug port, so the single-instance lock ` +
               `would immediately close the new process's CDP port.\n` +
-              `Quit ZCode completely (including any tray icon), then run \`zcode-beautify launch\` again.`
+              `Quit ZCode completely (including any tray icon), then run \`zcode-tarkov launch\` again.`
           );
           process.exitCode = 1;
         } else {
@@ -81,19 +95,34 @@ async function main(): Promise<void> {
           process.exitCode = 1;
           return;
         }
-        const { windows } = await applyWallpaper(image, {
+        const { windows, config } = await applyWallpaper(image, {
           port,
           blur: Number(flag("--blur") ?? 0),
           dim: Number(flag("--dim") ?? 25),
-          monet: !has("--no-monet"),
+          // No --theme means "keep the stored mode": applying a wallpaper must
+          // not silently drop a user out of Tarkov mode.
+          colorMode: themeFlag(),
+          monet: has("--no-monet") ? false : undefined,
           fit: flag("--fit") as ApplyOptions["fit"],
         });
-        console.log(`Applied wallpaper + theme to ${windows} window(s).`);
+        console.log(`Applied wallpaper + ${config.colorMode} theme to ${windows} window(s).`);
+        break;
+      }
+      case "theme": {
+        const { applyColorsOnly } = await import("./core/session.js");
+        const mode = rest.find((a) => !a.startsWith("--"));
+        if (!isColorMode(mode)) {
+          console.error(`Usage: zcode-tarkov theme <${MODE_LIST}>`);
+          process.exitCode = 1;
+          return;
+        }
+        const windows = await applyColorsOnly({ port, colorMode: mode });
+        console.log(`Theme mode "${mode}" applied to ${windows} window(s).`);
         break;
       }
       case "colors": {
         const { applyColorsOnly } = await import("./core/session.js");
-        const windows = await applyColorsOnly({ port });
+        const windows = await applyColorsOnly({ port, colorMode: themeFlag() });
         console.log(`Re-applied theme to ${windows} window(s).`);
         break;
       }
@@ -261,7 +290,7 @@ async function watch(port: number): Promise<void> {
   const { buildPayloadFromConfig } = await import("./core/session.js");
   const { loadConfig } = await import("./core/launch.js");
   const config = {
-    ...{ port: 9222, blur: 0, dim: 25, monet: true, wallpaperVisible: true, fit: "cover" as const },
+    ...DEFAULT_CONFIG,
     ...loadConfig(),
     port,
     fit: loadConfig().fit ?? "cover",

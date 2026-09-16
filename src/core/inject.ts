@@ -6,6 +6,9 @@
 import { CdpConnection, injectIntoTarget, listTargets, pickRendererTargets, buildResetScript } from "./cdp.js";
 import { loadWallpaper, type WallpaperAssets } from "./monet.js";
 import { buildVariableOverrides, buildTransparencyOverrides } from "./tokens.js";
+import { buildTarkovVariableOverrides, buildTarkovComponentCss } from "../themes/tarkov.js";
+import { DEFAULT_COLOR_MODE, type ColorMode } from "./colorMode.js";
+import { DEFAULT_BANNER, type BannerOptions } from "./banner.js";
 
 export type WallpaperFit = "cover" | "contain" | "smart";
 
@@ -14,9 +17,17 @@ export interface BeautifyConfig {
   wallpaperPath?: string;
   blur: number;
   dim: number;
+  /**
+   * Legacy boolean. Always kept in sync with `colorMode` on disk; read it only
+   * for backwards compatibility.
+   */
   monet: boolean;
+  /** Which palette drives the UI: wallpaper-derived, fixed Tarkov, or untouched. */
+  colorMode: ColorMode;
   wallpaperVisible: boolean;
   fit: WallpaperFit;
+  /** Tarkov-only beta banner. Ignored in the other modes. */
+  banner: BannerOptions;
 }
 
 export const DEFAULT_CONFIG: BeautifyConfig = {
@@ -24,8 +35,10 @@ export const DEFAULT_CONFIG: BeautifyConfig = {
   blur: 0,
   dim: 25,
   monet: true,
+  colorMode: DEFAULT_COLOR_MODE,
   wallpaperVisible: true,
   fit: "cover",
+  banner: DEFAULT_BANNER,
 };
 
 export interface BuiltPayload {
@@ -36,6 +49,24 @@ export interface BuiltPayload {
   /** Normalized focus point for background-position. */
   focusX: number;
   focusY: number;
+  /** Banner to install, or null to tear any existing one down. */
+  banner: BannerOptions | null;
+}
+
+/**
+ * Resolves the effective color mode. Configs written before `colorMode`
+ * existed can still reach here (e.g. via an in-memory object), so the legacy
+ * boolean is honored as a fallback rather than assumed absent.
+ */
+export function resolveColorMode(config: Pick<BeautifyConfig, "colorMode" | "monet">): ColorMode {
+  return config.colorMode ?? (config.monet ? "monet" : "native");
+}
+
+/** The banner is a Tarkov-mode feature only; other modes tear it down. */
+export function resolveBanner(config: BeautifyConfig): BannerOptions | null {
+  if (resolveColorMode(config) !== "tarkov") return null;
+  const banner = config.banner ?? DEFAULT_BANNER;
+  return banner.enabled ? banner : null;
 }
 
 export function buildPayload(config: BeautifyConfig, assets?: WallpaperAssets): BuiltPayload {
@@ -84,18 +115,33 @@ html, body { background: transparent !important; }
 }`);
   }
 
-  if (assets) {
-    // Monet recolors the UI from the wallpaper; the wallpaper toggle only
-    // decides whether the picture is visible at all. With Monet off we still
-    // need transparency, otherwise the opaque UI hides the wallpaper.
-    if (config.monet) {
-      parts.push(buildVariableOverrides(assets.theme, {
+  const mode = resolveColorMode(config);
+  if (mode === "tarkov") {
+    // The Tarkov palette is fixed, so it never consults the wallpaper: it
+    // applies whether or not an image is loaded, and swapping the wallpaper
+    // cannot shift the UI colors.
+    parts.push(
+      buildTarkovVariableOverrides({
         dim: config.dim,
         wallpaperVisible: config.wallpaperVisible,
-      }));
-    } else if (config.wallpaperVisible) {
-      parts.push(buildTransparencyOverrides({ dim: config.dim }));
+      })
+    );
+    parts.push(buildTarkovComponentCss());
+  } else if (mode === "monet") {
+    // Monet recolors the UI from the wallpaper, so it needs the extracted theme.
+    if (assets) {
+      parts.push(
+        buildVariableOverrides(assets.theme, {
+          dim: config.dim,
+          wallpaperVisible: config.wallpaperVisible,
+        })
+      );
     }
+  } else if (assets && config.wallpaperVisible) {
+    // Native keeps ZCode's own colors; surfaces only go translucent so the
+    // wallpaper is not hidden behind an opaque UI. As upstream, this needs a
+    // loaded wallpaper to have anything to be transparent about.
+    parts.push(buildTransparencyOverrides({ dim: config.dim }));
   }
   const wallpaperDataUri = config.wallpaperVisible ? assets?.dataUri : undefined;
 
@@ -105,6 +151,7 @@ html, body { background: transparent !important; }
     fit: config.wallpaperVisible ? resolved : "cover",
     focusX,
     focusY,
+    banner: resolveBanner(config),
   };
 }
 

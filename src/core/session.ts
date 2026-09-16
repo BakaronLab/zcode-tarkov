@@ -6,19 +6,44 @@ import fs from "node:fs";
 import path from "node:path";
 import { applyToZCode, buildPayload, DEFAULT_CONFIG, loadWallpaper, resetZCode, type BeautifyConfig, type BuiltPayload } from "./inject.js";
 import { dataDir, loadConfig, saveConfig } from "./launch.js";
+import { legacyMonetFlag, migrateColorMode, type ColorMode } from "./colorMode.js";
 
 export interface ApplyOptions {
   port?: number;
   blur?: number;
   dim?: number;
+  /** Legacy flag; only consulted when `colorMode` is not given. */
   monet?: boolean;
+  colorMode?: ColorMode;
   wallpaperVisible?: boolean;
   fit?: "cover" | "contain" | "smart";
 }
 
+/**
+ * Merges stored config with explicit options. `colorMode` wins over the legacy
+ * boolean, and `monet` is always re-derived so the two never disagree.
+ */
+function mergedConfig(opts: ApplyOptions, stored = loadConfig()): BeautifyConfig {
+  const colorMode =
+    opts.colorMode ??
+    (typeof opts.monet === "boolean" ? (opts.monet ? "monet" : "native") : migrateColorMode(stored));
+  return {
+    ...DEFAULT_CONFIG,
+    ...stored,
+    port: opts.port ?? stored.port ?? DEFAULT_CONFIG.port,
+    blur: opts.blur ?? stored.blur ?? DEFAULT_CONFIG.blur,
+    dim: opts.dim ?? stored.dim ?? DEFAULT_CONFIG.dim,
+    colorMode,
+    monet: legacyMonetFlag(colorMode),
+    wallpaperVisible: opts.wallpaperVisible ?? stored.wallpaperVisible ?? DEFAULT_CONFIG.wallpaperVisible,
+    fit: opts.fit ?? stored.fit ?? DEFAULT_CONFIG.fit,
+    banner: { ...DEFAULT_CONFIG.banner, ...(stored.banner ?? {}) },
+  };
+}
+
 /** Applies (or refreshes) the theme using the stored config. */
 export async function reapplyStored(): Promise<number> {
-  const config = mergedConfig();
+  const config = mergedConfig({});
   return applyToZCode(config, await buildPayloadFromConfig(config));
 }
 
@@ -26,17 +51,7 @@ export async function applyWallpaper(imagePath: string, opts: ApplyOptions): Pro
   const abs = path.resolve(imagePath);
   if (!fs.existsSync(abs)) throw new Error(`Image not found: ${abs}`);
 
-  const stored = loadConfig();
-  const config: BeautifyConfig = {
-    ...DEFAULT_CONFIG,
-    ...stored,
-    port: opts.port ?? stored.port ?? DEFAULT_CONFIG.port,
-    blur: opts.blur ?? stored.blur ?? DEFAULT_CONFIG.blur,
-    dim: opts.dim ?? stored.dim ?? DEFAULT_CONFIG.dim,
-    monet: opts.monet ?? stored.monet ?? DEFAULT_CONFIG.monet,
-    wallpaperVisible: opts.wallpaperVisible ?? stored.wallpaperVisible ?? DEFAULT_CONFIG.wallpaperVisible,
-    fit: opts.fit ?? stored.fit ?? DEFAULT_CONFIG.fit,
-  };
+  const config = mergedConfig(opts);
 
   // Keep a copy of the wallpaper inside the data dir so the theme survives
   // the original file being moved/deleted.
@@ -55,17 +70,7 @@ export async function applyWallpaper(imagePath: string, opts: ApplyOptions): Pro
 }
 
 export async function applyColorsOnly(opts: ApplyOptions): Promise<number> {
-  const stored = loadConfig();
-  const config: BeautifyConfig = {
-    ...DEFAULT_CONFIG,
-    ...stored,
-    port: opts.port ?? stored.port ?? DEFAULT_CONFIG.port,
-    blur: opts.blur ?? stored.blur ?? DEFAULT_CONFIG.blur,
-    dim: opts.dim ?? stored.dim ?? DEFAULT_CONFIG.dim,
-    monet: opts.monet ?? stored.monet ?? DEFAULT_CONFIG.monet,
-    wallpaperVisible: opts.wallpaperVisible ?? stored.wallpaperVisible ?? DEFAULT_CONFIG.wallpaperVisible,
-    fit: opts.fit ?? stored.fit ?? DEFAULT_CONFIG.fit,
-  };
+  const config = mergedConfig(opts);
   saveConfig(config);
   return applyToZCode(config, await buildPayloadFromConfig(config));
 }
@@ -83,8 +88,4 @@ export async function buildPayloadFromConfig(config: BeautifyConfig): Promise<Bu
     assets = await loadWallpaper(config.wallpaperPath);
   }
   return buildPayload(config, assets);
-}
-
-function mergedConfig(): BeautifyConfig {
-  return { ...DEFAULT_CONFIG, ...loadConfig(), port: loadConfig().port ?? DEFAULT_CONFIG.port };
 }

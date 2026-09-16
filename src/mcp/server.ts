@@ -1,5 +1,5 @@
 /**
- * MCP server exposing zcode-beautify to the ZCode agent:
+ * MCP server exposing zcode-tarkov to the ZCode agent:
  * the model can set a wallpaper / re-theme / reset on the user's behalf.
  */
 
@@ -10,6 +10,7 @@ import { z } from "zod";
 import { applyColorsOnly, applyWallpaper, reapplyStored, resetAppearance } from "../core/session.js";
 import { loadConfig } from "../core/launch.js";
 import { DEFAULT_CONFIG } from "../core/inject.js";
+import { migrateColorMode } from "../core/colorMode.js";
 import { listTargets, pickRendererTargets } from "../core/cdp.js";
 import { getAutostartStatus, installAutostart, uninstallAutostart } from "../core/autostart.js";
 import { loadRecovery, setRecoveryMode } from "../core/recovery.js";
@@ -19,7 +20,7 @@ import { repairLaunchers } from "../core/launchers.js";
 declare const __PLUGIN_VERSION__: string;
 
 const server = new McpServer({
-  name: "zcode-beautify",
+  name: "zcode-tarkov",
   version: __PLUGIN_VERSION__,
 });
 
@@ -28,17 +29,27 @@ server.registerTool(
   {
     title: "Set ZCode wallpaper",
     description:
-      "Set the ZCode desktop client's background wallpaper image and adapt the UI colors with Material Design 3 (Monet) dynamic color. ZCode must be running with the CDP debug port (see zcode-beautify launch).",
+      "Set the ZCode desktop client's background wallpaper image. The UI palette follows the current color mode: monet (Material Design 3 dynamic color from the wallpaper), tarkov (fixed Tarkov-inspired palette, unaffected by the wallpaper), or native (ZCode's own colors). ZCode must be running with the CDP debug port (see zcode-tarkov launch).",
     inputSchema: {
       image_path: z.string().describe("Absolute path of the image to use as wallpaper"),
       blur: z.number().min(0).max(100).optional().describe("Wallpaper blur radius in px (default 0)"),
       dim: z.number().min(0).max(100).optional().describe("Wallpaper darkening 0-100 (default 25)"),
+      color_mode: z
+        .enum(["monet", "tarkov", "native"])
+        .optional()
+        .describe("Palette to use; omit to keep the current mode"),
     },
   },
-  async ({ image_path, blur, dim }) => {
+  async ({ image_path, blur, dim, color_mode }) => {
     try {
-      const { windows } = await applyWallpaper(image_path, { blur, dim });
-      return { content: [{ type: "text", text: `Wallpaper applied to ${windows} window(s) with Monet-adapted colors.` }] };
+      const { windows, config } = await applyWallpaper(image_path, {
+        blur,
+        dim,
+        colorMode: color_mode,
+      });
+      return {
+        content: [{ type: "text", text: `Wallpaper applied to ${windows} window(s) with the "${config.colorMode}" palette.` }],
+      };
     } catch (err) {
       return { content: [{ type: "text", text: `Failed: ${(err as Error).message}` }], isError: true };
     }
@@ -50,18 +61,34 @@ server.registerTool(
   {
     title: "Tune ZCode appearance",
     description:
-      "Adjust the live ZCode appearance without changing the wallpaper: blur radius, dim level, Monet dynamic colors on/off, and wallpaper visibility (translucent vs opaque surfaces). Only the provided values change; the rest keep their current setting.",
+      "Adjust the live ZCode appearance without changing the wallpaper: blur radius, dim level, color mode (monet | tarkov | native), and wallpaper visibility (translucent vs opaque surfaces). Only the provided values change; the rest keep their current setting.",
     inputSchema: {
       blur: z.number().min(0).max(100).optional().describe("Wallpaper blur radius in px"),
       dim: z.number().min(0).max(100).optional().describe("Wallpaper darkening 0-100"),
-      monet: z.boolean().optional().describe("Regenerate UI colors from the wallpaper (true) or keep ZCode's original colors (false)"),
+      color_mode: z
+        .enum(["monet", "tarkov", "native"])
+        .optional()
+        .describe(
+          "monet: derive UI colors from the wallpaper; tarkov: fixed Tarkov palette; native: keep ZCode's original colors"
+        ),
+      monet: z
+        .boolean()
+        .optional()
+        .describe("Legacy alias for color_mode (true = monet, false = native); ignored when color_mode is given"),
       wallpaper_visible: z.boolean().optional().describe("Translucent surfaces showing the wallpaper (true) or opaque surfaces (false)"),
       fit: z.enum(["cover", "contain", "smart"]).optional().describe("Framing: cover fills and crops, contain letterboxes with a blurred backdrop, smart analyzes the picture locally and picks the best framing + focus point"),
     },
   },
-  async ({ blur, dim, monet, wallpaper_visible, fit }) => {
+  async ({ blur, dim, color_mode, monet, wallpaper_visible, fit }) => {
     try {
-      const windows = await applyColorsOnly({ blur, dim, monet, wallpaperVisible: wallpaper_visible, fit });
+      const windows = await applyColorsOnly({
+        blur,
+        dim,
+        colorMode: color_mode,
+        monet,
+        wallpaperVisible: wallpaper_visible,
+        fit,
+      });
       return { content: [{ type: "text", text: `Appearance updated in ${windows} window(s).` }] };
     } catch (err) {
       return { content: [{ type: "text", text: `Failed: ${(err as Error).message}` }], isError: true };
@@ -73,7 +100,8 @@ server.registerTool(
   "refresh_theme",
   {
     title: "Refresh ZCode theme",
-    description: "Re-inject the stored wallpaper and Monet theme into the running ZCode client (e.g. after the app was restarted).",
+    description:
+      "Re-inject the stored wallpaper and color mode into the running ZCode client (e.g. after the app was restarted).",
     inputSchema: {},
   },
   async () => {
@@ -156,6 +184,7 @@ server.registerTool(
         wallpaperSet: Boolean(stored.wallpaperPath),
         blur: stored.blur,
         dim: stored.dim,
+        colorMode: migrateColorMode(stored),
         monet: stored.monet,
         fit: stored.fit,
       },

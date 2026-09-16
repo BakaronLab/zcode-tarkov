@@ -20,10 +20,11 @@ import {
   listTargets,
   pickRendererTargets,
 } from "./cdp.js";
-import { buildPayload, DEFAULT_CONFIG, type BeautifyConfig } from "./inject.js";
+import { buildPayload, DEFAULT_CONFIG, resolveColorMode, type BeautifyConfig } from "./inject.js";
+import { isColorMode } from "./colorMode.js";
 import { loadWallpaper, type WallpaperAssets } from "./monet.js";
 import { buildPanelScript } from "../panel/panelScript.js";
-import { dataDir, isZcodeProcessRunning, loadConfig, relaunchZcode, saveConfig } from "./launch.js";
+import { dataDir, isZcodeProcessRunning, loadConfig, readJsonFile, relaunchZcode, saveConfig } from "./launch.js";
 import { applyRecoveryMode, loadRecovery, normalizeMode } from "./recovery.js";
 import { cliEntryPath, getAutostartStatus } from "./autostart.js";
 
@@ -91,6 +92,8 @@ function publicConfig(config: BeautifyConfig) {
     blur: config.blur,
     dim: config.dim,
     monet: config.monet,
+    colorMode: resolveColorMode(config),
+    banner: config.banner ?? DEFAULT_CONFIG.banner,
     wallpaperVisible: config.wallpaperVisible,
     fit: config.fit,
     wallpaperSet: Boolean(config.wallpaperPath && fs.existsSync(config.wallpaperPath)),
@@ -103,10 +106,44 @@ function sanitize(body: any): Partial<BeautifyConfig> {
   const out: Partial<BeautifyConfig> = {};
   if (typeof body?.blur === "number" && body.blur >= 0 && body.blur <= 100) out.blur = body.blur;
   if (typeof body?.dim === "number" && body.dim >= 0 && body.dim <= 100) out.dim = body.dim;
-  if (typeof body?.monet === "boolean") out.monet = body.monet;
+  // `colorMode` is authoritative; a bare `monet` boolean is still accepted so
+  // existing callers (and the old panel) keep working.
+  if (isColorMode(body?.colorMode)) out.colorMode = body.colorMode;
+  else if (typeof body?.monet === "boolean") out.colorMode = body.monet ? "monet" : "native";
   if (typeof body?.wallpaperVisible === "boolean") out.wallpaperVisible = body.wallpaperVisible;
   if (body?.fit === "cover" || body?.fit === "contain" || body?.fit === "smart") out.fit = body.fit;
+
+  const banner = sanitizeBanner(body?.banner);
+  if (banner) out.banner = banner;
   return out;
+}
+
+/** Banner overrides are additive: unspecified fields keep their current value. */
+function sanitizeBanner(raw: any): BeautifyConfig["banner"] | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const out = { ...DEFAULT_CONFIG.banner };
+  let touched = false;
+  if (typeof raw.enabled === "boolean") {
+    out.enabled = raw.enabled;
+    touched = true;
+  }
+  if (typeof raw.text1 === "string" && raw.text1.length > 0 && raw.text1.length <= 240) {
+    out.text1 = raw.text1;
+    touched = true;
+  }
+  if (typeof raw.text2 === "string" && raw.text2.length > 0 && raw.text2.length <= 400) {
+    out.text2 = raw.text2;
+    touched = true;
+  }
+  if (typeof raw.opacity === "number" && raw.opacity >= 0 && raw.opacity <= 1) {
+    out.opacity = raw.opacity;
+    touched = true;
+  }
+  if (typeof raw.height === "number" && raw.height >= 24 && raw.height <= 160) {
+    out.height = Math.round(raw.height);
+    touched = true;
+  }
+  return touched ? out : undefined;
 }
 
 // --- injection session management -------------------------------------------
@@ -142,6 +179,7 @@ async function holdSession(
       css: payload.css,
       wallpaperDataUri: payload.wallpaperDataUri,
       fit: payload.fit,
+      banner: payload.banner,
     });
     const { identifier } = await conn.send("Page.addScriptToEvaluateOnNewDocument", {
       source: bootstrap,
@@ -168,6 +206,7 @@ async function pushConfigToSessions(config: BeautifyConfig): Promise<number> {
     css: payload.css,
     wallpaperDataUri: payload.wallpaperDataUri,
     fit: payload.fit,
+    banner: payload.banner,
   });
   let ok = 0;
   for (const [id, session] of held) {
@@ -414,12 +453,8 @@ export async function startServe(opts: ServeOptions): Promise<void> {
       }
 
       if (req.method === "POST" && url.pathname === "/api/restore") {
-        let saved: Partial<BeautifyConfig>;
-        try {
-          saved = JSON.parse(fs.readFileSync(backupFile(), "utf8"));
-        } catch {
-          throw new Error("no wallpaper backup available");
-        }
+        const saved = readJsonFile<Partial<BeautifyConfig>>(backupFile());
+        if (!saved) throw new Error("no wallpaper backup available");
         const config: BeautifyConfig = { ...DEFAULT_CONFIG, ...saved };
         saveConfig(config);
         const windows = await pushConfigToSessions(config).catch(() => 0);

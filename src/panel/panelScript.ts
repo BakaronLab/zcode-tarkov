@@ -1,12 +1,17 @@
 /**
  * The injected settings panel: a floating, draggable panel in the ZCode
- * renderer for live-tuning blur/dim, toggling Monet colors and wallpaper
- * visibility, and swapping the wallpaper image — all via the local API
- * started by `zcode-beautify serve`.
+ * renderer for live-tuning blur/dim, choosing the color mode (Monet / Tarkov /
+ * Native), toggling wallpaper visibility, and swapping the wallpaper image —
+ * all via the local API started by `zcode-tarkov serve`.
  *
  * The script always rebuilds the panel, so a stale copy left in the DOM can
  * never shadow a newer script version, and it is safe to re-evaluate on every
  * injection or reload.
+ *
+ * The panel's own skin is driven entirely by CSS custom properties declared on
+ * `#zcode-beautify-panel-root`. Tarkov mode flips one `data-zb-theme` attribute
+ * that overrides those properties, so leaving Tarkov restores the neutral look
+ * with no leftover state.
  */
 
 export const PANEL_ROOT_ID = "zcode-beautify-panel-root";
@@ -25,35 +30,65 @@ export function buildPanelScript(apiPort: number, token: string): string {
   if (staleStyle) staleStyle.remove();
 
   var css = [
-    '#zcode-beautify-panel-root, #zcode-beautify-panel-root * { box-sizing: border-box; font-family: system-ui, sans-serif; }',
-    '#zcode-beautify-panel-root { position: fixed; inset: auto; z-index: 2147483647; font-size: 12px; color: #e8e8ea; }',
-    '#zb-fab { position: fixed; right: 18px; bottom: 18px; width: 34px; height: 34px; border-radius: 50%;',
-      ' background: rgba(32,32,38,.78); border: 1px solid rgba(255,255,255,.12); cursor: pointer;',
+    // --- neutral skin (Monet / Native) as the default variable set ---------
+    '#zcode-beautify-panel-root {',
+      ' --zb-bg: rgba(24,24,30,.88);',
+      ' --zb-border: rgba(255,255,255,.12);',
+      ' --zb-radius: 12px;',
+      ' --zb-radius-sm: 6px;',
+      ' --zb-radius-pill: 999px;',
+      ' --zb-text: #e8e8ea;',
+      ' --zb-muted: rgba(255,255,255,.1);',
+      ' --zb-ctl-bg: rgba(255,255,255,.09);',
+      ' --zb-ctl-border: rgba(255,255,255,.14);',
+      ' --zb-ctl-hover: rgba(255,255,255,.16);',
+      ' --zb-accent: #7aa2f7;',
+      ' --zb-shadow: 0 8px 32px rgba(0,0,0,.45);',
+      ' --zb-font: system-ui, sans-serif; }',
+    // --- Tarkov skin: deep brown, warm orange, squarer corners ------------
+    '#zcode-beautify-panel-root[data-zb-theme="tarkov"] {',
+      ' --zb-bg: rgba(26,18,10,.94);',
+      ' --zb-border: rgba(224,121,48,.45);',
+      ' --zb-radius: 4px;',
+      ' --zb-radius-sm: 3px;',
+      ' --zb-radius-pill: 3px;',
+      ' --zb-text: #e8d9c8;',
+      ' --zb-muted: rgba(224,121,48,.28);',
+      ' --zb-ctl-bg: rgba(224,121,48,.14);',
+      ' --zb-ctl-border: rgba(224,121,48,.35);',
+      ' --zb-ctl-hover: rgba(224,121,48,.26);',
+      ' --zb-accent: #e07930;',
+      ' --zb-shadow: 0 8px 28px rgba(0,0,0,.6); }',
+
+    '#zcode-beautify-panel-root, #zcode-beautify-panel-root * { box-sizing: border-box; font-family: var(--zb-font); }',
+    '#zcode-beautify-panel-root { position: fixed; inset: auto; z-index: 2147483647; font-size: 12px; color: var(--zb-text); }',
+    '#zb-fab { position: fixed; right: 18px; bottom: 18px; width: 34px; height: 34px; border-radius: var(--zb-radius-pill);',
+      ' background: var(--zb-bg); border: 1px solid var(--zb-border); cursor: pointer;',
       ' display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);',
       ' box-shadow: 0 2px 12px rgba(0,0,0,.35); user-select: none; font-size: 15px; line-height: 1; }',
-    '#zb-fab:hover { background: rgba(52,52,60,.85); }',
+    '#zb-fab:hover { background: var(--zb-ctl-hover); }',
     '#zb-panel { position: fixed; right: 18px; bottom: 60px; width: 264px; padding: 0 0 10px;',
-      ' background: rgba(24,24,30,.88); border: 1px solid rgba(255,255,255,.12); border-radius: 12px;',
-      ' backdrop-filter: blur(16px); box-shadow: 0 8px 32px rgba(0,0,0,.45); user-select: none; }',
+      ' background: var(--zb-bg); border: 1px solid var(--zb-border); border-radius: var(--zb-radius);',
+      ' backdrop-filter: blur(16px); box-shadow: var(--zb-shadow); user-select: none; }',
     '#zb-panel[hidden] { display: none; }',
-    '#zb-head { padding: 9px 12px; font-weight: 600; cursor: move; border-bottom: 1px solid rgba(255,255,255,.1);',
+    '#zb-head { padding: 9px 12px; font-weight: 600; cursor: move; border-bottom: 1px solid var(--zb-border);',
       ' display: flex; justify-content: space-between; align-items: center; }',
     '#zb-close { cursor: pointer; opacity: .7; padding: 0 4px; } #zb-close:hover { opacity: 1; }',
     '#zb-body { padding: 10px 12px 0; }',
     '.zb-row { margin-bottom: 10px; }',
     '.zb-row label { display: flex; justify-content: space-between; margin-bottom: 4px; opacity: .85; }',
-    '#zb-panel input[type=range] { width: 100%; accent-color: #7aa2f7; height: 18px; margin: 0; cursor: pointer; }',
+    '#zb-panel input[type=range] { width: 100%; accent-color: var(--zb-accent); height: 18px; margin: 0; cursor: pointer; }',
     '.zb-toggles { display: flex; justify-content: center; gap: 16px; }',
     '.zb-toggles label { display: flex; align-items: center; gap: 5px; margin: 0; cursor: pointer; }',
     '.zb-actions { display: flex; justify-content: center; gap: 10px; }',
-    '.zb-btn { display: inline-block; padding: 6px 20px; text-align: center; border-radius: 999px; cursor: pointer;',
-      ' background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.14); color: inherit; font-size: 12px; }',
-    '.zb-btn:hover { background: rgba(255,255,255,.16); }',
+    '.zb-btn { display: inline-block; padding: 6px 20px; text-align: center; border-radius: var(--zb-radius-pill); cursor: pointer;',
+      ' background: var(--zb-ctl-bg); border: 1px solid var(--zb-ctl-border); color: inherit; font-size: 12px; }',
+    '.zb-btn:hover { background: var(--zb-ctl-hover); }',
     '#zb-status { min-height: 14px; padding: 2px 12px 0; opacity: .6; font-size: 11px; }',
     '#zb-offline { display: flex; flex-direction: column; gap: 6px; align-items: center;',
       ' padding: 10px 12px; background: rgba(120,53,15,.55); font-size: 11px; line-height: 1.5; text-align: center; }',
     '#zb-offline[hidden] { display: none; }',
-    '#zb-offline code { background: rgba(0,0,0,.35); padding: 1px 4px; border-radius: 4px;',
+    '#zb-offline code { background: rgba(0,0,0,.35); padding: 1px 4px; border-radius: var(--zb-radius-sm);',
       ' font-size: 10px; user-select: text; }',
     '#zb-offline .zb-hint { opacity: .85; }',
     // While offline the controls hold nothing we could read, so they must not
@@ -65,10 +100,12 @@ export function buildPanelScript(apiPort: number, token: string): string {
     '#zb-needs-relaunch { display: flex; flex-direction: column; gap: 6px; align-items: center;',
       ' padding: 10px 12px; background: rgba(120,53,15,.45); font-size: 11px; line-height: 1.5; text-align: center; }',
     '#zb-needs-relaunch[hidden] { display: none; }',
-    '#zb-recovery { width: 100%; padding: 4px 6px; border-radius: 6px; font-size: 11px; color: inherit;',
-      ' background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); }',
-    '#zb-recovery option { color: #111; }',
-    '#zb-recovery-hint { margin-top: 4px; opacity: .65; font-size: 10px; line-height: 1.45; }'
+    '#zb-recovery, #zb-theme { width: 100%; padding: 4px 6px; border-radius: var(--zb-radius-sm); font-size: 11px; color: inherit;',
+      ' background: var(--zb-ctl-bg); border: 1px solid var(--zb-ctl-border); }',
+    '#zb-recovery option, #zb-theme option { color: #111; }',
+    '#zb-recovery-hint { margin-top: 4px; opacity: .65; font-size: 10px; line-height: 1.45; }',
+    // Tarkov accents the active theme row so the current mode reads at a glance.
+    '#zcode-beautify-panel-root[data-zb-theme="tarkov"] #zb-theme { border-color: var(--zb-accent); }'
   ].join('');
 
   var style = document.createElement('style');
@@ -79,9 +116,9 @@ export function buildPanelScript(apiPort: number, token: string): string {
   var root = document.createElement('div');
   root.id = ROOT_ID;
   root.innerHTML =
-    '<div id="zb-fab" title="ZCode Beautify">🎨</div>' +
+    '<div id="zb-fab" title="ZCode Tarkov">🎨</div>' +
     '<div id="zb-panel" hidden>' +
-    '  <div id="zb-head"><span>ZCode Beautify</span><span id="zb-close">✕</span></div>' +
+    '  <div id="zb-head"><span id="zb-title">ZCode Tarkov</span><span id="zb-close">✕</span></div>' +
     '  <div id="zb-offline" hidden>' +
     '    <div>⚠ 美化服务未运行,面板不可用</div>' +
     '    <div class="zb-hint">在插件目录执行 <code>node dist/cli.js serve --detach</code> 启动</div>' +
@@ -92,25 +129,32 @@ export function buildPanelScript(apiPort: number, token: string): string {
     '    <button class="zb-btn" id="zb-relaunch">立即重启 ZCode</button>' +
     '  </div>' +
     '  <div id="zb-body">' +
+    '    <div class="zb-row">' +
+    '      <label for="zb-theme" title="UI 配色来源:Monet 从壁纸取色,Tarkov 使用固定战术配色,Native 保留 ZCode 原生颜色"><span>UI Theme</span></label>' +
+    '      <select id="zb-theme">' +
+    '        <option value="monet">Monet · 壁纸取色</option>' +
+    '        <option value="tarkov">Tarkov · 战术界面</option>' +
+    '        <option value="native">Native · ZCode 原生</option>' +
+    '      </select>' +
+    '    </div>' +
     '    <div class="zb-row"><label title="背景模糊程度(像素)"><span>背景模糊</span><span><span id="zb-blur-val">0</span>px</span></label>' +
     '      <input type="range" id="zb-blur" min="0" max="30" step="1" value="0"></div>' +
     '    <div class="zb-row"><label title="背景压暗程度(百分比,越高越暗)"><span>背景压暗</span><span><span id="zb-dim-val">0</span>%</span></label>' +
     '      <input type="range" id="zb-dim" min="0" max="80" step="1" value="0"></div>' +
     '    <div class="zb-row zb-toggles">' +
-    '      <label title="根据壁纸自动生成 UI 配色;关闭则保留 ZCode 原生颜色"><input type="checkbox" id="zb-monet">UI 莫奈取色</label>' +
     '      <label title="显示或隐藏背景壁纸"><input type="checkbox" id="zb-vis">显示壁纸</label>' +
     '    </div>' +
     '    <div class="zb-row zb-actions">' +
     '      <button class="zb-btn" id="zb-fit" title="背景填充方式:填满裁剪铺满窗口 / 完整显示不裁剪(模糊垫底)/ 智能适配自动分析画面主体">背景填充: …</button>' +
     '    </div>' +
     '    <div class="zb-row zb-actions">' +
-    '      <label class="zb-btn" for="zb-file" title="选择一张图片作为背景壁纸,UI 配色随之更新">更换图片…</label>' +
+    '      <label class="zb-btn" for="zb-file" title="选择一张图片作为背景壁纸">更换图片…</label>' +
     '      <input type="file" id="zb-file" accept="image/*" hidden>' +
     '    </div>' +
     '    <div class="zb-row zb-actions">' +
     '      <button class="zb-btn" id="zb-reset" title="移除壁纸与配色,还原 ZCode 默认外观(壁纸会被记住,可再次恢复)">还原默认外观</button>' +
     '    </div>' +
-    '    <div class="zb-row" style="border-top:1px solid rgba(255,255,255,.1);padding-top:8px">' +
+    '    <div class="zb-row" style="border-top:1px solid var(--zb-border);padding-top:8px">' +
     '      <label title="ZCode 每次重启都会丢掉壁纸和配色,这里决定由谁来把它们恢复回来"><span>自动恢复</span></label>' +
     '      <select id="zb-recovery">' +
     '        <option value="off">关闭</option>' +
@@ -146,6 +190,17 @@ export function buildPanelScript(apiPort: number, token: string): string {
       .catch(function () { status('无法连接美化服务 service unreachable'); });
   }
 
+  // The panel wears the same skin as the page, so the mode is obvious from the
+  // panel alone. Only the attribute changes; the CSS variables do the rest.
+  function applyPanelSkin(mode) {
+    if (mode === 'tarkov') root.setAttribute('data-zb-theme', 'tarkov');
+    else root.removeAttribute('data-zb-theme');
+    var title = $('zb-title');
+    if (title) title.textContent = mode === 'tarkov' ? 'ZCode Tarkov' : 'ZCode Beautify';
+    var fab = $('zb-fab');
+    if (fab) fab.title = mode === 'tarkov' ? 'ZCode Tarkov' : 'ZCode Beautify';
+  }
+
   // Local live preview; the server re-injects the authoritative CSS right after.
   function preview() {
     var w = wallpaperEl(); if (!w) return;
@@ -162,7 +217,7 @@ export function buildPanelScript(apiPort: number, token: string): string {
       post('/api/config', {
         blur: Number($('zb-blur').value),
         dim: Number($('zb-dim').value),
-        monet: $('zb-monet').checked,
+        colorMode: $('zb-theme').value,
         wallpaperVisible: $('zb-vis').checked
       }, function (d) { status(d && d.windows > 0 ? '已应用 applied' : '已保存(ZCode 未连接)'); });
     }, 300);
@@ -183,11 +238,12 @@ export function buildPanelScript(apiPort: number, token: string): string {
     root.setAttribute('data-offline', on ? '1' : '0');
     $('zb-offline').hidden = !on;
     $('zb-retry').textContent = '重试连接';
-    $('zb-fab').title = on ? 'ZCode Beautify — 美化服务未运行' : 'ZCode Beautify';
+    $('zb-fab').title = on ? 'ZCode Tarkov — 美化服务未运行' : 'ZCode Tarkov';
     if (on) {
       $('zb-blur').value = 0; $('zb-blur-val').textContent = '0';
       $('zb-dim').value = 0; $('zb-dim-val').textContent = '0';
-      $('zb-monet').checked = false;
+      $('zb-theme').value = 'monet';
+      applyPanelSkin('monet');
       $('zb-vis').checked = false;
       $('zb-fit').textContent = '背景填充: 未知';
       $('zb-fit').removeAttribute('data-fit');
@@ -206,7 +262,11 @@ export function buildPanelScript(apiPort: number, token: string): string {
         setOffline(false);
         $('zb-blur').value = c.blur; $('zb-blur-val').textContent = c.blur;
         $('zb-dim').value = c.dim; $('zb-dim-val').textContent = c.dim;
-        $('zb-monet').checked = !!c.monet;
+        // Older services only report the legacy monet boolean; derive the mode
+        // from it so the panel still shows the truth during a version mismatch.
+        var mode = c.colorMode || (c.monet ? 'monet' : 'native');
+        $('zb-theme').value = mode;
+        applyPanelSkin(mode);
         $('zb-vis').checked = !!c.wallpaperVisible;
         $('zb-fit') && applyFitLabel($('zb-fit'), c.fit || 'cover');
         var resetBtn = $('zb-reset');
@@ -233,7 +293,12 @@ export function buildPanelScript(apiPort: number, token: string): string {
   $('zb-dim').addEventListener('input', function () {
     $('zb-dim-val').textContent = this.value; preview(); pushConfig();
   });
-  $('zb-monet').addEventListener('change', pushConfig);
+  // Theme switches must feel immediate: repaint the panel skin from the chosen
+  // value right away, then let the server push the authoritative page CSS.
+  $('zb-theme').addEventListener('change', function () {
+    applyPanelSkin(this.value);
+    pushConfig();
+  });
   $('zb-vis').addEventListener('change', pushConfig);
 
   var FITS = ['cover', 'contain', 'smart'];

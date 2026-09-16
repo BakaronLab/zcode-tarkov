@@ -5,6 +5,8 @@
  * with `--remote-debugging-port=<port>` before this module can connect.
  */
 
+import { buildBannerScript, buildBannerTeardownScript, type BannerOptions } from "./banner.js";
+
 export interface CdpTarget {
   id: string;
   type: string;
@@ -115,6 +117,8 @@ export interface InjectionPayload {
   marker?: string;
   /** "contain" additionally drives a blurred backdrop layer behind the image. */
   fit?: "cover" | "contain";
+  /** Banner to install; null/undefined tears down any banner currently shown. */
+  banner?: BannerOptions | null;
 }
 
 /**
@@ -143,6 +147,12 @@ export async function injectIntoTarget(
 
 export function buildBootstrapScript(payload: InjectionPayload): string {
   const marker = payload.marker ?? "zcode-beautify";
+  // The banner lives in its own IIFE after the theme block on purpose: the
+  // theme block returns early when the CSS is unchanged, and the banner must
+  // still be installed (or removed) on those evaluations.
+  const bannerScript = payload.banner
+    ? buildBannerScript(payload.banner)
+    : buildBannerTeardownScript();
   return `(function(){
   var MARKER = ${JSON.stringify(marker)};
   if (!window.__zcodeBeautify) window.__zcodeBeautify = {};
@@ -189,7 +199,8 @@ export function buildBootstrapScript(payload: InjectionPayload): string {
     localStorage.setItem(MARKER + ':css', ${JSON.stringify(payload.css)});
     localStorage.setItem(MARKER + ':wallpaper', ${JSON.stringify(payload.wallpaperDataUri ?? "")});
   } catch (e) {}
-})();`;
+})();
+${bannerScript}`;
 }
 
 /** Removes everything the bootstrap script created. */
@@ -199,5 +210,6 @@ export function buildResetScript(marker = "zcode-beautify"): string {
   document.getElementById(${JSON.stringify(marker)} + '-wallpaper')?.remove();
   document.getElementById(${JSON.stringify(marker)} + '-backdrop')?.remove();
   if (window.__zcodeBeautify) { window.__zcodeBeautify.cssText = null; }
-})();`;
+})();
+${buildBannerTeardownScript()}`;
 }
