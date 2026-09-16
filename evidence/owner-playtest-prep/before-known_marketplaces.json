@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "marketplaces": [
+    {
+      "id": "zcode-plugins-official",
+      "source": {
+        "source": "url",
+        "url": "https://cdn-zcode.z.ai/zcode/official-plugin/marketplace.json"
+      },
+      "name": "zcode-plugins-official",
+      "description": "Official ZCode plugins marketplace: built-in and community plugins for ZCode.",
+      "addedAt": "2026-09-07T07:04:30.517Z",
+      "pluginCount": 0
+    },
+    {
+      "id": "claude-plugins-official",
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      },
+      "name": "claude-plugins-official",
+      "description": "Directory of popular Claude Code extensions including development tools, productivity plugins, and MCP integrations",
+      "addedAt": "2026-09-07T07:04:30.517Z",
+      "pluginCount": 0
+    }
+  ]
+}

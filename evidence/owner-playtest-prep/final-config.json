@@ -1,0 +1,16 @@
+{
+  "port": 9222,
+  "colorMode": "tarkov",
+  "monet": false,
+  "blur": 0,
+  "dim": 25,
+  "wallpaperVisible": false,
+  "fit": "cover",
+  "banner": {
+    "enabled": true,
+    "text1": "ATTENTION! ZCODE TACTICAL INTERFACE ACTIVE",
+    "text2": "Experimental interface. Verify your task, tool calls and working tree before deployment.",
+    "height": 56,
+    "opacity": 0.92
+  }
+}

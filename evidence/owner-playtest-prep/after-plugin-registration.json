@@ -1,0 +1,28 @@
+{
+  "pluginCount": 9,
+  "diagnostics": [],
+  "zcodeTarkov": [
+    {
+      "commandRootCount": 1,
+      "dataPath": "C:\\Users\\<USER>\\.zcode\\cli\\plugins\\data\\zcode-tarkov@zcode-tarkov",
+      "enabled": true,
+      "id": "zcode-tarkov@zcode-tarkov",
+      "manifestPath": "C:\\Users\\<USER>\\.zcode\\cli\\plugins\\cache\\zcode-tarkov\\zcode-tarkov\\0.1.0\\.zcode-plugin\\plugin.json",
+      "marketplace": "zcode-tarkov",
+      "declaredMcpServerNames": [
+        "zcode-tarkov"
+      ],
+      "mcpServerNames": [
+        "plugin:zcode-tarkov:zcode-tarkov"
+      ],
+      "hookDetails": [],
+      "name": "zcode-tarkov",
+      "rootPath": "C:\\Users\\<USER>\\.zcode\\cli\\plugins\\cache\\zcode-tarkov\\zcode-tarkov\\0.1.0",
+      "skillCount": 1,
+      "skillRootCount": 1,
+      "source": "cache",
+      "description": "Escape-from-Tarkov-inspired theme mode for the ZCode desktop client: a fixed Tarkov palette, Monet wallpaper-derived colors, or ZCode's native colors.",
+      "version": "0.1.0"
+    }
+  ]
+}

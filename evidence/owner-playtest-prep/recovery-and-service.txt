@@ -1,0 +1,26 @@
+=== service health ===
+{"ok":true,"service":"zcode-beautify","pid":25912}
+
+=== serve.log (tail) ===
+serve: control API on http://127.0.0.1:9223 — Ctrl+C to stop
+serve: injecting into ZCode renderers on CDP port 9222
+
+=== recovery state (reads back) ===
+{
+  "mode": "always",
+  "updatedAt": "2026-09-16T03:43:47.093Z",
+  "autostart": {
+    "platform": "win32",
+    "supported": true,
+    "installed": true,
+    "entryPath": "C:\\Users\\<USER>\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs"
+  }
+}
+
+=== autostart file present ===
+  406 /c/Users/<USER>/AppData/Roaming/Microsoft/Windows/Start
+
+=== ZCODE RESTART CHECK ===
+ZCode processes: 16
+CDP 9222 listening: no (expected: user has not restarted yet)
+serve 9223 listening: YES

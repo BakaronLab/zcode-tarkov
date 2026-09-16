@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "enabledPlugins": {
+      "github@zcode-plugins-official": true,
+      "zcode-tarkov@zcode-tarkov": true
+    }
+  }
+}

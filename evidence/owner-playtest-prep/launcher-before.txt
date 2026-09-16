@@ -1,0 +1,25 @@
+﻿=== SHORTCUTS (before) ===
+C:\Users\<USER>\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\ZCode.lnk
+    target: C:\Program Files\ZCode\ZCode.exe
+    args  : ''
+C:\Users\<USER>\Desktop\ZCode.lnk
+    (absent)
+C:\Users\Public\Desktop\ZCode.lnk
+    target: C:\Program Files\ZCode\ZCode.exe
+    args  : ''
+C:\ProgramData\Microsoft\Windows\Start Menu\Programs\ZCode.lnk
+    target: C:\Program Files\ZCode\ZCode.exe
+    args  : ''
+
+=== HKCU HANDLERS (before) ===
+HKCU:\Software\Classes\zcode\shell\open\command
+    value: '"C:\Program Files\ZCode\ZCode.exe" "%1"'
+HKCU:\Software\Classes\Directory\shell\ZCode.OpenInZCode\command
+    value: '"C:\Program Files\ZCode\ZCode.exe" --open-workspace "%1"'
+HKCU:\Software\Classes\Drive\shell\ZCode.OpenInZCode\command
+    value: '"C:\Program Files\ZCode\ZCode.exe" --open-workspace "%1"'
+
+=== MERGED DESKTOP VIEW (before) ===
+ZCode-named desktop icons visible: 1
+    ZCode  ->  C:\Users\Public\Desktop\ZCode.lnk
+

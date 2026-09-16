@@ -1,0 +1,23 @@
+=== recovery state BEFORE ===
+{
+  "mode": "on-start",
+  "autostart": {
+    "platform": "win32",
+    "supported": true,
+    "installed": false,
+    "entryPath": "C:\\Users\\<USER>\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs"
+  }
+}
+=== set recovery = always ===
+Recovery mode set to "always".
+Autostart entry written to C:\Users\<USER>\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\zcode-beautify.vbs (active from the next sign-in).
+{
+  "mode": "always",
+  "updatedAt": "2026-09-16T03:43:47.093Z",
+  "autostart": {
+    "platform": "win32",
+    "supported": true,
+    "installed": true,
+    "entryPath": "C:\\Users\\<USER>\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs"
+  }
+}

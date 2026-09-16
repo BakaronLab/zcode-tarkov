@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "plugins": {
+    "zcode-tarkov@zcode-tarkov": [
+      {
+        "installPath": "C:\\Users\\<USER>\\.zcode\\cli\\plugins\\cache\\zcode-tarkov\\zcode-tarkov\\0.1.0",
+        "version": "0.1.0",
+        "installedAt": "2026-09-16T03:41:01.729Z",
+        "lastUpdated": "2026-09-16T03:41:01.729Z",
+        "scope": "user"
+      }
+    ]
+  }
+}

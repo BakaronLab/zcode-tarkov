@@ -1,0 +1,7 @@
+[updated] C:\Users\<USER>\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\ZCode.lnk — dry-run
+[updated] C:\Users\Public\Desktop\ZCode.lnk — dry-run
+[updated] C:\ProgramData\Microsoft\Windows\Start Menu\Programs\ZCode.lnk — dry-run
+[updated] HKCU:\Software\Classes\zcode\shell\open\command — dry-run
+[updated] HKCU:\Software\Classes\Directory\shell\ZCode.OpenInZCode\command — dry-run
+[updated] HKCU:\Software\Classes\Drive\shell\ZCode.OpenInZCode\command — dry-run
+6 of 6 entry(ies) would be updated.

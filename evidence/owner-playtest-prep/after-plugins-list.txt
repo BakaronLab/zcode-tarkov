@@ -1,0 +1,28 @@
+Plugins (9)
+- android-emulator@zcode-plugins-official [disabled]
+  official/zcode-plugins-official: C:\Users\<USER>\.zcode\cli\plugins\cache\zcode-plugins-official\android-emulator\0.1.0
+  skills: 0, commands: 0, hooks: 0, mcp: none
+- browser-use@zcode-plugins-official [enabled]
+  official/zcode-plugins-official: C:\Users\<USER>\.zcode\cli\plugins\cache\zcode-plugins-official\browser-use\0.4.2
+  skills: 2, commands: 0, hooks: 0, mcp: none
+- document-skills@zcode-plugins-official [enabled]
+  official/zcode-plugins-official: C:\Users\<USER>\.zcode\cli\plugins\cache\zcode-plugins-official\document-skills\0.1.4
+  skills: 4, commands: 0, hooks: 0, mcp: plugin:document-skills:image_search
+- ios-simulator@zcode-plugins-official [disabled]
+  official/zcode-plugins-official: C:\Users\<USER>\.zcode\cli\plugins\cache\zcode-plugins-official\ios-simulator\0.1.0
+  skills: 0, commands: 0, hooks: 0, mcp: none
+- restore-legacy-sessions@zcode-plugins-official [disabled]
+  official/zcode-plugins-official: C:\Users\<USER>\.zcode\cli\plugins\cache\zcode-plugins-official\restore-legacy-sessions\0.1.0
+  skills: 0, commands: 0, hooks: 0, mcp: none
+- skill-creator@zcode-plugins-official [enabled]
+  official/zcode-plugins-official: C:\Users\<USER>\.zcode\cli\plugins\cache\zcode-plugins-official\skill-creator\0.1.0
+  skills: 1, commands: 0, hooks: 0, mcp: none
+- zcode-guide@zcode-plugins-official [enabled]
+  official/zcode-plugins-official: C:\Users\<USER>\.zcode\cli\plugins\cache\zcode-plugins-official\zcode-guide\0.1.0
+  skills: 6, commands: 0, hooks: 0, mcp: none
+- computer-use@zcode-plugins-official [enabled]
+  official/zcode-plugins-official: C:\Users\<USER>\.zcode\cli\plugins\cache\zcode-plugins-official\computer-use\0.5.14
+  skills: 1, commands: 0, hooks: 0, mcp: plugin:computer-use:computer-use
+- zcode-tarkov@zcode-tarkov [enabled]
+  cache/zcode-tarkov: C:\Users\<USER>\.zcode\cli\plugins\cache\zcode-tarkov\zcode-tarkov\0.1.0
+  skills: 1, commands: 1, hooks: 0, mcp: plugin:zcode-tarkov:zcode-tarkov
