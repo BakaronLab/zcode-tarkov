@@ -144737,7 +144737,7 @@ var ACCENT_RGB2 = "224, 121, 48";
 var MUTED_RGB = "139, 135, 124";
 var TARKOV_GREETING = {
   line1: "\u6CE8\u610F\uFF01\u8FD9\u662F\u201CZCode\u201D\u7684Beta\u6D4B\u8BD5\u7248\u672C\u3002",
-  line2: "Beta \u6D4B\u8BD5\u7248\u672C\u4E0D\u4EE3\u8868\u672C\u4EA7\u54C1\u7684\u6700\u7EC8\u8D28\u91CF\u3002\u611F\u8C22\u60A8\u7684\u7406\u89E3\u548C\u652F\u6301\uFF0C\u795D\u4F60\u597D\u8FD0\uFF01"
+  line2: "Beta\u6D4B\u8BD5\u7248\u672C\u4E0D\u4EE3\u8868\u672C\u4EA7\u54C1\u7684\u6700\u7EC8\u8D28\u91CF\u3002\u611F\u8C22\u60A8\u7684\u7406\u89E3\u548C\u652F\u6301\uFF0C\u795D\u4F60\u597D\u8FD0\uFF01"
 };
 function cssString(value) {
   const escaped = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, "\\a ");
@@ -144895,78 +144895,103 @@ ${itemActive} {
 
 /* Tarkov: the empty-chat beta notice.
  *
+ * Visual language is dsh-theme-tarkov's own #tarkov-beta-banner (MIT; see
+ * THIRD_PARTY_NOTICES.md): a translucent orange warning band, a dark hexagonal
+ * "!" badge and two black lines \u2014 nothing else, no plate, no frame, no blur.
+ * Its fixed pixel sizes are re-expressed against ZCode's greeting font-size
+ * variable, so at that variable's 30px default they resolve to the reference
+ * values: badge 43.5x37.5 (reference 42x36), line 1 18px/700, line 2 15px/400,
+ * both #111111 with the reference's 1.5px letter-spacing and 5px line gap.
+ *
  * Anchor: p[data-v4-draft-greeting="true"] \u2014 a semantic data attribute emitted by
  * ZCode's own empty-chat component (verified live; see docs/zcode-dom-notes.md).
  * No hashed class names are involved.
  *
- * The element becomes the announcement panel itself, so no extra DOM is created
- * and there is nothing to tear down. The original greeting text is never
- * rewritten: it is only made non-painting and zero-sized, so this is purely
- * presentational and dropping the stylesheet \u2014 which is exactly what leaving
- * Tarkov mode does \u2014 restores the real greeting byte for byte.
+ * The element becomes the band itself, so no extra DOM is created and there is
+ * nothing to tear down. ZCode's own visible greeting span becomes the text
+ * column: its text is never rewritten, only collapsed to zero size, and the two
+ * lines are drawn by that span's pseudo-elements. Dropping the stylesheet \u2014
+ * which is exactly what leaving Tarkov mode does \u2014 restores the real greeting
+ * byte for byte.
  *
- * The element only mounts on the empty-chat screen, so opening a real session
- * simply stops matching; if ZCode ever renames the attribute, nothing matches
- * and the stock greeting is shown. Both are fail-soft by construction.
+ * Every rule also requires that two-span structure (the aria-hidden measuring
+ * span plus the visible one) through :has(), and targets only the last span, so
+ * if that markup ever changes the whole notice stops matching and the stock
+ * greeting is drawn instead of a half-painted band. Nothing here can duplicate
+ * itself either. The element only mounts on the empty-chat screen, so opening a
+ * real session stops matching too.
  */
-p[data-v4-draft-greeting="true"] {
-  /* Announcement panel: content-sized and centred, with a hard-edged frame
-     rather than the app's soft rounded look. */
-  position: relative;
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-sizing: border-box;
+  width: min(94%, 720px);
+  margin: 18px auto 10px;
+  padding: 15px 22px 15px 16px;
+  border-radius: 6px;
+  text-align: left;
+  /* The band itself. One knob for its strength, as in the reference project,
+     which ships the same variable \u2014 at 0.55, its own default, which is what is
+     used here. Measured on a real renderer over ZCode's empty-chat backdrop,
+     the painted band is rgb(160,86,35) at 0.55 and rgb(171,94,37) at 0.62,
+     against #111111 text: 3.5:1 and 3.9:1, so the reference value already
+     clears the 3:1 large-text bar. Raise it here for extra margin. */
+  background: rgba(224, 121, 48, var(--zct-banner-opacity, 0.55));
+}
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child)::before {
+  /* The warning badge: the reference's hexagon, cut from the deepest surface
+     tone with the accent as the glyph colour. */
+  content: "!";
+  flex: none;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: fit-content;
-  max-width: min(100%, 36rem);
-  margin-inline: auto;
-  padding: 1.1rem 1.7rem 1.15rem;
-  border: 1px solid rgba(224, 121, 48, 0.35);
-  border-left: 4px solid rgba(224, 121, 48, 0.9);
-  border-radius: 3px;
-  /* Deep-brown translucent plate. The top stop is deliberately a few tones
-     lighter than --color-background (#1c1207): with no wallpaper the page
-     background is that exact colour, so a plate of the same hue would show no
-     panel at all and the notice would read as bare text with a border. Lifting
-     the top stop keeps it a dark warm brown while making the plate visible as a
-     block; the .55-.72 range also keeps the Z graphic readable through it. */
-  background: linear-gradient(180deg, rgba(48, 33, 17, 0.55), rgba(28, 19, 10, 0.72));
-  backdrop-filter: blur(6px);
-  box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.42),
-    inset 0 1px 0 rgba(255, 215, 174, 0.06),
-    inset 0 0 24px rgba(224, 121, 48, 0.06);
-  /* Collapses the original greeting's own text box; the two lines are drawn by
-     the pseudo-elements below. */
+  width: calc(var(--v4-draft-greeting-font-size, 30px) * 1.45);
+  height: calc(var(--v4-draft-greeting-font-size, 30px) * 1.25);
+  background: #1c1207;
+  color: #e07930;
+  font-weight: 800;
+  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.8);
+  line-height: 1;
+  font-family: system-ui, "Microsoft YaHei", sans-serif;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child {
+  /* ZCode's own greeting span doubles as the notice's text column: collapsed to
+     zero size so its text cannot paint, but never emptied, so the real greeting
+     is still in the DOM to come back to. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
   font-size: 0;
   line-height: 0;
 }
-p[data-v4-draft-greeting="true"] > span {
-  /* Non-painting, but the boxes survive: ZCode keeps an aria-hidden absolute
-     span purely to measure the greeting, and hiding it entirely would make that
-     measurement read zero. */
-  visibility: hidden;
-}
-p[data-v4-draft-greeting="true"]::before {
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child::before {
   content: ${cssString(TARKOV_GREETING.line1)};
   display: block;
-  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.85);
+  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.6);
   font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: 0.01em;
-  color: var(--color-foreground, #e8d9c8);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  line-height: 1.5;
+  letter-spacing: 1.5px;
+  color: #111111;
 }
-p[data-v4-draft-greeting="true"]::after {
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child::after {
   content: ${cssString(TARKOV_GREETING.line2)};
   display: block;
-  /* Slightly tighter than a plain block gap so the two lines read as one notice. */
-  margin-top: calc(var(--v4-draft-greeting-font-size, 30px) * 0.18);
-  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.45);
+  /* The reference project's 5px gap between the two lines, at ZCode's scale. */
+  margin-top: calc(var(--v4-draft-greeting-font-size, 30px) * 0.1667);
+  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.5);
   font-weight: 400;
   line-height: 1.5;
-  color: var(--color-foreground-subtle, #8b877c);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  letter-spacing: 1.5px;
+  color: #111111;
+}
+p[data-v4-draft-greeting="true"] > span[aria-hidden="true"] {
+  /* ZCode keeps this one purely to measure the greeting's width, so its box has
+     to survive (no display: none); it is only made non-painting. */
+  visibility: hidden;
 }
 
 /* Deliberately NOT styled: code blocks, success/warning/destructive states,

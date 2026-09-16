@@ -447,66 +447,90 @@ rules:
 - Nothing in the block is global: every rule starts with the `p[data-v4-draft-…]`
   anchor.
 
-### Live verification
+### Live verification (first iteration)
 
-Verified on an isolated ZCode 3.11.2 instance driven through the real
-`dist/cli.js`, cycling **Tarkov → Native → Monet → Tarkov** and then reset:
-32 assertions, all passing. Specifically — the `::before` / `::after` content
-matched the intended wording exactly; line 1 rendered at 25.5px/700 against line
-2 at 13.5px/400 (both derived from ZCode's own 30px variable); the rendered
-greeting box grew from 36px to 61px and stayed inside its 672px container; the
-span text was byte-identical after every switch; the Z graphic kept its 400×320
-box in all states; and the injected stylesheet carried no greeting rule at all
-in Native and Monet.
+At the time of the first pass the notice was two plain text lines in the
+greeting's place. Verified on an isolated ZCode 3.11.2 instance driven through
+the real `dist/cli.js`, cycling **Tarkov → Native → Monet → Tarkov** and then
+reset: 32 assertions, all passing. Specifically — the `::before` / `::after`
+content matched the intended wording exactly; both lines derived from ZCode's own
+30px variable; the rendered greeting box grew from 36px to 61px and stayed inside
+its 672px container; the span text was byte-identical after every switch; the Z
+graphic kept its 400×320 box in all states; and the injected stylesheet carried
+no greeting rule at all in Native and Monet. The sizes quoted here are the ones
+that pass shipped at the time; the current ones are in the next section.
 
-### Announcement panel (v0.1 visual pass)
+### Beta band (v0.1 visual pass, second iteration)
 
-The element is also the announcement plate, built entirely from CSS on the same
-anchor — no extra DOM, nothing to tear down.
+The notice now reproduces the reference project's own beta banner rather than a
+design of our own. Everything below is dsh-theme-tarkov's `#tarkov-beta-banner`
+from `lib/client.js` (MIT), re-expressed against ZCode's greeting scale:
 
-The DSH-style plate tone needed one deliberate deviation from the suggested
-values, and the reason is worth recording: the suggested background
-(`rgba(28,18,7,…)`) is **the same colour as `--color-background` (#1c1207)**. On
-a wallpaper that does not matter, but with no wallpaper set — the default — the
-plate composited to the identical tone as the page behind it, so the panel was
-invisible as a block and the notice read as bare text with a border.
+| reference declaration | here |
+|---|---|
+| `display:flex; align-items:center; gap:16px` | unchanged |
+| `width:min(94%,720px); margin:18px auto 10px` | unchanged |
+| `padding:15px 22px 15px 16px; border-radius:6px` | unchanged |
+| `background:rgba(224,121,48,var(--tarkov-banner-opacity,.55))` | same, variable renamed `--zct-banner-opacity` |
+| icon `42×36`, `#1c1207` on `#e07930`, `font:800 24px/1` | `× 1.45` / `× 1.25` / `× 0.8` of `--v4-draft-greeting-font-size`, i.e. 43.5×37.5 and 24px at its 30px default |
+| `line1 #111111 18px 700; line2 #111111 15px 400`, `letter-spacing:1.5px`, `gap:5px` | `× 0.6` / `× 0.5` of the same variable (exactly 18px/15px at 30px), same colours, spacing and gap |
+| `clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%)` | unchanged |
 
-Measured, before and after the top stop was lifted to `rgba(48,33,17,0.55)`:
+Structure, without adding any DOM:
 
-| sample | before | after |
-|---|---|---|
-| plate interior | meanL 21.6 | meanL 30.4 |
-| backdrop just above | meanL 22.4 | meanL 21.2 |
-| **visible step** | **−0.8 (none)** | **+9.2** |
+- the band **is** `p[data-v4-draft-greeting="true"]`;
+- the hexagonal `!` badge is `::before` on that element (pure CSS clip-path, no
+  image and no game asset);
+- ZCode's own visible greeting span — the last child, the one without
+  `aria-hidden` — becomes the text column, and its `::before` / `::after` draw
+  the two lines. Its own text is collapsed with `font-size: 0`, never rewritten,
+  so the real greeting is still in the DOM to return to.
+- every rule is also gated on that structure with
+  `:has(> span:not([aria-hidden]):last-child)` and targets only the last span, so
+  a future markup change reverts to the stock greeting instead of drawing half a
+  banner, and no rule can match twice.
 
-Sampled from a captured render; the plate stays a dark warm brown
-(`rgb(42,28,15)` composited) and never becomes a bright block.
+Measurement note: the browser does **not** composite this translucent band with
+straight sRGB alpha math — with the band at `opacity: 1` the painted pixel is
+exactly `rgb(224,121,48)` and at `opacity: 0` exactly the backdrop, but at 0.62
+the painted pixel is `rgb(171,94,37)`, which is `rgb(151,82,34)` under straight
+alpha (implied alpha 0.72; the window runs at `devicePixelRatio` 1.75 on a
+wide-gamut display). Contrast figures here are therefore taken from painted
+pixels, not from a formula.
 
-Other measured properties of the shipped panel:
+Measured live on ZCode 3.11.2, isolated instance, `dist/cli.js` from this build:
 
-- geometry at a 1363px viewport: 510×96, content-sized (`width: fit-content`,
-  `max-width: min(100%, 36rem)`), centred, with `padding: 17.6px 27.2px 18.4px`;
-- at a narrower 778px viewport it correctly reflows to 465×149 with the subtitle
-  wrapping to two lines — content-adaptive as intended;
-- the left accent bar renders `rgb(137,76,31)` against an interior of
-  `rgb(42,28,15)`, so the frame is unmistakable even where the plate tone is
-  close to the background;
-- the Z graphic band above the plate still shows the strokes
-  (sd 3.16, luminance range 29), so the graphic remains visible;
-- the panel bottom sits at y=461 with the prompt input at y=557 — no overlap,
-  and the panel is in flow (`position: relative`), so it cannot cover it.
+- geometry at a 1363px viewport: band 632×107 (94% of its 672px container,
+  capped at 720px) centred with 20px on both sides, `padding 15px 22px 15px 16px`,
+  radius 6px; badge 43.5×37.5; line 1 18px/700, line 2 15px/400, line gap 5px;
+- `#111111` on the painted band is **3.46:1** at the shipped 0.55 — clearing the
+  3:1 large-text bar — and 3.92:1 at 0.62;
+- translucency proven by pixel, not by declaration: with the knob at 1 the band
+  paints `rgb(224,121,48)` exactly, at 0 it paints the backdrop
+  `rgb(31,19,10)`, and at 0.55 it paints `rgb(160,86,35)`, between the two;
+- the badge core is `rgb(28,18,7)` and its clipped corners show the band, so the
+  hexagon really is cut;
+- the band bottom sits at y=470 with the prompt input at y=577 — no overlap, and
+  the band is in flow;
+- the Z graphic keeps its 400×320 box and its strokes stay visible in the strip
+  the band does not cover (luminance 0.0076 → 0.0353). It moves down by 56px,
+  because the notice is taller than one line of greeting text and the empty-chat
+  column is vertically centred;
+- at an 820px viewport the container narrows to 507px, the band to 477px, the
+  copy wraps inside the column (`scrollWidth` 379 = `clientWidth`), the badge
+  keeps its size and there is still no overlap with the prompt input;
+- Tarkov → Native → Monet → Tarkov leaves no greeting rule and no band in
+  Native or Monet, restores the stock greeting text and size in both, and redraws
+  exactly one band on return; `reset` removes the stylesheet and the notice.
 
-Verified live, 20 assertions: plate/geometry/wording in Tarkov, then
-Tarkov → Native → Monet → Tarkov with no greeting rule and no plate left in the
-injected stylesheet in Native or Monet, the original greeting visible again in
-both, and the wording and untouched original text restored on returning to
-Tarkov.
+Verification: 55 assertions, all passing, run by `.tools/verify-dsh-band.mjs`
+(launches its own instance, its own scratch profile, and closes it again). One
+honest caveat: the test window refused `SetWindowPos` (client rect unchanged at
+1362×909), so the narrow case was measured through an emulated layout viewport
+of 820px rather than a real window resize; the reflow itself is real.
 
-One measurement caveat: a minimized Chromium window stops producing frames, and
-`Page.captureScreenshot` then hangs rather than erroring. Screenshots here were
-taken immediately after launching a fresh renderer, while frames were still
-flowing. This model also cannot accept image input, so the render was verified by
-sampling pixels and reading computed styles rather than by looking at the image;
-the screenshots are kept for human review.
-
-
+Earlier caveat, still true: a minimized Chromium window stops producing frames
+and `Page.captureScreenshot` then hangs rather than erroring, and this model
+cannot accept image input — so the render was verified by reading computed styles
+and sampling pixels through CDP clip rectangles, and the screenshots are kept for
+human review.

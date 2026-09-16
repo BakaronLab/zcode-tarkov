@@ -2,13 +2,15 @@
 //
 // The replacement is pure CSS on a semantic data attribute: the DOM text is
 // never rewritten, so leaving Tarkov mode restores the original greeting by
-// simply not matching any more. These tests pin that contract down.
+// simply not matching any more. These tests pin that contract down, along with
+// the visual language it borrows from dsh-theme-tarkov's beta banner.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { argbFromRgb, themeFromSourceColor } from "@material/material-color-utilities";
 
 import {
   TARKOV_GREETING,
+  TARKOV_PALETTE,
   buildTarkovComponentCss,
   buildTarkovVariableOverrides,
 } from "../.test-build/themes/tarkov.js";
@@ -22,10 +24,16 @@ function blockFor(selector) {
   assert.ok(i >= 0, `selector not found: ${selector}`);
   const open = css.indexOf("{", i);
   const close = css.indexOf("}", open);
-  return css.slice(open + 1, close);
+  // Comments carry prose — including words like "border" and "display: none" —
+  // so they are stripped before anything is asserted about declarations.
+  return css.slice(open + 1, close).replace(/\/\*[\s\S]*?\*\//g, "");
 }
 
 const GREETING_SEL = 'p[data-v4-draft-greeting="true"]';
+/** The band rule: the anchor plus the structure guard every rule carries. */
+const BAND_SEL = `${GREETING_SEL}:has(> span:not([aria-hidden]):last-child)`;
+/** The text column: ZCode's own visible greeting span. */
+const COLUMN_SEL = `${BAND_SEL} > span:not([aria-hidden]):last-child`;
 
 // --- the wording ------------------------------------------------------------
 
@@ -36,8 +44,18 @@ test("greeting line 1 is the required beta notice", () => {
 test("greeting line 2 is the required beta notice", () => {
   assert.equal(
     TARKOV_GREETING.line2,
-    "Beta 测试版本不代表本产品的最终质量。感谢您的理解和支持，祝你好运！"
+    "Beta测试版本不代表本产品的最终质量。感谢您的理解和支持，祝你好运！"
   );
+});
+
+test("the wording follows the reference copy, including its punctuation", () => {
+  // dsh-theme-tarkov ships these two lines verbatim for its own beta banner;
+  // line 1 only swaps the product name. The missing space after "Beta" is part
+  // of that copy, not a typo introduced here.
+  assert.equal(TARKOV_GREETING.line2.startsWith("Beta测试版本"), true);
+  assert.equal(/Beta\s/.test(TARKOV_GREETING.line2), false, "the reference has no space after Beta");
+  assert.equal(TARKOV_GREETING.line2.endsWith("祝你好运！"), true);
+  assert.equal(/[“”]ZCode[“”]/.test(TARKOV_GREETING.line1), true, "curly quotes are kept");
 });
 
 test("the copy is adapted to ZCode, not copied from the reference project", () => {
@@ -62,7 +80,7 @@ test("every greeting rule is scoped to the greeting element", () => {
     .filter((s) => s.includes("{") && s.includes("v4-draft-greeting"))
     .map((s) => s.slice(0, s.indexOf("{")).trim());
 
-  assert.ok(selectors.length >= 3, `expected the greeting rules, got ${selectors.length}`);
+  assert.ok(selectors.length >= 4, `expected the greeting rules, got ${selectors.length}`);
   for (const sel of selectors) {
     assert.ok(
       sel.startsWith("p[data-v4-draft-greeting="),
@@ -72,21 +90,155 @@ test("every greeting rule is scoped to the greeting element", () => {
   assert.equal(/^\s*body\s*\{/m.test(css), false, "must not restyle body");
 });
 
-test("the original text is not rewritten, only made non-painting", () => {
-  const span = blockFor(`${GREETING_SEL} > span`);
-  assert.match(span, /visibility:\s*hidden/, "spans are hidden visually");
-  // display:none would zero the measurement span ZCode keeps for layout.
-  assert.equal(/display:\s*none/.test(span), false, "must not remove the span from layout");
-  assert.match(blockFor(GREETING_SEL), /font-size:\s*0/);
+test("every greeting rule requires ZCode's two-span structure", () => {
+  // The notice reuses ZCode's own greeting spans, so each rule is gated on that
+  // structure: if the markup changes, nothing matches and the stock greeting is
+  // drawn instead of a half-painted band.
+  const guarded = css
+    .split("}")
+    .map((chunk) => chunk.slice(chunk.lastIndexOf("\n", chunk.lastIndexOf("{")) + 1))
+    .filter((s) => s.includes("{") && s.includes("v4-draft-greeting"))
+    .map((s) => s.slice(0, s.indexOf("{")).trim())
+    .filter((sel) => sel.includes("span"))
+    // The rule that keeps the measuring span non-painting is not part of the
+    // painted structure, so it needs no guard: it is a no-op on its own.
+    .filter((sel) => !sel.includes('[aria-hidden="true"]'));
+
+  assert.ok(guarded.length >= 4, `expected guarded greeting rules, got ${guarded.length}`);
+  for (const sel of guarded) {
+    assert.match(sel, /:has\(> span:not\(\[aria-hidden\]\):last-child\)/, `unguarded rule: ${sel}`);
+  }
+});
+
+// --- the reference band -----------------------------------------------------
+
+test("the notice is the reference warning band, not a dark plate", () => {
+  const band = blockFor(BAND_SEL);
+  assert.match(band, /background:\s*rgba\(224, 121, 48, var\(--zct-banner-opacity, [0-9.]+\)\)/);
+  // The previous iteration's self-designed treatment is gone for good.
+  assert.equal(/linear-gradient/.test(band), false, "no gradient plate");
+  // The only border-ish declaration left is the reference's corner radius:
+  // `box-sizing: border-box` is not a border, hence the declaration match.
+  assert.deepEqual(
+    [...band.matchAll(/(?:^|[\s;])border[a-z-]*\s*:/g)].map((m) => m[0].trim()),
+    ["border-radius:"],
+    "no frame and no accent bar"
+  );
+  assert.equal(/box-shadow/.test(band), false, "no glow");
+  assert.equal(/backdrop-filter/.test(band), false, "no blur");
+});
+
+test("the band keeps the reference's translucent, adjustable strength", () => {
+  const band = blockFor(BAND_SEL);
+  const alpha = Number(/--zct-banner-opacity,\s*([0-9.]+)\)/.exec(band)[1]);
+  assert.ok(alpha >= 0.45 && alpha <= 0.62, `band alpha ${alpha} is outside the agreed 0.45-0.62 range`);
+  // A solid band would hide the page and stop being a warning band.
+  assert.ok(alpha < 1, "the band must stay translucent");
+});
+
+test("the band's hue is the Tarkov accent, so it reads orange", () => {
+  const band = blockFor(BAND_SEL);
+  const [r, g, b] = /rgba\((\d+),\s*(\d+),\s*(\d+)/.exec(band).slice(1).map(Number);
+  assert.deepEqual([r, g, b], [224, 121, 48], "the band must be rgba(224,121,48,…)");
+  assert.equal(`#${r.toString(16)}${g.toString(16)}${b.toString(16)}`, TARKOV_PALETTE.accent);
+});
+
+test("black text on the band is legible at the shipped alpha", () => {
+  // This is a conservative proxy: it blends in sRGB, which is the darkest of the
+  // plausible models, so a pass here cannot flatter the design. The real rendered
+  // contrast is measured from screenshots during live verification (3.5:1 at
+  // 0.55, 3.9:1 at 0.62) and is better than this bound.
+  const band = blockFor(BAND_SEL);
+  // The alpha is the variable's fallback, so it is parsed out of the var().
+  const [r, g, b, a] = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*var\([^)]*,\s*([0-9.]+)\)\)/.exec(band).slice(1).map(Number);
+  const page = [0x1c, 0x12, 0x07]; // --color-background, the darkest plausible backdrop
+  const composited = [r, g, b].map((c, i) => c * a + page[i] * (1 - a));
+
+  const luminance = (rgb) => {
+    const [R, G, B] = rgb.map((v) => {
+      const s = v / 255;
+      return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+  };
+
+  const bandL = luminance(composited);
+  const textL = luminance([0x11, 0x11, 0x11]);
+  const ratio = (bandL + 0.05) / (textL + 0.05);
+  assert.ok(ratio >= 2.6, `black on the band is only ${ratio.toFixed(2)}:1 even on this optimistic model`);
+  assert.ok(ratio < 12, `${ratio.toFixed(2)}:1 looks like the band is no longer orange`);
+});
+
+// --- layout -----------------------------------------------------------------
+
+test("the band is laid out like the reference banner", () => {
+  const band = blockFor(BAND_SEL);
+  assert.match(band, /display:\s*flex/);
+  assert.match(band, /align-items:\s*center/);
+  assert.match(band, /gap:\s*16px/);
+  assert.match(band, /box-sizing:\s*border-box/);
+  assert.match(band, /width:\s*min\(94%,\s*720px\)/);
+  assert.match(band, /margin:\s*18px auto 10px/);
+  assert.match(band, /padding:\s*15px 22px 15px 16px/);
+  assert.match(band, /border-radius:\s*6px/);
+  assert.match(band, /text-align:\s*left/);
+});
+
+test("the band stays in flow, so it cannot cover the prompt box", () => {
+  const band = blockFor(BAND_SEL);
+  assert.equal(/position:\s*(fixed|absolute)/.test(band), false, "must stay in flow");
+});
+
+test("the warning badge is the reference hexagon", () => {
+  const badge = blockFor(`${BAND_SEL}::before`);
+  assert.match(badge, /content:\s*"!"/, "the badge is a text glyph");
+  assert.match(
+    badge,
+    /clip-path:\s*polygon\(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%\)/
+  );
+  assert.match(badge, /background:\s*#1c1207/);
+  assert.match(badge, /color:\s*#e07930/);
+  assert.match(badge, /flex:\s*none/, "the badge must not be squeezed by long copy");
+  assert.match(badge, /font-weight:\s*800/);
+  // No image asset is used for the badge: no game art, no SVG data URI.
+  assert.equal(/url\(|background-image/.test(badge), false);
+});
+
+test("the badge scales with ZCode's greeting scale and lands in the agreed range", () => {
+  const badge = blockFor(`${BAND_SEL}::before`);
+  const sizeOf = (prop) => Number(new RegExp(`${prop}:\\s*calc\\([^;]*\\*\\s*([0-9.]+)\\)`).exec(badge)[1]);
+  // Both are written against --v4-draft-greeting-font-size, whose default is 30px.
+  assert.match(badge, /1\.45|1\.25/, "sizes derive from the greeting font-size variable");
+  const w = sizeOf("width") * 30;
+  const h = sizeOf("height") * 30;
+  assert.ok(w >= 42 && w <= 48, `badge width ${w}px is outside the agreed 42-48px`);
+  assert.ok(h >= 36 && h <= 42, `badge height ${h}px is outside the agreed 36-42px`);
 });
 
 // --- typographic hierarchy --------------------------------------------------
 
-test("line 1 is the larger, bolder title", () => {
-  const before = blockFor(`${GREETING_SEL}::before`);
-  const after = blockFor(`${GREETING_SEL}::after`);
+test("the text column is ZCode's own greeting span, not a new element", () => {
+  const column = blockFor(COLUMN_SEL);
+  assert.match(column, /display:\s*flex/);
+  assert.match(column, /flex-direction:\s*column/, "the two lines stack beside the badge");
+  assert.match(column, /min-width:\s*0/, "the copy must be allowed to wrap");
+  assert.match(column, /font-size:\s*0/, "the original greeting text is collapsed, not removed");
+});
 
-  // font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.85);
+test("the original text is not rewritten, only made non-painting", () => {
+  const hidden = blockFor('p[data-v4-draft-greeting="true"] > span[aria-hidden="true"]');
+  assert.match(hidden, /visibility:\s*hidden/, "the measuring span is hidden visually");
+  // display:none would zero the measurement span ZCode keeps for layout.
+  assert.equal(/display:\s*none/.test(hidden), false, "must not remove the span from layout");
+  // Nothing in the notice writes to the DOM: the copy lives in CSS content only.
+  assert.equal(/textContent|innerHTML|appendChild/.test(css), false);
+});
+
+test("line 1 is the larger, bolder title", () => {
+  const before = blockFor(`${COLUMN_SEL}::before`);
+  const after = blockFor(`${COLUMN_SEL}::after`);
+
+  // font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.6);
   // [^;]* rather than [^)]* because the var() fallback contains parens.
   const sizeOf = (b) => Number(/font-size:\s*calc\([^;]*\*\s*([0-9.]+)\)/.exec(b)?.[1]);
   const weightOf = (b) => Number(/font-weight:\s*(\d+)/.exec(b)?.[1]);
@@ -96,115 +248,42 @@ test("line 1 is the larger, bolder title", () => {
   assert.ok(Number.isFinite(s1) && Number.isFinite(s2), "both sizes should be parseable");
   assert.ok(s1 > s2, `line 1 (${s1}) must be larger than line 2 (${s2})`);
   assert.ok(weightOf(before) > weightOf(after), "line 1 must be bolder than line 2");
+  // At ZCode's default 30px scale these resolve to the reference's 18px/15px.
+  assert.equal(s1 * 30, 18, "line 1 should land on the reference size");
+  assert.equal(s2 * 30, 15, "line 2 should land on the reference size");
 });
 
 test("both lines scale with ZCode's own greeting font-size variable", () => {
   assert.match(css, /--v4-draft-greeting-font-size/);
   // Every size derives from that variable, so a ZCode change is followed.
   const sizes = css.match(/font-size:\s*calc\(var\(--v4-draft-greeting-font-size/g) ?? [];
-  assert.ok(sizes.length >= 2, "expected both lines to be variable-derived");
+  assert.ok(sizes.length >= 3, "expected the lines and the badge to be variable-derived");
 });
 
 test("line 1 and line 2 render as separate blocks", () => {
-  assert.match(blockFor(`${GREETING_SEL}::before`), /display:\s*block/);
-  assert.match(blockFor(`${GREETING_SEL}::after`), /display:\s*block/);
+  assert.match(blockFor(`${COLUMN_SEL}::before`), /display:\s*block/);
+  assert.match(blockFor(`${COLUMN_SEL}::after`), /display:\s*block/);
 });
 
-// --- palette ----------------------------------------------------------------
-
-test("both lines still take their colours from the existing Tarkov tokens", () => {
-  assert.match(blockFor(`${GREETING_SEL}::before`), /var\(--color-foreground,/);
-  assert.match(blockFor(`${GREETING_SEL}::after`), /var\(--color-foreground-subtle,/);
-});
-
-// --- the announcement panel -------------------------------------------------
-
-test("the greeting element becomes a framed, padded announcement panel", () => {
-  const panel = blockFor(GREETING_SEL);
-  assert.match(panel, /border:\s*1px solid rgba\(224, 121, 48, 0\.35\)/, "thin warm border");
-  assert.match(panel, /border-left:\s*4px solid/, "left accent bar");
-  assert.match(panel, /border-radius:\s*3px/, "hard-edged, not the app's rounded look");
-  assert.match(panel, /padding:/, "panel padding");
-  assert.match(panel, /backdrop-filter:\s*blur\(6px\)/, "backdrop blur");
-  assert.match(panel, /box-shadow:/, "shadow for layering");
-});
-
-test("the panel is centred, content-sized, and capped in width", () => {
-  const panel = blockFor(GREETING_SEL);
-  assert.match(panel, /display:\s*flex/);
-  assert.match(panel, /flex-direction:\s*column/);
-  assert.match(panel, /align-items:\s*center/);
-  assert.match(panel, /justify-content:\s*center/);
-  assert.match(panel, /width:\s*fit-content/);
-  assert.match(panel, /max-width:\s*min\(100%,\s*36rem\)/);
-  assert.match(panel, /margin-inline:\s*auto/);
-});
-
-test("the plate is dark and translucent, never a bright orange block", () => {
-  const panel = blockFor(GREETING_SEL);
-  const gradient = /background:\s*linear-gradient\(([^;]*)\)/.exec(panel);
-  assert.ok(gradient, "expected a gradient plate");
-
-  const stops = [...gradient[1].matchAll(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\)/g)].map((m) => ({
-    r: +m[1],
-    g: +m[2],
-    b: +m[3],
-    a: +m[4],
-  }));
-  assert.ok(stops.length >= 2, "gradient should have at least two stops");
-  for (const s of stops) {
-    assert.ok(s.a > 0 && s.a < 0.75, `plate alpha ${s.a} must stay translucent so the Z shows through`);
-    assert.ok(s.r + s.g + s.b < 120, `plate colour ${s.r},${s.g},${s.b} must be dark`);
-  }
+test("both lines use the reference's black text, not the warm theme colours", () => {
+  assert.match(blockFor(`${COLUMN_SEL}::before`), /color:\s*#111111/);
+  assert.match(blockFor(`${COLUMN_SEL}::after`), /color:\s*#111111/);
+  const notice = css.slice(css.indexOf("empty-chat beta notice"));
   assert.equal(
-    /background:\s*rgba\(224, 121, 48/.test(panel),
+    /color:\s*var\(--color-foreground/.test(notice),
     false,
-    "the orange must not become a solid fill"
+    "the previous light-on-dark text colours must be gone"
   );
 });
 
-test("every colour in the panel stays within the Tarkov palette", () => {
-  const panel = blockFor(GREETING_SEL);
-  const allowed = new Set(["224,121,48", "48,33,17", "28,19,10", "255,215,174", "0,0,0"]);
-  for (const m of panel.matchAll(/rgba\((\d+),\s*(\d+),\s*(\d+)/g)) {
-    const key = `${m[1]},${m[2]},${m[3]}`;
-    assert.ok(allowed.has(key), `unexpected colour ${key} in the notice panel`);
-  }
-});
-
-test("the plate reads as a block against the default background", () => {
-  // With no wallpaper the page background is --color-background (#1c1207 =
-  // rgb(28,18,7)). A plate of that same tone would be invisible, leaving the
-  // notice as bare text, so the top stop must be measurably lighter.
-  const gradient = /background:\s*linear-gradient\(([^;]*)\)/.exec(blockFor(GREETING_SEL))[1];
-  const first = /rgba\((\d+),\s*(\d+),\s*(\d+)/.exec(gradient);
-  const [r, g, b] = [+first[1], +first[2], +first[3]];
-  const plate = r + g + b;
-  const background = 28 + 18 + 7; // #1c1207
-  assert.ok(plate > background + 20, `plate rgb(${r},${g},${b}) is too close to the background to show as a block`);
-  assert.ok(plate < 160, `plate rgb(${r},${g},${b}) is too light for a dark Tarkov surface`);
-  // Still a warm brown: red-dominant, blue-lightest.
-  assert.ok(r > g && g > b, `plate rgb(${r},${g},${b}) must stay a warm brown`);
-});
-
-test("nothing opaque is painted over the backdrop, so the Z graphic stays visible", () => {
-  const panel = blockFor(GREETING_SEL);
-  assert.equal(/background(-color)?:\s*(#|rgb\()/.test(panel), false, "no opaque fill");
-  assert.equal(/background(-color)?:\s*[a-z-]+\s*;/.test(panel), false, "plate must be a gradient, not a solid keyword");
-});
-
-test("the panel does not capture pointer events away from the page", () => {
-  // It is an in-flow block, not an overlay: no fixed/absolute positioning that
-  // could sit on top of the prompt box.
-  const panel = blockFor(GREETING_SEL);
-  assert.equal(/position:\s*(fixed|absolute)/.test(panel), false, "must stay in flow");
-  assert.match(panel, /position:\s*relative/);
-});
-
-test("the two lines are slightly tighter than a plain block gap", () => {
-  const margin = /margin-top:\s*calc\([^;]*\*\s*([0-9.]+)\)/.exec(blockFor(`${GREETING_SEL}::after`));
-  assert.ok(margin, "expected a derived margin-top");
-  assert.ok(Number(margin[1]) < 0.26, `spacing ${margin[1]} should be tighter than the previous 0.26`);
+test("the two lines carry the reference's letter-spacing and line gap", () => {
+  const before = blockFor(`${COLUMN_SEL}::before`);
+  const after = blockFor(`${COLUMN_SEL}::after`);
+  assert.match(before, /letter-spacing:\s*1\.5px/);
+  assert.match(after, /letter-spacing:\s*1\.5px/);
+  // The reference's 5px gap between the two lines, at ZCode's scale.
+  const gap = Number(/margin-top:\s*calc\([^;]*\*\s*([0-9.]+)\)/.exec(after)?.[1]);
+  assert.ok(Math.abs(gap * 30 - 5) < 0.1, `line gap ${gap * 30}px should match the reference's 5px`);
 });
 
 // --- emitted content --------------------------------------------------------
@@ -254,6 +333,7 @@ test("only the Tarkov payload carries the greeting replacement", () => {
       `${mode} must leave the original greeting alone`
     );
     assert.equal(other.css.includes(TARKOV_GREETING.line1), false);
+    assert.equal(other.css.includes("zct-banner-opacity"), false);
   }
 });
 
@@ -287,8 +367,19 @@ test("the replacement introduces no script or DOM mutation", () => {
   assert.equal(/javascript:|expression\(|url\(/.test(greetingOnly), false);
 });
 
-test("tarkov token overrides still cover the tokens the notice relies on", () => {
-  const tokens = buildTarkovVariableOverrides({ wallpaperVisible: false, dim: 0 });
-  assert.match(tokens, /--color-foreground:/);
-  assert.match(tokens, /--color-foreground-subtle:/);
+test("the band is composed from palette values only", () => {
+  // Comments carry prose that quotes colours (e.g. the measured renders), so the
+  // declarations are what gets checked.
+  const notice = css.slice(css.indexOf("empty-chat beta notice")).replace(/\/\*[\s\S]*?\*\//g, "");
+  const allowed = new Set(["224,121,48", "28,18,7", "17,17,17"]);
+  for (const m of notice.matchAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)/g)) {
+    const key = `${m[1]},${m[2]},${m[3]}`;
+    assert.ok(allowed.has(key), `unexpected colour ${key} in the beta notice`);
+  }
+  for (const hex of notice.matchAll(/#([0-9a-f]{6})/g)) {
+    assert.ok(
+      [TARKOV_PALETTE.accent, TARKOV_PALETTE.background, "#111111"].includes(`#${hex[1]}`),
+      `unexpected colour #${hex[1]} in the beta notice`
+    );
+  }
 });

@@ -24,7 +24,7 @@ Fully quit ZCode (including the tray icon), then start it again using **either**
 | 2 | The UI is the **Tarkov palette**: dark brown surfaces, orange accents, warm off-white text | |
 | 3 | A **settings panel** button (🎨) sits in the bottom-right corner | |
 | 4 | A two-line **orange warning band** is pinned across the top | |
-| 5 | On the **new-task / empty homepage**, the greeting has been replaced by the two-line beta notice: a large bold line, then a smaller dimmer line. The central **Z graphic is still there** | |
+| 5 | On the **new-task / empty homepage**, the greeting is replaced by the beta notice: a **semi-transparent orange band** with a **dark hexagonal `!` badge** on the left and two **black** lines beside it (bold title, smaller subtitle). The central **Z graphic is still there** | |
 | 6 | Open the panel; a **UI Theme** dropdown shows Monet / Tarkov / Native | |
 | 7 | Switch to **Monet** → panel turns neutral, band disappears, **the original greeting returns**, colors re-derive from the wallpaper | |
 | 8 | Switch to **Native** → ZCode's own colors return, greeting still original | |
@@ -39,9 +39,16 @@ Fully quit ZCode (including the tray icon), then start it again using **either**
 
 ## Notes on a few items
 
-- **Item 5** — the notice only replaces the greeting text. It should not shift the
-  Z graphic, the prompt box, or anything else on that screen. Open a real session
-  and the normal header returns; the notice belongs to the empty page only.
+- **Item 5** — the notice only replaces the greeting text, and it takes that text's
+  place in the page: the band is centred across the content column and sits above
+  the prompt box, never over it. The Z graphic keeps its size; it shifts up or
+  down by a few dozen pixels, because the band is taller than one line of greeting
+  text and that column is centred. Open a real session and the normal header
+  returns; the notice belongs to the empty page only.
+- **Item 5, if the band looks too weak or too strong** — its strength is one CSS
+  variable, `--zct-banner-opacity` (0.55, the reference project's own value;
+  measured 3.5:1 against the black text). The band's colour is `#e07930` at that
+  alpha.
 - **Item 8** — the band must never stack into two. If you ever see two, that is a bug.
 - **Item 12** — this is the first time a wallpaper is set. Until then the theme is
   deliberately opaque (there was no image to show through).
