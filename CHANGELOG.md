@@ -6,6 +6,8 @@ history of the upstream project this repository was forked from,
 
 ## v0.1.0
 
+Frozen and verified 2026-09-16.
+
 First release. Adds a Tarkov UI preset to the zcode-beautify infrastructure
 without reimplementing any of it.
 
@@ -32,6 +34,22 @@ without reimplementing any of it.
 - **`color_mode`** in the MCP tools, with `monet` kept as a legacy alias.
 - **60 automated tests** covering migration, per-mode payloads, palette output,
   wallpaper visibility, banner generation/teardown, and mode-switch residue.
+- **A user-level lifecycle** — `install.ps1`, `repair.ps1` and `uninstall.ps1`.
+  `install.ps1` copies the payload into `%LOCALAPPDATA%\Programs\zcode-tarkov`,
+  writes `settings.json`, creates the "ZCode Tarkov" shortcut on the user
+  Desktop and Start Menu, registers the per-user sign-in entry and starts the
+  resident service; `repair.ps1` re-detects ZCode after it moved, re-resolves
+  node, verifies — or with `-SourceDir` restores — the payload, rewrites the
+  shortcut and reports the three interfaces a ZCode update can break;
+  `uninstall.ps1` reverses all of it. No elevation, no machine-wide writes,
+  ZCode's installation files and official shortcuts untouched.
+- **A project-owned launcher** (`launcher/`): resolves ZCode dynamically
+  (ZCode's own environment variable, `App Paths`, known paths, bounded scan),
+  starts it with `--remote-debugging-port`, keeps the resident service healthy
+  and appends one line to `launcher.log`. The shortcut reaches it through a VBS
+  trampoline (`zcode-tarkov-launch.vbs`) so a double-click never flashes a
+  console window. When ZCode already runs without the debug port, the launcher
+  asks before restarting the app and changes nothing if the user declines.
 
 ### Changed
 
@@ -43,6 +61,15 @@ without reimplementing any of it.
 - Config resolution prefers a `zcode-tarkov` data directory and falls back to an
   existing `zcode-beautify` one, so an old config is migrated rather than
   ignored.
+- The appearance commands (`theme`, `apply`, `colors`, `reset`) now wait for
+  the first renderer target only in the cold-start case ("endpoint reachable,
+  zero targets"), bounded to 5 s, instead of failing with "No ZCode renderer
+  target found" when one runs immediately after ZCode starts. An unreachable
+  endpoint still fails on the first attempt, so `status`, `watch` and `serve`
+  keep their latency.
+- The autostart entry the CLI registers now carries the configured data
+  directory (`ZCODE_BEAUTIFY_DATA_DIR`) when one is set, so the service started
+  at sign-in serves the same config file the launcher and the panel expect.
 
 ### Security
 
@@ -60,6 +87,68 @@ without reimplementing any of it.
   measured A/B in that same topology, 1 visible window without the flag and 0
   with it. `tasklist`, `taskkill` and the launcher-repair `powershell` spawn now
   pass `windowsHide: true`.
+- The settings panel's offline text no longer tells the user to run a terminal
+  command: it names the "ZCode Tarkov" shortcut and says that relaunching ZCode
+  that way restores the service, which is what actually fixes it.
+- `recovery` now honours `--api-port`: a non-default API port is written into
+  the autostart entry instead of the historical default, so the sign-in service
+  and the launcher agree on one port.
+
+### Hardening
+
+From the internal audit of the lifecycle scripts:
+
+- **A CDP endpoint must identify itself.** An open TCP port no longer counts:
+  the already-running path, the "did the port come up" wait and the
+  single-instance race check require `GET /json/version` to parse, carry
+  `webSocketDebuggerUrl` and report a `Chrome|Electron|ZCode` browser. A
+  foreign listener on 9222 can no longer fake success or silently swallow a
+  launch.
+- **An existing install directory is only adopted when its content is ours.**
+  `settings.json` must carry `"product": "zcode-tarkov"` (or the directory must
+  be empty); otherwise the installer refuses without `-Force`, naming the file
+  and what it found. A foreign file never supplies the re-install continuity
+  values (`installedAt`, `dataDir`, cached `zcodeExe`).
+- **Debug-flag removal is port-scoped.** Uninstall strips a
+  `--remote-debugging-port` token from an official shortcut or handler value
+  only for the configured cdp port or the historical 9222; a token naming any
+  other port stays.
+- **Process handling is identity-verified.** A pid is stopped only when it is
+  `node.exe`, runs this install's `cliPath` and carries the `serve`/`watch`
+  token; a port number alone never identifies a process. When the process list
+  cannot be read at all, the step reports "could not inspect", never "none
+  found".
+- **Reparse points are never traversed.** Recursive payload sweeps and the
+  uninstall delete skip junctions/symlinks and report them, so a link target is
+  never read or deleted through the link.
+
+### Tests
+
+- The frozen tree's `npm test` suite: 109 tests, all passing at the v0.1.0
+  freeze.
+- `tools/test-lifecycle.ps1` (`npm run test:lifecycle`): bounded, temp-only
+  regression suite for `install.ps1` / `repair.ps1` / `uninstall.ps1` — a clean
+  install, install idempotency, refusal of a foreign `settings.json` (and
+  `-Force` adoption), `-ShortcutDir` merging, uninstall `-DryRun`, a real
+  uninstall that keeps the data directory, a second uninstall reporting
+  `[absent]`, and the real profile unchanged.
+- `tools/verify-clean-install.ps1` (with the CDP driver
+  `tools/verify-clean-install.mjs`): isolated end-to-end harness — clean
+  install, isolated launch, the live theme in the renderer, screenshots,
+  uninstall (dry run, real, idempotency). Evidence from its last run:
+  `docs/images/clean-install-evidence.json`.
+
+### Documentation
+
+- `README.md` and `README.zh-CN.md` rewritten as end-user documentation:
+  install, day-to-day use, updates, uninstall, troubleshooting, limits and
+  attribution. The CLI-first quick start (open a debug port, run
+  `node dist/cli.js launch`) is no longer the entry path.
+- New developer index `docs/dev/README.md`; `docs/zcode-dom-notes.md` and
+  `docs/OWNER_PLAYTEST.md` moved to `docs/dev/` as developer/verification
+  material.
+- `docs/dev/install-layout.md`: the layout and behavior contract behind the
+  lifecycle scripts.
 
 ### Verified
 
@@ -68,7 +157,12 @@ bundle against an isolated instance started with its own runtime-data directory,
 so the user's running ZCode was never restarted or modified. 67 live assertions
 plus 71 unit tests, all passing. Coverage and the one pre-existing upstream
 limitation found (a bare renderer reload drops the theme) are recorded in
-`docs/zcode-dom-notes.md`.
+`docs/dev/zcode-dom-notes.md`.
+
+The productionization path was verified end to end on an isolated scratch tree:
+clean install -> isolated launch -> theme visible in the live renderer (30/30
+assertions) -> uninstall -> idempotency, with the real profile provably
+unchanged. Evidence: `docs/images/clean-install-evidence.json`.
 
 ## v0.3.1
 

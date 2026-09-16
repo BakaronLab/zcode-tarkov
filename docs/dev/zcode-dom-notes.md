@@ -1,5 +1,7 @@
 # ZCode DOM notes
 
+> Developer/verification material, not user documentation. The user guide is `README.md` in the repository root.
+
 Investigation record for the selectors `zcode-tarkov` depends on: the semantic
 token scopes, the stable component-selector vocabulary, and the banner anchor.
 

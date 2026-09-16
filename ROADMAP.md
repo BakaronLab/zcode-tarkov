@@ -13,7 +13,7 @@ Shipped:
 - Automated tests for the new pure logic.
 
 Not yet verified live — see the "Limitations" section of the README and
-`docs/zcode-dom-notes.md`.
+`docs/dev/zcode-dom-notes.md`.
 
 ## Candidates for v0.2
 
@@ -22,7 +22,7 @@ Roughly in order of value per unit of risk.
 ### 1. Live verification and selector hardening (do this first)
 
 The first pass of this is **done** — see the "Live verification results" section
-of `docs/zcode-dom-notes.md`. A live CDP session was obtained via ZCode's
+of `docs/dev/zcode-dom-notes.md`. A live CDP session was obtained via ZCode's
 `ZCODE_DESKTOP_USER_DATA_DIR` runtime override, and the token scopes, banner
 anchor, mode switching, panel and restart recovery were all confirmed live.
 
@@ -37,7 +37,7 @@ What remains:
 - Add a regression guard so an upgrade that renames a token or drops `data-slot`
   fails loudly rather than silently half-theming.
 - Decide whether to fix the pre-existing "bare renderer reload drops the theme"
-  behavior, which is documented in `docs/zcode-dom-notes.md` as upstream.
+  behavior, which is documented in `docs/dev/zcode-dom-notes.md` as upstream.
 
 ### 2. More first-party Tarkov palettes
 

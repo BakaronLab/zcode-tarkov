@@ -79,7 +79,7 @@ runtime code was copied.
 - **Selectors.** DSH anchors its banner on `[class*="_heroWorkspaceRow"]`, which
   is a DSH/Cordis class and does not exist in ZCode. `zcode-tarkov` uses its own
   anchor, derived from the shipped ZCode renderer — see
-  [`docs/zcode-dom-notes.md`](docs/zcode-dom-notes.md).
+  [`docs/dev/zcode-dom-notes.md`](docs/dev/zcode-dom-notes.md).
 - **Banner text.** The DSH banner text is not reused; `zcode-tarkov` ships its
   own wording.
 - **Game-derived assets.** DSH bundles Altyn desktop-pet imagery, Scav voice

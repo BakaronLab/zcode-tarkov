@@ -1,165 +1,135 @@
 # zcode-tarkov
 
-An **Escape from Tarkov-inspired theme mode for the [ZCode](https://zcode.ai) desktop client**, with three switchable UI color modes and a live in-app settings panel. Applied by CDP injection — it never modifies ZCode's installation files.
+An unofficial, Tarkov-inspired theme for the **ZCode desktop client**: three switchable color modes plus a wallpaper layer, installed per user and started from its own **ZCode Tarkov** shortcut. It never modifies ZCode's files.
 
-> **Unofficial.** `zcode-tarkov` is a community project. It is **not affiliated with, endorsed by, or sponsored by Battlestate Games**, the developers or publishers of *Escape from Tarkov*. No game art, audio, logos, textures or screenshots are bundled — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+![The ZCode desktop client with the Tarkov theme applied](docs/images/homepage-tarkov.png)
 
-## The three color modes
+> **Unofficial.** `zcode-tarkov` is a community project. It is **not affiliated with, endorsed by, or sponsored by** Battlestate Games, the developers or publishers of *Escape from Tarkov*, nor by the ZCode vendors. No game art, audio, logos, textures or screenshots are bundled — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-The reason this fork exists: the original `monet: true/false` toggle could not express a third state. It is now an explicit `colorMode`.
+## What it does
 
-| Mode | UI palette comes from | Wallpaper still works? |
+The theme is applied to the running ZCode window by injecting CSS over a local debug port (the Chrome DevTools Protocol). ZCode's installation files are never modified, and nothing about the theme is written into them.
+
+Three color modes, switchable at any time from the in-app settings panel:
+
+| Mode | Where the UI colors come from | Wallpaper |
 |---|---|---|
-| **Monet** | The wallpaper — MD3 dynamic color extraction (upstream behavior, unchanged) | Yes |
-| **Tarkov** | A **fixed** Tarkov-inspired palette; the wallpaper never influences UI colors | Yes — swap, hide, blur, dim, cover/contain/smart all still work |
-| **Native** | ZCode's own colors, untouched | Yes, via translucency overrides so the wallpaper stays visible |
+| **Monet** | Your wallpaper, via Material Design 3 dynamic color | Still visible |
+| **Tarkov** | A fixed Tarkov-inspired palette: `#e07930` accent on deep-brown surfaces, warm `#e8d9c8` text | Still visible; the wallpaper never changes the UI colors |
+| **Native** | ZCode's own colors, untouched | Still visible, through translucency |
 
-In **Tarkov** mode the UI takes a fixed palette — accent orange `#e07930` on deep-brown surfaces, warm `#e8d9c8` text, thin warm-orange borders, near-square corners, orange active indicators — plus a two-line "beta interface" warning band pinned to the top of the window.
+All three modes keep the wallpaper layer: import your own image, blur it, dim it, hide or show it, and choose how it fills the window.
 
-Functional colors (`success`, `warning`, `danger`, `destructive`, `git-*`, `diff-*`) and code-block syntax colors are **never** re-tinted: states stay readable and code stays legible.
+Tarkov mode also adds the visual language this project exists for: a two-line beta warning band pinned across the top of the window, and — on the empty homepage — a beta notice that replaces the greeting (translucent orange band, dark hexagonal `!` badge) while leaving the page's own graphic in place.
 
-## Where this comes from
-
-- **Infrastructure: [zcode-beautify](https://github.com/Logocceai/zcode-beautify)** (MIT, © 2026 Logocceai). This project is a derivative of it. The CDP injection layer, MD3/Monet color extraction, the wallpaper layer, launcher/recovery/autostart machinery, the settings panel and the MCP surface are its work, reused rather than reimplemented. Git history is retained and the original remote is kept as `upstream-beautify`.
-- **Visual language: [dsh-theme-tarkov](https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov)** (MIT, © 2026 dsh-theme-tarkov contributors). Used as a **read-only reference** for the Tarkov palette and the beta-banner design ideas only. It targets a different application (DeepSeek Harness / Cordis): **no DSH code, selectors or assets were copied.**
-
-The upstream platform-agnostic `skill-pack/` is retained as-is under its original MIT attribution; it is not part of the Tarkov theme itself.
-
-Full attribution and the explicit asset-exclusion list: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+What stays untouched in every mode: ZCode's functional colors (`success`, `warning`, `danger`, `git-*`, `diff-*`) and the code-block syntax colors. State colors stay meaningful and code stays legible.
 
 ## Requirements
 
-- **Windows** is the primary target (the launcher-repair path is Windows-only; the rest is cross-platform).
-- **Node.js ≥ 20** to run the CLI/MCP server. **End users do not need to build** — `dist/cli.js` and `dist/mcp/server.js` are committed.
-- **ZCode Desktop 3.11.x**, started once with `--remote-debugging-port` so theming can be injected.
+- **Windows.** The installer, the launcher and the shortcuts are Windows-only.
+- **ZCode Desktop installed.** Verified against ZCode 3.11.2.
+- **Node.js 20 or newer.** The installer looks for `node.exe` on `PATH`, in `C:\Program Files\nodejs` and in `%LOCALAPPDATA%\Programs\nodejs`, and refuses to install when it cannot find one.
 
-## Quick start (Windows, from a clone)
+You do not need to build anything: the bundles in `dist/` are committed.
 
-```powershell
-# 0) Quit ZCode completely, including the tray icon.
+## Install
 
-# 1) Start ZCode with the CDP debug port.
-node dist/cli.js launch
-
-# 2) Import a wallpaper. This keeps whatever color mode is stored.
-node dist/cli.js apply "C:\path\to\wallpaper.jpg"
-
-# 3) Switch to the Tarkov palette.
-node dist/cli.js theme tarkov
-
-# 4) Make the debug port survive normal launches, so starting ZCode the usual
-#    way still opens CDP. Preview first: this writes per-user shortcuts and
-#    HKCU handlers only, and never elevates.
-node dist/cli.js repair-launchers --dry-run
-node dist/cli.js repair-launchers
-
-# 5) Start the resident service: settings panel + automatic restore.
-node dist/cli.js serve --detach
-```
-
-With `serve` running, a 🎨 button appears in the bottom-right of ZCode. The panel itself takes on the Tarkov skin while Tarkov mode is active, and returns to its neutral look for Monet and Native.
-
-## CLI reference
-
-| Command | Purpose |
-|---|---|
-| `launch [--port N]` | Start ZCode with `--remote-debugging-port` (quit ZCode first) |
-| `apply <image> [--blur] [--dim] [--fit] [--theme] [--no-monet]` | Set the wallpaper; **keeps the current color mode** unless `--theme` is given |
-| `theme <monet\|tarkov\|native>` | Switch the UI palette without touching the wallpaper |
-| `colors [--theme <mode>]` | Re-apply the stored theme, optionally changing mode |
-| `serve [--detach] [--api-port M]` | Watch mode + settings panel + local control API (default API port 9223) |
-| `watch` | Headless watch mode: re-inject whenever ZCode restarts |
-| `recovery [off\|on-start\|always]` | How the theme comes back after a restart (default `on-start`) |
-| `autostart [install\|uninstall]` | Register the resident service at sign-in (used by `always`) |
-| `repair-launchers [--dry-run]` | Add `--remote-debugging-port` to launch entries missing it |
-| `reset` | Remove wallpaper and color overrides |
-| `status` | Show CDP reachability and renderer targets |
-
-`--fit` accepts `cover` (fill and crop), `contain` (letterbox over a blurred backdrop), or `smart` (local saliency analysis picks framing and focus).
-
-## MCP tools
-
-The bundled MCP server (`dist/mcp/server.js`) exposes:
-
-| Tool | Purpose |
-|---|---|
-| `set_background` | Set the wallpaper, optionally choosing `color_mode` |
-| `apply_options` | Tune blur / dim / `color_mode` / wallpaper visibility / framing |
-| `refresh_theme` | Re-inject the stored theme after a restart |
-| `reset_appearance` | Remove wallpaper and overrides |
-| `beautify_status` | Show the stored config |
-| `recovery_status` | Report recovery mode, autostart entry, CDP reachability |
-| `set_recovery_mode` | Switch between `off` / `on-start` / `always` |
-| `repair_launchers` | Add the debug-port flag to launch entries missing it |
-
-The legacy `monet` boolean is still accepted by `apply_options` as an alias for `color_mode` (`true` = `monet`, `false` = `native`).
-
-## Configuration and migration
-
-Config lives in `%USERPROFILE%\.zcode\cli\plugins\data\zcode-tarkov\config.json` — or the plugin-scoped `zcode-tarkov@zcode-tarkov` directory, or `ZCODE_BEAUTIFY_DATA_DIR` if that variable is set.
-
-`colorMode` supersedes the old `monet` boolean:
-
-| Stored config | Resolved mode |
-|---|---|
-| `{ "monet": true }` (a pre-0.1 config) | `monet` |
-| `{ "monet": false }` | `native` |
-| `{ "colorMode": "tarkov" }` | `tarkov` |
-| missing, malformed or unknown | `monet` (the upstream default) |
-
-Both fields are always written back, kept consistent, so an older build reading the same file still behaves sensibly. Reading a legacy config never throws. If an existing `zcode-beautify` data directory is present it is used as a fallback location, so an old config is picked up and upgraded on the next save rather than silently ignored.
-
-## The beta warning banner
-
-Shown **only** in Tarkov mode: a translucent orange band with a dark hexagonal `!` badge and two lines of text. Both lines are configurable (`banner.text1` / `banner.text2` / `banner.opacity` / `banner.height` via the config file or `POST /api/config`), so the wording is not hardcoded.
-
-It is fail-soft by construction. It anchors on `#root` (guaranteed by ZCode's shipped HTML) and is inserted as a **sibling of the React root**, so React can never reconcile over it. If the anchor is missing, nothing is inserted and nothing throws. Text writes are conditional and the observer is debounced, so the banner cannot wedge page boot. Switching away from Tarkov mode removes it cleanly.
-
-The selector investigation — including how a live CDP session was obtained without disturbing a running ZCode, and the live-verified results — is recorded in [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md).
-
-## Project structure
-
-```
-├─ src/
-│  ├─ core/          CDP, injection, tokens, Monet, config, server, banner, launcher
-│  │  ├─ colorMode.ts    the monet|tarkov|native model + legacy migration
-│  │  ├─ tokenScopes.ts  verified ZCode token scopes
-│  │  └─ banner.ts       the Tarkov beta warning banner
-│  ├─ themes/        tarkov.ts — fixed palette + component skin
-│  ├─ panel/         panelScript.ts — the injected settings panel
-│  └─ mcp/           MCP server
-├─ tests/            node:test suites for the new pure logic
-├─ dist/             committed bundles (cli.js, mcp/server.js) — no build needed to use
-├─ docs/             zcode-dom-notes.md — selector investigation record
-├─ commands/ skills/ ZCode slash-command + skill definitions
-└─ THIRD_PARTY_NOTICES.md  licenses/
-```
-
-## Development
+From a checkout of this repository:
 
 ```powershell
-npm install
-npm run build      # tsc -> dist (typecheck)
-npm test           # compiles to .test-build/ and runs node --test
-npm run bundle     # build + esbuild -> the two committed dist bundles
+powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1
 ```
 
-`npm test` covers the new pure logic: config migration, per-mode payload assembly, wallpaper-visible/opacity behavior, the Tarkov palette mapping, banner script generation and teardown, and mode-switch residue.
+A real install does all of this:
 
-After changing anything under `src/`, run `npm run bundle` and commit the updated `dist/`. Users run the bundles directly and should never need to build.
+- copies the payload (the CLI bundle, the launcher scripts, `LICENSE`, `THIRD_PARTY_NOTICES.md` and `licenses/`) into `%LOCALAPPDATA%\Programs\zcode-tarkov`;
+- locates `ZCode.exe` automatically (settings cache, ZCode's environment variable, the `App Paths` registry entries, known paths, then a bounded scan — the disk is never scanned recursively);
+- creates one new shortcut, **"ZCode Tarkov"**, on your Desktop and in your Start Menu;
+- registers the per-user sign-in entry that brings the resident theme service back after you sign in, and starts that service now;
+- writes `settings.json` into the install directory, which the launcher reads.
 
-## Limitations
+Everything is **user-level**. The installer never elevates, never asks for administrator rights and never writes to `C:\Program Files`, `%ProgramData%`, the public desktop or machine-wide registry locations. It never modifies ZCode's installation files and never creates, changes or deletes an official ZCode shortcut. What it writes is the install directory, the shortcut named `ZCode Tarkov.lnk`, and the per-user sign-in entry.
 
-- **A bare renderer reload (F5 / `Page.reload`) drops the injected theme, and does not self-heal.** This is **pre-existing upstream behavior**, verified by reproducing it identically with pristine `zcode-beautify` at the base commit. ZCode's recovery modes exist precisely because the injected theme dies with the renderer: an **app restart** is restored correctly (verified live), a bare page reload is not. Fixing that would change upstream behavior and is out of scope; it is recorded in [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md).
-- The Tarkov component skin targets Radix portals (`dialog-content`, `dropdown-menu-content`, `select-item`, `input`, …) that only mount when those surfaces are opened, so they are not visible in a resting tree. The token layer, the banner and the panel were verified live; the individual styled portal surfaces were not opened during testing.
-- The banner reserves its height with `body { padding-top }` while mounted. This relies on ZCode's `html,body,#root{height:100%}` plus border-box roots, which holds in 3.11.2.
-- Tarkov mode is a dark palette by design; it does not follow ZCode's own light/dark switch.
-- Injection is an **unofficial** mechanism. A future ZCode update may break it; `reset` always restores the default appearance.
+Useful options: `-DryRun` reports what it would do and writes nothing; `-CdpPort` / `-ApiPort` change the two local ports (defaults `9222` / `9223`); `-DataDir` keeps the theme data in a directory you choose; `-InstallDir`, `-ShortcutDir`, `-NoShortcuts`, `-NoService`, `-Force` and `-Json` are also available. Exit code `0` means installed (warnings are allowed); `1` means refused or failed and nothing was installed.
 
-## Verified
+The repository also carries ZCode plugin/marketplace packaging (`marketplace.json`, `.zcode-plugin/plugin.json`). That path has not been verified for this fork, which has not been published to a marketplace; `install.ps1` is the supported, verified way to install it.
 
-Checked live against ZCode 3.11.2 (an isolated instance started with its own runtime-data directory, so the user's own ZCode was never restarted or modified): Monet / Tarkov / Native payloads and switching, wallpaper-visible and hidden behavior, the fixed palette surviving a wallpaper swap, the banner's presence, single-instance behavior, hexagon badge, reserved space, removal on mode change and on reset, the panel's UI Theme selector and Tarkov skin, config persistence, and theme restoration across an app restart. Full results in [docs/zcode-dom-notes.md](docs/zcode-dom-notes.md).
+## Using it day to day
 
-## License
+**Always start ZCode from the "ZCode Tarkov" shortcut** (Desktop or Start Menu). ZCode can only be themed when it is started with the local debug port, and the shortcut is what arranges that.
 
-MIT — see [LICENSE](LICENSE). Derived from zcode-beautify; Tarkov styling partly adapted from dsh-theme-tarkov. Both upstream notices are preserved in [LICENSE](LICENSE) and [licenses/](licenses/).
+The shortcut runs a hidden launcher, so no console window flashes. On each start it:
+
+1. resolves ZCode, using the cached path first, so a ZCode update that moves the app is noticed and the cached path refreshed;
+2. leaves ZCode alone when it is already running with the debug port;
+3. when ZCode is running **without** the theme, asks whether it may restart ZCode (unsaved conversation content would be lost). If you say no — or a non-interactive caller passes `-NoPrompt` — it changes nothing and tells you to quit ZCode fully and start it again from the shortcut;
+4. otherwise starts ZCode with the debug port;
+5. makes sure the resident theme service is healthy, and writes one line to `launcher.log`.
+
+The only process the launcher may terminate is ZCode itself, and only after an explicit Yes in that dialog. It fails soft: the worst case is ZCode starting without the theme. Exit codes: `0` healthy, `2` degraded (ZCode runs, the theme cannot be applied), `3` ZCode is running without the debug port, `4` the installation or `settings.json` is unusable, `1` unexpected error.
+
+### Switching themes
+
+Once the service is running, a 🎨 button sits in the bottom-right corner of the ZCode window. Click it to open the panel. It controls:
+
+- **UI Theme** — Monet / Tarkov / Native. Switching applies immediately and is remembered.
+- **Background blur** and **background dim** sliders.
+- **Show wallpaper** on/off, the **background fit** mode (fill and crop / contain / smart), and a button to pick a new wallpaper image.
+- **Reset to default appearance** — removes the wallpaper and the color overrides.
+- **Automatic restore** — whether ZCode restores the theme by itself at start, runs the resident service, or does nothing.
+
+The panel labels are in Chinese in this build.
+
+If the panel cannot reach the theme service it shows an explicit offline banner with a retry button instead of rendering values it never read. If ZCode is running without the debug port, the panel says a restart is needed and offers a button that restarts ZCode properly.
+
+![The settings panel with the UI Theme selector](docs/images/panel-theme-selector.png)
+
+## Keep it updated
+
+- **Re-run `install.ps1` from the checkout** to refresh an existing install. It is idempotent: it preserves `installedAt`, the recorded data directory and the cached ZCode path, and it removes only the payload files it owns that the current source no longer ships.
+- **After a ZCode update, run `repair.ps1`.** It re-detects `ZCode.exe` (a ZCode update can change the install path), re-resolves `node.exe`, verifies the payload, rewrites the "ZCode Tarkov" shortcut in the directories it recorded, and checks the resident service. It also reports the three things a ZCode update can break: the launcher, the DOM selectors and the CSS tokens.
+- **`repair.ps1 -SourceDir <tree>`** copies the payload from another checkout — the in-place upgrade path when you have a newer version. `-RestartService` stops and restarts the resident service so a freshly copied bundle reaches the running app; `-NoService`, `-NoShortcuts`, `-ZcodeExe`, `-ShortcutDir`, `-DryRun`, `-Force` and `-Json` are also available.
+- `repair.ps1` never rewrites the recorded ports; use `install.ps1 -CdpPort ...` to change them.
+- `repair.ps1` exits `0` when everything is healthy or was repaired, `2` when something is still degraded, `1` when it is blocked.
+
+## Uninstall
+
+Run `uninstall.ps1`, either from the installed tree (`%LOCALAPPDATA%\Programs\zcode-tarkov\uninstall.ps1`) or from the checkout:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File uninstall.ps1
+```
+
+It stops the resident service of this installation, removes the sign-in entry the CLI registered, deletes the "ZCode Tarkov" shortcuts it wrote, and removes the install directory. It is idempotent: a second run reports `[absent]` for what is already gone and still exits `0`.
+
+**Your data directory is kept by default** — it holds your wallpaper and settings. `uninstall.ps1` prints its path. `-RemoveData` additionally deletes the files the CLI owns there (`config.json`, `config.backup.json`, `recovery.json`, `wallpaper.*`, `serve.log`, `launcher.log`) and the directory itself only when nothing else remains in it.
+
+`uninstall.ps1` never touches ZCode's installation or profile, ZCode's official shortcuts, the marketplace plugin cache (`%USERPROFILE%\.zcode\cli\plugins`), or any shortcut that is not ours. The only official-entry changes it can make are removing the `--remote-debugging-port` token that this project's earlier playtest tooling once injected from an official shortcut or one of ZCode's own HKCU handler values; the entries themselves are never deleted. `-DryRun` reports the whole plan without writing anything. Exit code `0` means the sweep completed, `1` means a step was refused or failed and needs your attention.
+
+## Troubleshooting
+
+| Symptom | What to do |
+|---|---|
+| The theme is not applied | Start ZCode from the **ZCode Tarkov** shortcut (Desktop or Start Menu), not from ZCode's own icon. |
+| ZCode was already running when you used the shortcut | Quit ZCode completely — including the tray icon — then start it again from the shortcut. The debug port is fixed at process start, so an already-running instance cannot be themed. |
+| The theme stopped working after a ZCode software update | Run `repair.ps1`; it re-detects ZCode and repairs the launcher. If the theme still does not apply, ZCode's DOM anchors or color tokens have probably changed and a newer zcode-tarkov is needed — `repair.ps1` reports these as `dom-selectors` / `css-tokens` and cannot repair them offline. |
+| The launcher reports that the port is in use by another program | Reinstall with a different port: `powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1 -CdpPort 9333`. |
+| You need the logs | `launcher.log` is written in the install directory (`%LOCALAPPDATA%\Programs\zcode-tarkov`), or in the data directory when the installation used `-DataDir`. `serve.log` sits in the data directory — `uninstall.ps1` prints the path it resolved; by default it is below `%USERPROFILE%\.zcode\cli\plugins\data\`. |
+
+## Limits and honesty
+
+- **Unofficial.** Not affiliated with, endorsed by or sponsored by Battlestate Games or the ZCode vendors. "Escape from Tarkov" and related marks belong to their owners.
+- **No game assets.** The theme bundles no logos, textures, music, voice lines or other game material: it is CSS, a palette, and a wallpaper layer you fill with your own image.
+- **CSS injection over a debug port.** This is not an official extension point, so a ZCode update can break the theme until this project catches up. `repair.ps1` is the first stop, and the panel's reset button always restores the default appearance.
+- **Verified against ZCode 3.11.2.** Other ZCode versions are untested; the DOM anchors and color tokens the theme depends on are version-specific facts.
+- **Windows only for the lifecycle scripts.** The CLI itself also runs on macOS and Linux, where none of the shortcut logic applies.
+
+## Credits and license
+
+MIT — see [LICENSE](LICENSE). This repository is a local fork of the upstream **zcode-beautify** project (MIT): the CDP injection layer, the Monet color extraction, the wallpaper layer, the settings panel and the MCP surface are its work, reused rather than reimplemented. The Tarkov palette and the beta-banner visual language are adapted from the **dsh-theme-tarkov** project (MIT) as a read-only reference — no DSH code, selectors or assets were copied.
+
+Attribution and the explicit asset-exclusion list: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); both upstream licenses are reproduced in [`licenses/`](licenses/).
+
+## For contributors and verification
+
+Developer documentation — the install-layout contract, the live DOM notes, the build/test/bundle commands and the verification harnesses — is in [docs/dev/README.md](docs/dev/README.md). What is deliberately not part of v0.1.0 is in [ROADMAP.md](ROADMAP.md). Everything under `docs/dev/`, `tools/` and `evidence/` is developer and verification material, not user documentation.

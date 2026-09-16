@@ -1,5 +1,7 @@
 # Owner playtest — zcode-tarkov v0.1
 
+> Developer/verification material, not user documentation. The user guide is `README.md` in the repository root.
+
 Eyeball check only. No commands to run. Just restart ZCode and walk down the list.
 
 **Candidate:** `c5099b286195ca79c36227c1544084d810143e18`
