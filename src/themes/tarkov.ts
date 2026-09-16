@@ -296,16 +296,45 @@ ${itemActive} {
  * ZCode's own empty-chat component (verified live; see docs/zcode-dom-notes.md).
  * No hashed class names are involved.
  *
- * The original greeting text is never rewritten. It is only made non-painting
- * and zero-sized, so this is purely presentational: dropping the stylesheet —
- * which is exactly what leaving Tarkov mode does — restores the real greeting
- * byte for byte, with no restore path that could fail.
+ * The element becomes the announcement panel itself, so no extra DOM is created
+ * and there is nothing to tear down. The original greeting text is never
+ * rewritten: it is only made non-painting and zero-sized, so this is purely
+ * presentational and dropping the stylesheet — which is exactly what leaving
+ * Tarkov mode does — restores the real greeting byte for byte.
  *
  * The element only mounts on the empty-chat screen, so opening a real session
  * simply stops matching; if ZCode ever renames the attribute, nothing matches
  * and the stock greeting is shown. Both are fail-soft by construction.
  */
 p[data-v4-draft-greeting="true"] {
+  /* Announcement panel: content-sized and centred, with a hard-edged frame
+     rather than the app's soft rounded look. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: min(100%, 36rem);
+  margin-inline: auto;
+  padding: 1.1rem 1.7rem 1.15rem;
+  border: 1px solid rgba(224, 121, 48, 0.35);
+  border-left: 4px solid rgba(224, 121, 48, 0.9);
+  border-radius: 3px;
+  /* Deep-brown translucent plate. The top stop is deliberately a few tones
+     lighter than --color-background (#1c1207): with no wallpaper the page
+     background is that exact colour, so a plate of the same hue would show no
+     panel at all and the notice would read as bare text with a border. Lifting
+     the top stop keeps it a dark warm brown while making the plate visible as a
+     block; the .55-.72 range also keeps the Z graphic readable through it. */
+  background: linear-gradient(180deg, rgba(48, 33, 17, 0.55), rgba(28, 19, 10, 0.72));
+  backdrop-filter: blur(6px);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 215, 174, 0.06),
+    inset 0 0 24px rgba(224, 121, 48, 0.06);
+  /* Collapses the original greeting's own text box; the two lines are drawn by
+     the pseudo-elements below. */
   font-size: 0;
   line-height: 0;
 }
@@ -321,16 +350,20 @@ p[data-v4-draft-greeting="true"]::before {
   font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.85);
   font-weight: 700;
   line-height: 1.3;
+  letter-spacing: 0.01em;
   color: var(--color-foreground, #e8d9c8);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 p[data-v4-draft-greeting="true"]::after {
   content: ${cssString(TARKOV_GREETING.line2)};
   display: block;
-  margin-top: calc(var(--v4-draft-greeting-font-size, 30px) * 0.26);
+  /* Slightly tighter than a plain block gap so the two lines read as one notice. */
+  margin-top: calc(var(--v4-draft-greeting-font-size, 30px) * 0.18);
   font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.45);
   font-weight: 400;
   line-height: 1.5;
   color: var(--color-foreground-subtle, #8b877c);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 /* Deliberately NOT styled: code blocks, success/warning/destructive states,

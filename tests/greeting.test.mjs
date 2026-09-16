@@ -112,14 +112,99 @@ test("line 1 and line 2 render as separate blocks", () => {
 
 // --- palette ----------------------------------------------------------------
 
-test("both lines use existing Tarkov tokens, adding no new colors", () => {
+test("both lines still take their colours from the existing Tarkov tokens", () => {
   assert.match(blockFor(`${GREETING_SEL}::before`), /var\(--color-foreground,/);
   assert.match(blockFor(`${GREETING_SEL}::after`), /var\(--color-foreground-subtle,/);
-  // The only literal colors allowed are the palette fallbacks already used
-  // elsewhere in the theme; no new large surfaces are introduced.
-  const greetingOnly = css.slice(css.indexOf("empty-chat beta notice"));
-  assert.equal(/background/.test(greetingOnly), false, "the notice must not paint a panel");
-  assert.equal(/border/.test(greetingOnly), false, "the notice must not add a border");
+});
+
+// --- the announcement panel -------------------------------------------------
+
+test("the greeting element becomes a framed, padded announcement panel", () => {
+  const panel = blockFor(GREETING_SEL);
+  assert.match(panel, /border:\s*1px solid rgba\(224, 121, 48, 0\.35\)/, "thin warm border");
+  assert.match(panel, /border-left:\s*4px solid/, "left accent bar");
+  assert.match(panel, /border-radius:\s*3px/, "hard-edged, not the app's rounded look");
+  assert.match(panel, /padding:/, "panel padding");
+  assert.match(panel, /backdrop-filter:\s*blur\(6px\)/, "backdrop blur");
+  assert.match(panel, /box-shadow:/, "shadow for layering");
+});
+
+test("the panel is centred, content-sized, and capped in width", () => {
+  const panel = blockFor(GREETING_SEL);
+  assert.match(panel, /display:\s*flex/);
+  assert.match(panel, /flex-direction:\s*column/);
+  assert.match(panel, /align-items:\s*center/);
+  assert.match(panel, /justify-content:\s*center/);
+  assert.match(panel, /width:\s*fit-content/);
+  assert.match(panel, /max-width:\s*min\(100%,\s*36rem\)/);
+  assert.match(panel, /margin-inline:\s*auto/);
+});
+
+test("the plate is dark and translucent, never a bright orange block", () => {
+  const panel = blockFor(GREETING_SEL);
+  const gradient = /background:\s*linear-gradient\(([^;]*)\)/.exec(panel);
+  assert.ok(gradient, "expected a gradient plate");
+
+  const stops = [...gradient[1].matchAll(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\)/g)].map((m) => ({
+    r: +m[1],
+    g: +m[2],
+    b: +m[3],
+    a: +m[4],
+  }));
+  assert.ok(stops.length >= 2, "gradient should have at least two stops");
+  for (const s of stops) {
+    assert.ok(s.a > 0 && s.a < 0.75, `plate alpha ${s.a} must stay translucent so the Z shows through`);
+    assert.ok(s.r + s.g + s.b < 120, `plate colour ${s.r},${s.g},${s.b} must be dark`);
+  }
+  assert.equal(
+    /background:\s*rgba\(224, 121, 48/.test(panel),
+    false,
+    "the orange must not become a solid fill"
+  );
+});
+
+test("every colour in the panel stays within the Tarkov palette", () => {
+  const panel = blockFor(GREETING_SEL);
+  const allowed = new Set(["224,121,48", "48,33,17", "28,19,10", "255,215,174", "0,0,0"]);
+  for (const m of panel.matchAll(/rgba\((\d+),\s*(\d+),\s*(\d+)/g)) {
+    const key = `${m[1]},${m[2]},${m[3]}`;
+    assert.ok(allowed.has(key), `unexpected colour ${key} in the notice panel`);
+  }
+});
+
+test("the plate reads as a block against the default background", () => {
+  // With no wallpaper the page background is --color-background (#1c1207 =
+  // rgb(28,18,7)). A plate of that same tone would be invisible, leaving the
+  // notice as bare text, so the top stop must be measurably lighter.
+  const gradient = /background:\s*linear-gradient\(([^;]*)\)/.exec(blockFor(GREETING_SEL))[1];
+  const first = /rgba\((\d+),\s*(\d+),\s*(\d+)/.exec(gradient);
+  const [r, g, b] = [+first[1], +first[2], +first[3]];
+  const plate = r + g + b;
+  const background = 28 + 18 + 7; // #1c1207
+  assert.ok(plate > background + 20, `plate rgb(${r},${g},${b}) is too close to the background to show as a block`);
+  assert.ok(plate < 160, `plate rgb(${r},${g},${b}) is too light for a dark Tarkov surface`);
+  // Still a warm brown: red-dominant, blue-lightest.
+  assert.ok(r > g && g > b, `plate rgb(${r},${g},${b}) must stay a warm brown`);
+});
+
+test("nothing opaque is painted over the backdrop, so the Z graphic stays visible", () => {
+  const panel = blockFor(GREETING_SEL);
+  assert.equal(/background(-color)?:\s*(#|rgb\()/.test(panel), false, "no opaque fill");
+  assert.equal(/background(-color)?:\s*[a-z-]+\s*;/.test(panel), false, "plate must be a gradient, not a solid keyword");
+});
+
+test("the panel does not capture pointer events away from the page", () => {
+  // It is an in-flow block, not an overlay: no fixed/absolute positioning that
+  // could sit on top of the prompt box.
+  const panel = blockFor(GREETING_SEL);
+  assert.equal(/position:\s*(fixed|absolute)/.test(panel), false, "must stay in flow");
+  assert.match(panel, /position:\s*relative/);
+});
+
+test("the two lines are slightly tighter than a plain block gap", () => {
+  const margin = /margin-top:\s*calc\([^;]*\*\s*([0-9.]+)\)/.exec(blockFor(`${GREETING_SEL}::after`));
+  assert.ok(margin, "expected a derived margin-top");
+  assert.ok(Number(margin[1]) < 0.26, `spacing ${margin[1]} should be tighter than the previous 0.26`);
 });
 
 // --- emitted content --------------------------------------------------------

@@ -459,4 +459,54 @@ span text was byte-identical after every switch; the Z graphic kept its 400×320
 box in all states; and the injected stylesheet carried no greeting rule at all
 in Native and Monet.
 
+### Announcement panel (v0.1 visual pass)
+
+The element is also the announcement plate, built entirely from CSS on the same
+anchor — no extra DOM, nothing to tear down.
+
+The DSH-style plate tone needed one deliberate deviation from the suggested
+values, and the reason is worth recording: the suggested background
+(`rgba(28,18,7,…)`) is **the same colour as `--color-background` (#1c1207)**. On
+a wallpaper that does not matter, but with no wallpaper set — the default — the
+plate composited to the identical tone as the page behind it, so the panel was
+invisible as a block and the notice read as bare text with a border.
+
+Measured, before and after the top stop was lifted to `rgba(48,33,17,0.55)`:
+
+| sample | before | after |
+|---|---|---|
+| plate interior | meanL 21.6 | meanL 30.4 |
+| backdrop just above | meanL 22.4 | meanL 21.2 |
+| **visible step** | **−0.8 (none)** | **+9.2** |
+
+Sampled from a captured render; the plate stays a dark warm brown
+(`rgb(42,28,15)` composited) and never becomes a bright block.
+
+Other measured properties of the shipped panel:
+
+- geometry at a 1363px viewport: 510×96, content-sized (`width: fit-content`,
+  `max-width: min(100%, 36rem)`), centred, with `padding: 17.6px 27.2px 18.4px`;
+- at a narrower 778px viewport it correctly reflows to 465×149 with the subtitle
+  wrapping to two lines — content-adaptive as intended;
+- the left accent bar renders `rgb(137,76,31)` against an interior of
+  `rgb(42,28,15)`, so the frame is unmistakable even where the plate tone is
+  close to the background;
+- the Z graphic band above the plate still shows the strokes
+  (sd 3.16, luminance range 29), so the graphic remains visible;
+- the panel bottom sits at y=461 with the prompt input at y=557 — no overlap,
+  and the panel is in flow (`position: relative`), so it cannot cover it.
+
+Verified live, 20 assertions: plate/geometry/wording in Tarkov, then
+Tarkov → Native → Monet → Tarkov with no greeting rule and no plate left in the
+injected stylesheet in Native or Monet, the original greeting visible again in
+both, and the wording and untouched original text restored on returning to
+Tarkov.
+
+One measurement caveat: a minimized Chromium window stops producing frames, and
+`Page.captureScreenshot` then hangs rather than erroring. Screenshots here were
+taken immediately after launching a fresh renderer, while frames were still
+flowing. This model also cannot accept image input, so the render was verified by
+sampling pixels and reading computed styles rather than by looking at the image;
+the screenshots are kept for human review.
+
 
