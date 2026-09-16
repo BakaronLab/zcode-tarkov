@@ -5,7 +5,7 @@
  * derive from the wallpaper, so switching wallpapers never changes the UI
  * colors (that is the whole point of the mode). Token names and their ZCode
  * meanings were taken from the shipped stylesheet of ZCode 3.11.2 — see
- * `docs/zcode-dom-notes.md`.
+ * `docs/dev/zcode-dom-notes.md`.
  *
  * Visual language adapted from dsh-theme-tarkov (MIT) — accent orange, deep
  * brown surfaces, warm text, hexagon warning badge. No game assets are used.
@@ -302,7 +302,7 @@ ${itemActive} {
  * both #111111 with the reference's 1.5px letter-spacing and 5px line gap.
  *
  * Anchor: p[data-v4-draft-greeting="true"] — a semantic data attribute emitted by
- * ZCode's own empty-chat component (verified live; see docs/zcode-dom-notes.md).
+ * ZCode's own empty-chat component (verified live; see docs/dev/zcode-dom-notes.md).
  * No hashed class names are involved.
  *
  * The element becomes the band itself, so no extra DOM is created and there is

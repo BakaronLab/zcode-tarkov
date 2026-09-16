@@ -3,7 +3,7 @@
  * overrides, plus helpers to apply a theme to a running ZCode instance.
  */
 
-import { CdpConnection, injectIntoTarget, listTargets, pickRendererTargets, buildResetScript } from "./cdp.js";
+import { CdpConnection, injectIntoTarget, listRendererTargets, buildResetScript } from "./cdp.js";
 import { loadWallpaper, type WallpaperAssets } from "./monet.js";
 import { buildVariableOverrides, buildTransparencyOverrides } from "./tokens.js";
 import { buildTarkovVariableOverrides, buildTarkovComponentCss } from "../themes/tarkov.js";
@@ -157,7 +157,12 @@ html, body { background: transparent !important; }
 
 /** Apply config to a running ZCode instance. Returns how many windows got it. */
 export async function applyToZCode(config: BeautifyConfig, payload: BuiltPayload): Promise<number> {
-  const targets = pickRendererTargets(await listTargets(config.port));
+  // listRendererTargets, not listTargets + pickRendererTargets: it adds the
+  // bounded cold-start wait (endpoint reachable, renderer not up yet), which is
+  // exactly the window in which the appearance commands used to fail. Every
+  // appearance command funnels through here (apply, colors, theme) or through
+  // resetZCode below, so all of them benefit.
+  const targets = await listRendererTargets(config.port);
   if (targets.length === 0) {
     throw new Error("No ZCode renderer target found on the CDP endpoint.");
   }
@@ -174,7 +179,7 @@ export async function applyToZCode(config: BeautifyConfig, payload: BuiltPayload
 }
 
 export async function resetZCode(port: number): Promise<number> {
-  const targets = pickRendererTargets(await listTargets(port));
+  const targets = await listRendererTargets(port);
   let count = 0;
   for (const target of targets) {
     try {

@@ -42,8 +42,11 @@ Commands:
   serve [--port N] [--api-port M] [--detach]
                                  Watch mode + settings panel + local API (default API port 9223)
                                  --detach runs it in the background, outliving this shell
-  recovery [mode]                Restore the theme after ZCode restarts:
+  recovery [mode] [--port N] [--api-port M]
+                                 Restore the theme after ZCode restarts:
                                  off | on-start (default) | always
+                                 The api port matters: "always" bakes it into the
+                                 sign-in autostart entry (default 9223)
   autostart [install|uninstall]  Start the resident service at sign-in (used by mode "always")
   repair-launchers [--dry-run]   Add --remote-debugging-port to ZCode launch entries missing it
 `;
@@ -51,7 +54,16 @@ Commands:
 const MODE_LIST = COLOR_MODES.join(" | ");
 
 function autostartSpec(cdpPort: number, apiPort = 9223): AutostartSpec {
-  return { nodePath: process.execPath, cliPath: cliEntryPath(), cdpPort, apiPort };
+  // The data directory has to reach the sign-in daemon too: ZCODE_BEAUTIFY_DATA_DIR
+  // is how install.ps1 and the launcher pin it, and without it a service started
+  // at sign-in would serve the CLI's own default data directory after a reboot.
+  return {
+    nodePath: process.execPath,
+    cliPath: cliEntryPath(),
+    cdpPort,
+    apiPort,
+    dataDir: process.env.ZCODE_BEAUTIFY_DATA_DIR,
+  };
 }
 
 async function main(): Promise<void> {
@@ -158,14 +170,24 @@ async function main(): Promise<void> {
         break;
       }
       case "recovery": {
-        const wanted = normalizeMode(rest[0]);
-        if (rest[0] !== undefined && wanted === undefined) {
-          console.error(`Unknown recovery mode "${rest[0]}". Use one of: ${RECOVERY_MODES.join(", ")}.`);
+        // The autostart entry that "always" writes bakes both ports in, so a
+        // custom --api-port has to reach autostartSpec here: otherwise the
+        // sign-in daemon would come back on the default 9223 while the launcher
+        // probes the configured port and reports a missing service.
+        const apiPort = Number(flag("--api-port") ?? 9223);
+        // The mode is the first positional argument. A value that belongs to a
+        // preceding flag is not positional, so `recovery --api-port 9333 always`
+        // reads "always" (not "9333"); `recovery always --api-port 9333` was
+        // already positional.
+        const modeArg = rest.find((a, i) => !a.startsWith("--") && !(i > 0 && rest[i - 1].startsWith("--")));
+        const wanted = normalizeMode(modeArg);
+        if (modeArg !== undefined && wanted === undefined) {
+          console.error(`Unknown recovery mode "${modeArg}". Use one of: ${RECOVERY_MODES.join(", ")}.`);
           process.exitCode = 1;
           break;
         }
         if (wanted) {
-          const status = applyRecoveryMode(wanted, autostartSpec(port));
+          const status = applyRecoveryMode(wanted, autostartSpec(port, apiPort));
           console.log(`Recovery mode set to "${wanted}".`);
           if (wanted === "always") {
             console.log(

@@ -37,6 +37,28 @@ export function pickRendererTargets(targets: CdpTarget[]): CdpTarget[] {
   return main.length > 0 ? main : pages.filter((t) => !t.url.includes("devtools://"));
 }
 
+/**
+ * Renderer targets for an appearance command, with the cold-start grace period
+ * those commands need: ZCode's CDP endpoint answers /json/version about a second
+ * after start, but the renderer page target only appears a couple of seconds in
+ * (measured: 805 ms vs 2457 ms), so a command run in that window would otherwise
+ * fail with "No ZCode renderer target found on the CDP endpoint."
+ *
+ * Only the specific case "endpoint reachable, zero renderer targets" waits, and
+ * it is bounded (<= 5 s by default). An unreachable endpoint still fails on the
+ * first attempt, so watch/serve/status keep their current fast failure and only
+ * the appearance commands (apply, colors, theme, reset - they all pick their
+ * targets here) get the retry.
+ */
+export async function listRendererTargets(port: number, host = "127.0.0.1", timeoutMs = 5000): Promise<CdpTarget[]> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const targets = pickRendererTargets(await listTargets(port, host));
+    if (targets.length > 0 || Date.now() >= deadline) return targets;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+}
+
 export class CdpConnection {
   private ws: WebSocket;
   private nextId = 1;

@@ -121,7 +121,7 @@ export function buildPanelScript(apiPort: number, token: string): string {
     '  <div id="zb-head"><span id="zb-title">ZCode Tarkov</span><span id="zb-close">✕</span></div>' +
     '  <div id="zb-offline" hidden>' +
     '    <div>⚠ 美化服务未运行,面板不可用</div>' +
-    '    <div class="zb-hint">在插件目录执行 <code>node dist/cli.js serve --detach</code> 启动</div>' +
+    '    <div class="zb-hint">请从 ZCode Tarkov 快捷方式重新启动 ZCode,服务会自动恢复</div>' +
     '    <button class="zb-btn" id="zb-retry">重试连接</button>' +
     '  </div>' +
     '  <div id="zb-needs-relaunch" hidden>' +

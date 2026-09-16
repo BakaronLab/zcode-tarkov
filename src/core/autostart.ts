@@ -22,6 +22,14 @@ export interface AutostartSpec {
   cliPath: string;
   cdpPort: number;
   apiPort: number;
+  /**
+   * Optional ZCODE_BEAUTIFY_DATA_DIR for the autostarted process. The installer
+   * and the launcher pin the data directory through that variable; without it
+   * here, a service started at sign-in would resolve the CLI's own default data
+   * directory, so after a reboot the resident service would serve a different
+   * config than the launcher expects.
+   */
+  dataDir?: string;
 }
 
 export interface AutostartStatus {
@@ -90,16 +98,37 @@ function windowsScript(spec: AutostartSpec): string {
     String(spec.apiPort),
     "--detach",
   ].join(" ");
-  return [
+  const lines = [
     `' ZCode Beautify — restores the wallpaper and Monet colors after ZCode restarts.`,
     `' Runs \`serve --detach\` in the background, with no visible window.`,
     `' Delete this file (or run \`zcode-beautify autostart uninstall\`) to disable it.`,
-    `CreateObject("WScript.Shell").Run ${vbsLiteral(command)}, 0, False`,
-    ``,
-  ].join("\r\n");
+  ];
+  if (spec.dataDir) {
+    // Set the variable in this process's environment before Run: whatever
+    // wscript.exe starts inherits it. No console window and no cmd wrapper are
+    // involved, so the entry stays a fire-and-forget background start.
+    lines.push(
+      `CreateObject("WScript.Shell").Environment("PROCESS")("ZCODE_BEAUTIFY_DATA_DIR") = ${vbsLiteral(spec.dataDir)}`
+    );
+  }
+  lines.push(`CreateObject("WScript.Shell").Run ${vbsLiteral(command)}, 0, False`, ``);
+  return lines.join("\r\n");
+}
+
+/** Minimal XML text escaping for the values interpolated into the plist. */
+function xmlText(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function macosScript(spec: AutostartSpec): string {
+  const envBlock = spec.dataDir
+    ? `  <key>EnvironmentVariables</key>
+  <dict>
+    <key>ZCODE_BEAUTIFY_DATA_DIR</key>
+    <string>${xmlText(spec.dataDir)}</string>
+  </dict>
+`
+    : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -116,7 +145,7 @@ function macosScript(spec: AutostartSpec): string {
     <string>--api-port</string>
     <string>${spec.apiPort}</string>
   </array>
-  <key>RunAtLoad</key>
+${envBlock}  <key>RunAtLoad</key>
   <true/>
   <key>KeepAlive</key>
   <false/>
@@ -125,15 +154,23 @@ function macosScript(spec: AutostartSpec): string {
 `;
 }
 
+/** Desktop Entry Exec quoting: double quotes when the token needs them. */
+function desktopArg(part: string): string {
+  return /[\s"]/.test(part) ? `"${part.replace(/"/g, '\\"')}"` : part;
+}
+
 function linuxScript(spec: AutostartSpec): string {
   const exec = [spec.nodePath, spec.cliPath, "serve", "--port", String(spec.cdpPort), "--api-port", String(spec.apiPort)]
-    .map((part) => (/[\s"]/.test(part) ? `"${part.replace(/"/g, '\\"')}"` : part))
+    .map(desktopArg)
     .join(" ");
+  // `env VAR=value` keeps the Exec line a single command while pinning the same
+  // data directory the installer and the launcher use.
+  const dataEnv = spec.dataDir ? `env ${desktopArg(`ZCODE_BEAUTIFY_DATA_DIR=${spec.dataDir}`)} ` : "";
   return `[Desktop Entry]
 Type=Application
 Name=ZCode Beautify
 Comment=Keeps the ZCode wallpaper and Monet colors applied across restarts
-Exec=${exec}
+Exec=${dataEnv}${exec}
 Terminal=false
 X-GNOME-Autostart-enabled=true
 `;

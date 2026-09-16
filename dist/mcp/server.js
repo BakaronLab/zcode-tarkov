@@ -66234,6 +66234,15 @@ function pickRendererTargets(targets) {
   const main = pages.filter((t2) => t2.url.includes("out/renderer/index.html") || t2.title === "ZCode");
   return main.length > 0 ? main : pages.filter((t2) => !t2.url.includes("devtools://"));
 }
+async function listRendererTargets(port, host = "127.0.0.1", timeoutMs = 5e3) {
+  const deadline = Date.now() + timeoutMs;
+  for (; ; ) {
+    const targets = pickRendererTargets(await listTargets(port, host));
+    if (targets.length > 0 || Date.now() >= deadline)
+      return targets;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+}
 var CdpConnection = class _CdpConnection {
   ws;
   nextId = 1;
@@ -144904,7 +144913,7 @@ ${itemActive} {
  * both #111111 with the reference's 1.5px letter-spacing and 5px line gap.
  *
  * Anchor: p[data-v4-draft-greeting="true"] \u2014 a semantic data attribute emitted by
- * ZCode's own empty-chat component (verified live; see docs/zcode-dom-notes.md).
+ * ZCode's own empty-chat component (verified live; see docs/dev/zcode-dom-notes.md).
  * No hashed class names are involved.
  *
  * The element becomes the band itself, so no extra DOM is created and there is
@@ -145108,7 +145117,7 @@ html, body { background: transparent !important; }
   };
 }
 async function applyToZCode(config2, payload) {
-  const targets = pickRendererTargets(await listTargets(config2.port));
+  const targets = await listRendererTargets(config2.port);
   if (targets.length === 0) {
     throw new Error("No ZCode renderer target found on the CDP endpoint.");
   }
@@ -145124,7 +145133,7 @@ async function applyToZCode(config2, payload) {
   return count;
 }
 async function resetZCode(port) {
-  const targets = pickRendererTargets(await listTargets(port));
+  const targets = await listRendererTargets(port);
   let count = 0;
   for (const target of targets) {
     try {
@@ -145284,15 +145293,27 @@ function windowsScript(spec) {
     String(spec.apiPort),
     "--detach"
   ].join(" ");
-  return [
+  const lines = [
     `' ZCode Beautify \u2014 restores the wallpaper and Monet colors after ZCode restarts.`,
     `' Runs \`serve --detach\` in the background, with no visible window.`,
-    `' Delete this file (or run \`zcode-beautify autostart uninstall\`) to disable it.`,
-    `CreateObject("WScript.Shell").Run ${vbsLiteral(command)}, 0, False`,
-    ``
-  ].join("\r\n");
+    `' Delete this file (or run \`zcode-beautify autostart uninstall\`) to disable it.`
+  ];
+  if (spec.dataDir) {
+    lines.push(`CreateObject("WScript.Shell").Environment("PROCESS")("ZCODE_BEAUTIFY_DATA_DIR") = ${vbsLiteral(spec.dataDir)}`);
+  }
+  lines.push(`CreateObject("WScript.Shell").Run ${vbsLiteral(command)}, 0, False`, ``);
+  return lines.join("\r\n");
+}
+function xmlText(value) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 function macosScript(spec) {
+  const envBlock = spec.dataDir ? `  <key>EnvironmentVariables</key>
+  <dict>
+    <key>ZCODE_BEAUTIFY_DATA_DIR</key>
+    <string>${xmlText(spec.dataDir)}</string>
+  </dict>
+` : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -145309,7 +145330,7 @@ function macosScript(spec) {
     <string>--api-port</string>
     <string>${spec.apiPort}</string>
   </array>
-  <key>RunAtLoad</key>
+${envBlock}  <key>RunAtLoad</key>
   <true/>
   <key>KeepAlive</key>
   <false/>
@@ -145317,13 +145338,17 @@ function macosScript(spec) {
 </plist>
 `;
 }
+function desktopArg(part) {
+  return /[\s"]/.test(part) ? `"${part.replace(/"/g, '\\"')}"` : part;
+}
 function linuxScript(spec) {
-  const exec = [spec.nodePath, spec.cliPath, "serve", "--port", String(spec.cdpPort), "--api-port", String(spec.apiPort)].map((part) => /[\s"]/.test(part) ? `"${part.replace(/"/g, '\\"')}"` : part).join(" ");
+  const exec = [spec.nodePath, spec.cliPath, "serve", "--port", String(spec.cdpPort), "--api-port", String(spec.apiPort)].map(desktopArg).join(" ");
+  const dataEnv = spec.dataDir ? `env ${desktopArg(`ZCODE_BEAUTIFY_DATA_DIR=${spec.dataDir}`)} ` : "";
   return `[Desktop Entry]
 Type=Application
 Name=ZCode Beautify
 Comment=Keeps the ZCode wallpaper and Monet colors applied across restarts
-Exec=${exec}
+Exec=${dataEnv}${exec}
 Terminal=false
 X-GNOME-Autostart-enabled=true
 `;

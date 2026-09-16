@@ -290,6 +290,7 @@ __export(cdp_exports, {
   buildBootstrapScript: () => buildBootstrapScript,
   buildResetScript: () => buildResetScript,
   injectIntoTarget: () => injectIntoTarget,
+  listRendererTargets: () => listRendererTargets,
   listTargets: () => listTargets,
   pickRendererTargets: () => pickRendererTargets
 });
@@ -308,6 +309,15 @@ function pickRendererTargets(targets) {
   const pages = targets.filter((t2) => t2.type === "page" && t2.webSocketDebuggerUrl);
   const main2 = pages.filter((t2) => t2.url.includes("out/renderer/index.html") || t2.title === "ZCode");
   return main2.length > 0 ? main2 : pages.filter((t2) => !t2.url.includes("devtools://"));
+}
+async function listRendererTargets(port, host = "127.0.0.1", timeoutMs = 5e3) {
+  const deadline = Date.now() + timeoutMs;
+  for (; ; ) {
+    const targets = pickRendererTargets(await listTargets(port, host));
+    if (targets.length > 0 || Date.now() >= deadline)
+      return targets;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
 }
 async function injectIntoTarget(target, payload) {
   const conn = await CdpConnection.connect(target.webSocketDebuggerUrl);
@@ -110172,7 +110182,7 @@ ${itemActive} {
  * both #111111 with the reference's 1.5px letter-spacing and 5px line gap.
  *
  * Anchor: p[data-v4-draft-greeting="true"] \u2014 a semantic data attribute emitted by
- * ZCode's own empty-chat component (verified live; see docs/zcode-dom-notes.md).
+ * ZCode's own empty-chat component (verified live; see docs/dev/zcode-dom-notes.md).
  * No hashed class names are involved.
  *
  * The element becomes the band itself, so no extra DOM is created and there is
@@ -110398,7 +110408,7 @@ html, body { background: transparent !important; }
   };
 }
 async function applyToZCode(config, payload) {
-  const targets = pickRendererTargets(await listTargets(config.port));
+  const targets = await listRendererTargets(config.port);
   if (targets.length === 0) {
     throw new Error("No ZCode renderer target found on the CDP endpoint.");
   }
@@ -110414,7 +110424,7 @@ async function applyToZCode(config, payload) {
   return count;
 }
 async function resetZCode(port) {
-  const targets = pickRendererTargets(await listTargets(port));
+  const targets = await listRendererTargets(port);
   let count = 0;
   for (const target of targets) {
     try {
@@ -110723,15 +110733,27 @@ function windowsScript(spec) {
     String(spec.apiPort),
     "--detach"
   ].join(" ");
-  return [
+  const lines = [
     `' ZCode Beautify \u2014 restores the wallpaper and Monet colors after ZCode restarts.`,
     `' Runs \`serve --detach\` in the background, with no visible window.`,
-    `' Delete this file (or run \`zcode-beautify autostart uninstall\`) to disable it.`,
-    `CreateObject("WScript.Shell").Run ${vbsLiteral(command)}, 0, False`,
-    ``
-  ].join("\r\n");
+    `' Delete this file (or run \`zcode-beautify autostart uninstall\`) to disable it.`
+  ];
+  if (spec.dataDir) {
+    lines.push(`CreateObject("WScript.Shell").Environment("PROCESS")("ZCODE_BEAUTIFY_DATA_DIR") = ${vbsLiteral(spec.dataDir)}`);
+  }
+  lines.push(`CreateObject("WScript.Shell").Run ${vbsLiteral(command)}, 0, False`, ``);
+  return lines.join("\r\n");
+}
+function xmlText(value) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 function macosScript(spec) {
+  const envBlock = spec.dataDir ? `  <key>EnvironmentVariables</key>
+  <dict>
+    <key>ZCODE_BEAUTIFY_DATA_DIR</key>
+    <string>${xmlText(spec.dataDir)}</string>
+  </dict>
+` : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -110748,7 +110770,7 @@ function macosScript(spec) {
     <string>--api-port</string>
     <string>${spec.apiPort}</string>
   </array>
-  <key>RunAtLoad</key>
+${envBlock}  <key>RunAtLoad</key>
   <true/>
   <key>KeepAlive</key>
   <false/>
@@ -110756,13 +110778,17 @@ function macosScript(spec) {
 </plist>
 `;
 }
+function desktopArg(part) {
+  return /[\s"]/.test(part) ? `"${part.replace(/"/g, '\\"')}"` : part;
+}
 function linuxScript(spec) {
-  const exec = [spec.nodePath, spec.cliPath, "serve", "--port", String(spec.cdpPort), "--api-port", String(spec.apiPort)].map((part) => /[\s"]/.test(part) ? `"${part.replace(/"/g, '\\"')}"` : part).join(" ");
+  const exec = [spec.nodePath, spec.cliPath, "serve", "--port", String(spec.cdpPort), "--api-port", String(spec.apiPort)].map(desktopArg).join(" ");
+  const dataEnv = spec.dataDir ? `env ${desktopArg(`ZCODE_BEAUTIFY_DATA_DIR=${spec.dataDir}`)} ` : "";
   return `[Desktop Entry]
 Type=Application
 Name=ZCode Beautify
 Comment=Keeps the ZCode wallpaper and Monet colors applied across restarts
-Exec=${exec}
+Exec=${dataEnv}${exec}
 Terminal=false
 X-GNOME-Autostart-enabled=true
 `;
@@ -110954,7 +110980,7 @@ function buildPanelScript(apiPort, token) {
     '  <div id="zb-head"><span id="zb-title">ZCode Tarkov</span><span id="zb-close">\u2715</span></div>' +
     '  <div id="zb-offline" hidden>' +
     '    <div>\u26A0 \u7F8E\u5316\u670D\u52A1\u672A\u8FD0\u884C,\u9762\u677F\u4E0D\u53EF\u7528</div>' +
-    '    <div class="zb-hint">\u5728\u63D2\u4EF6\u76EE\u5F55\u6267\u884C <code>node dist/cli.js serve --detach</code> \u542F\u52A8</div>' +
+    '    <div class="zb-hint">\u8BF7\u4ECE ZCode Tarkov \u5FEB\u6377\u65B9\u5F0F\u91CD\u65B0\u542F\u52A8 ZCode,\u670D\u52A1\u4F1A\u81EA\u52A8\u6062\u590D</div>' +
     '    <button class="zb-btn" id="zb-retry">\u91CD\u8BD5\u8FDE\u63A5</button>' +
     '  </div>' +
     '  <div id="zb-needs-relaunch" hidden>' +
@@ -111882,14 +111908,23 @@ Commands:
   serve [--port N] [--api-port M] [--detach]
                                  Watch mode + settings panel + local API (default API port 9223)
                                  --detach runs it in the background, outliving this shell
-  recovery [mode]                Restore the theme after ZCode restarts:
+  recovery [mode] [--port N] [--api-port M]
+                                 Restore the theme after ZCode restarts:
                                  off | on-start (default) | always
+                                 The api port matters: "always" bakes it into the
+                                 sign-in autostart entry (default 9223)
   autostart [install|uninstall]  Start the resident service at sign-in (used by mode "always")
   repair-launchers [--dry-run]   Add --remote-debugging-port to ZCode launch entries missing it
 `;
 var MODE_LIST = COLOR_MODES.join(" | ");
 function autostartSpec(cdpPort, apiPort = 9223) {
-  return { nodePath: process.execPath, cliPath: cliEntryPath(), cdpPort, apiPort };
+  return {
+    nodePath: process.execPath,
+    cliPath: cliEntryPath(),
+    cdpPort,
+    apiPort,
+    dataDir: process.env.ZCODE_BEAUTIFY_DATA_DIR
+  };
 }
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
@@ -111993,14 +112028,16 @@ Quit ZCode completely (including any tray icon), then run \`zcode-tarkov launch\
         break;
       }
       case "recovery": {
-        const wanted = normalizeMode(rest[0]);
-        if (rest[0] !== void 0 && wanted === void 0) {
-          console.error(`Unknown recovery mode "${rest[0]}". Use one of: ${RECOVERY_MODES.join(", ")}.`);
+        const apiPort = Number(flag("--api-port") ?? 9223);
+        const modeArg = rest.find((a2, i2) => !a2.startsWith("--") && !(i2 > 0 && rest[i2 - 1].startsWith("--")));
+        const wanted = normalizeMode(modeArg);
+        if (modeArg !== void 0 && wanted === void 0) {
+          console.error(`Unknown recovery mode "${modeArg}". Use one of: ${RECOVERY_MODES.join(", ")}.`);
           process.exitCode = 1;
           break;
         }
         if (wanted) {
-          const status = applyRecoveryMode(wanted, autostartSpec(port));
+          const status = applyRecoveryMode(wanted, autostartSpec(port, apiPort));
           console.log(`Recovery mode set to "${wanted}".`);
           if (wanted === "always") {
             console.log(status.autostart.installed ? `Autostart entry written to ${status.autostart.entryPath} (active from the next sign-in).` : `Could not register autostart${status.autostart.note ? `: ${status.autostart.note}` : ""}.`);
