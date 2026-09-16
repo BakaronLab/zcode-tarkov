@@ -24,26 +24,30 @@ Fully quit ZCode (including the tray icon), then start it again using **either**
 | 2 | The UI is the **Tarkov palette**: dark brown surfaces, orange accents, warm off-white text | |
 | 3 | A **settings panel** button (🎨) sits in the bottom-right corner | |
 | 4 | A two-line **orange warning band** is pinned across the top | |
-| 5 | Open the panel; a **UI Theme** dropdown shows Monet / Tarkov / Native | |
-| 6 | Switch to **Monet** → panel turns neutral, band disappears, colors re-derive from the wallpaper | |
-| 7 | Switch to **Native** → ZCode's own colors return | |
-| 8 | Switch back to **Tarkov** → Tarkov palette + band return. Band appears **once** (not twice) | |
-| 9 | Drag the **background blur** slider → background visibly blurs | |
-| 10 | Drag the **background dim** slider → background visibly darkens | |
-| 11 | Click **更换图片…** and pick any image → it becomes the background; UI colors stay Tarkov | |
-| 12 | Toggle **显示壁纸** off/on → background hides and returns | |
-| 13 | Text is clearly readable throughout: chat, sidebar, code blocks, menus/popovers | |
-| 14 | Use the agent normally (send one real request) → the theme does not interfere | |
-| 15 | Quit ZCode completely, reopen it → theme, band and panel come back **by themselves** | |
+| 5 | On the **new-task / empty homepage**, the greeting has been replaced by the two-line beta notice: a large bold line, then a smaller dimmer line. The central **Z graphic is still there** | |
+| 6 | Open the panel; a **UI Theme** dropdown shows Monet / Tarkov / Native | |
+| 7 | Switch to **Monet** → panel turns neutral, band disappears, **the original greeting returns**, colors re-derive from the wallpaper | |
+| 8 | Switch to **Native** → ZCode's own colors return, greeting still original | |
+| 9 | Switch back to **Tarkov** → Tarkov palette + band + beta notice return. Band appears **once** (not twice) | |
+| 10 | Drag the **background blur** slider → background visibly blurs | |
+| 11 | Drag the **background dim** slider → background visibly darkens | |
+| 12 | Click **更换图片…** and pick any image → it becomes the background; UI colors stay Tarkov | |
+| 13 | Toggle **显示壁纸** off/on → background hides and returns | |
+| 14 | Text is clearly readable throughout: chat, sidebar, code blocks, menus/popovers | |
+| 15 | Use the agent normally (send one real request) → the theme does not interfere | |
+| 16 | Quit ZCode completely, reopen it → theme, band, beta notice and panel come back **by themselves** | |
 
 ## Notes on a few items
 
+- **Item 5** — the notice only replaces the greeting text. It should not shift the
+  Z graphic, the prompt box, or anything else on that screen. Open a real session
+  and the normal header returns; the notice belongs to the empty page only.
 - **Item 8** — the band must never stack into two. If you ever see two, that is a bug.
-- **Item 11** — this is the first time a wallpaper is set. Until then the theme is
+- **Item 12** — this is the first time a wallpaper is set. Until then the theme is
   deliberately opaque (there was no image to show through).
-- **Item 14** — the point is that theming is cosmetic only; nothing about tool
+- **Item 15** — the point is that theming is cosmetic only; nothing about tool
   calls, file edits, or the working tree should change.
-- **Item 15** — this is the real test of auto-recovery. If the theme does *not*
+- **Item 16** — this is the real test of auto-recovery. If the theme does *not*
   return, the debug port is the likely cause: check you launched from
   "ZCode Tarkov" or the Start Menu.
 
@@ -56,17 +60,18 @@ Copy this and fill it in:
 2  Tarkov palette ................... PASS / FAIL / NOTE
 3  settings panel present ........... PASS / FAIL / NOTE
 4  beta band present ................ PASS / FAIL / NOTE
-5  UI Theme dropdown ................ PASS / FAIL / NOTE
-6  -> Monet ......................... PASS / FAIL / NOTE
-7  -> Native ........................ PASS / FAIL / NOTE
-8  -> back to Tarkov (one band) ..... PASS / FAIL / NOTE
-9  blur slider ...................... PASS / FAIL / NOTE
-10 dim slider ....................... PASS / FAIL / NOTE
-11 change wallpaper ................. PASS / FAIL / NOTE
-12 hide / show wallpaper ............ PASS / FAIL / NOTE
-13 text readable (code/menu/sidebar)  PASS / FAIL / NOTE
-14 agent still works normally ....... PASS / FAIL / NOTE
-15 restart restores the theme ....... PASS / FAIL / NOTE
+5  homepage beta notice + Z graphic . PASS / FAIL / NOTE
+6  UI Theme dropdown ................ PASS / FAIL / NOTE
+7  -> Monet (greeting returns) ...... PASS / FAIL / NOTE
+8  -> Native ........................ PASS / FAIL / NOTE
+9  -> back to Tarkov (one band) ..... PASS / FAIL / NOTE
+10 blur slider ...................... PASS / FAIL / NOTE
+11 dim slider ....................... PASS / FAIL / NOTE
+12 change wallpaper ................. PASS / FAIL / NOTE
+13 hide / show wallpaper ............ PASS / FAIL / NOTE
+14 text readable (code/menu/sidebar)  PASS / FAIL / NOTE
+15 agent still works normally ....... PASS / FAIL / NOTE
+16 restart restores the theme ....... PASS / FAIL / NOTE
 
 NOTE (anything that looked wrong, felt off, or you liked):
 ```
