@@ -110227,12 +110227,15 @@ p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) {
   border-radius: 6px;
   text-align: left;
   /* The band itself. One knob for its strength, as in the reference project,
-     which ships the same variable \u2014 at 0.55, its own default, which is what is
-     used here. Measured on a real renderer over ZCode's empty-chat backdrop,
-     the painted band is rgb(160,86,35) at 0.55 and rgb(171,94,37) at 0.62,
-     against #111111 text: 3.5:1 and 3.9:1, so the reference value already
-     clears the 3:1 large-text bar. Raise it here for extra margin. */
-  background: rgba(224, 121, 48, var(--zct-banner-opacity, 0.55));
+     which ships the same variable \u2014 at 0.55, its own default.
+     Measured on a real renderer over ZCode's empty-chat backdrop, the painted
+     band is rgb(160,86,35) at 0.55 and rgb(171,94,37) at 0.62, against #111111
+     text: 3.5:1 and 3.9:1, so both clear the 3:1 large-text bar.
+     Shipped at the top of the agreed 0.45-0.62 range (0.62) because the owner
+     read the 0.55 band as slightly dark on a real display: the hue and RGB stay
+     #e07930, only the strength changes, and the band is still translucent.
+     The --zct-banner-opacity variable remains the single knob for tuning it. */
+  background: rgba(224, 121, 48, var(--zct-banner-opacity, 0.62));
 }
 p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child)::before {
   /* The warning badge: the reference's hexagon, cut from the deepest surface
