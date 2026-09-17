@@ -51,7 +51,24 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 // dist/core/banner.js
 function buildBannerCss(opts) {
   return `
-html[data-zct-banner="1"] body { padding-top: ${opts.height}px; }
+/* Single source of truth for the reserved band: BannerOptions.height. */
+html[data-zct-banner="1"] { --zcode-tarkov-banner-height: ${opts.height}px; }
+/* flow-root keeps #root's margin-top from collapsing through the body; without
+   it the whole body box moves down by the band and the document keeps the band
+   height of scrollable overflow (measured on 3.11.2). */
+html[data-zct-banner="1"] body { display: flow-root; }
+/* #root is position: static in ZCode, so its space is reserved with a margin
+   and its 100dvh height is reduced by the same band height. */
+html[data-zct-banner="1"] #root {
+  margin-top: var(--zcode-tarkov-banner-height);
+  height: calc(100dvh - var(--zcode-tarkov-banner-height));
+}
+/* ZCode's app shells size themselves with the 100dvh utility, which does not
+   shrink when #root does; without this they stay a full viewport tall and the
+   bottom band of the UI (account area, composer) is clipped again. */
+html[data-zct-banner="1"] .h-dvh {
+  height: calc(100dvh - var(--zcode-tarkov-banner-height));
+}
 #${BANNER_ID} {
   position: fixed;
   top: 0;
@@ -110943,7 +110960,17 @@ function buildPanelScript(apiPort, token) {
     '.zb-btn { display: inline-block; padding: 6px 20px; text-align: center; border-radius: var(--zb-radius-pill); cursor: pointer;',
       ' background: var(--zb-ctl-bg); border: 1px solid var(--zb-ctl-border); color: inherit; font-size: 12px; }',
     '.zb-btn:hover { background: var(--zb-ctl-hover); }',
-    '#zb-status { min-height: 14px; padding: 2px 12px 0; opacity: .6; font-size: 11px; }',
+    // Transient status toast. It must never sit in normal flow: it was the only
+    // in-flow child of the root, so with the root fixed at "inset: auto" the
+    // root shrink-wrapped to it and landed at the very end of the document \u2014
+    // 14px below the viewport, off-screen in every mode. It is now pinned to
+    // the viewport next to the FAB (the panel's own control) and wears the
+    // panel surface so the message is readable over arbitrary content.
+    '#zb-status { position: fixed; right: 62px; bottom: 24px; max-width: calc(100vw - 100px); min-height: 14px;',
+      ' padding: 4px 10px; border-radius: var(--zb-radius-sm); background: var(--zb-bg); border: 1px solid var(--zb-border);',
+      ' color: var(--zb-text); box-shadow: 0 2px 12px rgba(0,0,0,.35); backdrop-filter: blur(10px); pointer-events: none;',
+      ' opacity: .95; font-size: 11px; overflow-wrap: anywhere; }',
+    '#zb-status:empty { display: none; }',
     '#zb-offline { display: flex; flex-direction: column; gap: 6px; align-items: center;',
       ' padding: 10px 12px; background: rgba(120,53,15,.55); font-size: 11px; line-height: 1.5; text-align: center; }',
     '#zb-offline[hidden] { display: none; }',
@@ -110967,6 +110994,14 @@ function buildPanelScript(apiPort, token) {
     '#zcode-beautify-panel-root[data-zb-theme="tarkov"] #zb-theme { border-color: var(--zb-accent); }'
   ].join('');
 
+  // Registered through Page.addScriptToEvaluateOnNewDocument this script runs
+  // before the document exists at all \u2014 measured on ZCode 3.11.2: readyState
+  // "loading", document.documentElement/head/body all null \u2014 so the old
+  // document.body.appendChild(root) threw and the panel was silently missing
+  // from every document created after the service attached (a renderer reload
+  // left it gone). Build the panel once the body exists; the service's late
+  // Runtime.evaluate on a loaded document still installs immediately.
+  function install() {
   var style = document.createElement('style');
   style.id = 'zcode-beautify-panel-style';
   style.textContent = css;
@@ -111310,6 +111345,9 @@ function buildPanelScript(apiPort, token) {
       }
     }
   }
+  }
+  if (document.body) install();
+  else document.addEventListener('DOMContentLoaded', function () { install(); }, { once: true });
 })();`;
 }
 var PANEL_ROOT_ID;

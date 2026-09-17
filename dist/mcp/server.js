@@ -66007,7 +66007,24 @@ var ACCENT = "#e07930";
 var INK = "#1c1207";
 function buildBannerCss(opts) {
   return `
-html[data-zct-banner="1"] body { padding-top: ${opts.height}px; }
+/* Single source of truth for the reserved band: BannerOptions.height. */
+html[data-zct-banner="1"] { --zcode-tarkov-banner-height: ${opts.height}px; }
+/* flow-root keeps #root's margin-top from collapsing through the body; without
+   it the whole body box moves down by the band and the document keeps the band
+   height of scrollable overflow (measured on 3.11.2). */
+html[data-zct-banner="1"] body { display: flow-root; }
+/* #root is position: static in ZCode, so its space is reserved with a margin
+   and its 100dvh height is reduced by the same band height. */
+html[data-zct-banner="1"] #root {
+  margin-top: var(--zcode-tarkov-banner-height);
+  height: calc(100dvh - var(--zcode-tarkov-banner-height));
+}
+/* ZCode's app shells size themselves with the 100dvh utility, which does not
+   shrink when #root does; without this they stay a full viewport tall and the
+   bottom band of the UI (account area, composer) is clipped again. */
+html[data-zct-banner="1"] .h-dvh {
+  height: calc(100dvh - var(--zcode-tarkov-banner-height));
+}
 #${BANNER_ID} {
   position: fixed;
   top: 0;

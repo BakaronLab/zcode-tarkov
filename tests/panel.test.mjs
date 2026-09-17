@@ -80,3 +80,71 @@ test("the panel always rebuilds itself, so a stale copy cannot shadow it", () =>
 test("blur/dim still drive the shared dim variable and local preview", () => {
   assert.match(script, /setProperty\('--zcode-beautify-dim'/);
 });
+
+// The status line used to be the root's only in-flow child. With the root at
+// `position: fixed; inset: auto` the root then shrink-wrapped to the 24x14
+// status box and, as a fixed box with auto insets, took its static position at
+// the very end of the document: measured 14px below the viewport (painted
+// bottom 835.14 at innerHeight 821) in Tarkov and Native alike, so every
+// `status(msg)` message was written to an invisible element. These tests pin
+// the fix: the status is viewport-pinned on the panel surface, an empty status
+// paints nothing, and every root child is positioned, so the root can no
+// longer leave a painted box at the document end.
+function cssRuleBody(source, selector, predicate) {
+  const esc = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(esc + "\\s*\\{([^}]*)\\}", "g");
+  for (const match of source.matchAll(re)) {
+    if (!predicate || predicate.test(match[1])) return match[1];
+  }
+  return null;
+}
+
+test("the status line is positioned inside the viewport, not left at the document end", () => {
+  const body = cssRuleBody(script, "#zb-status", /position:/);
+  assert.ok(body, "a #zb-status rule with a position declaration is missing");
+  assert.match(body, /position:\s*fixed/, "#zb-status must be taken out of normal flow");
+  assert.match(body, /right:\s*62px/, "#zb-status must be anchored to the viewport");
+  assert.match(body, /bottom:\s*24px/, "#zb-status must be anchored to the viewport");
+  assert.match(body, /background:\s*var\(--zb-bg\)/, "the status must wear the panel surface");
+  assert.match(body, /border-radius:\s*var\(--zb-radius-sm\)/);
+  assert.match(body, /color:\s*var\(--zb-text\)/);
+  assert.match(body, /padding:\s*4px 10px/);
+});
+
+test("the panel root cannot leave a painted box at the document end", () => {
+  const root = cssRuleBody(script, "#zcode-beautify-panel-root", /position:\s*fixed/);
+  assert.ok(root, "the root must stay position: fixed");
+  assert.match(root, /inset:\s*auto/);
+  for (const id of ["zb-fab", "zb-panel", "zb-status"]) {
+    const body = cssRuleBody(script, `#${id}`, /position:/);
+    assert.ok(body, `#${id} has no position declaration`);
+    assert.match(body, /position:\s*fixed/, `#${id} would flow inside the root and push its box to the document end`);
+  }
+});
+
+test("an empty status line paints nothing", () => {
+  assert.match(script, /#zb-status:empty\s*\{\s*display:\s*none/);
+});
+
+// The script is also registered with Page.addScriptToEvaluateOnNewDocument,
+// where it runs before the document exists at all (measured on ZCode 3.11.2:
+// readyState "loading", documentElement/head/body null). The old unconditional
+// document.body.appendChild(root) threw there, so the panel was silently
+// missing from every document created after the service attached. The build
+// now lives in install(), which runs immediately when a body exists and on
+// DOMContentLoaded otherwise.
+test("the panel is built only once the document has a body", () => {
+  assert.match(script, /function install\(\) \{/);
+  assert.match(script, /if \(document\.body\) install\(\);/);
+  assert.match(script, /document\.addEventListener\('DOMContentLoaded', function \(\) \{ install\(\); \}, \{ once: true \}\)/);
+  const installAt = script.indexOf("function install() {");
+  const styleAt = script.indexOf("var style = document.createElement('style');");
+  const rootAppendAt = script.indexOf("document.body.appendChild(root);");
+  assert.ok(installAt >= 0, "install() is missing");
+  assert.ok(styleAt > installAt, "the panel build must live inside install()");
+  assert.ok(rootAppendAt > styleAt, "the panel root mount must live inside install()");
+});
+
+test("the generated panel script parses as JavaScript", () => {
+  assert.doesNotThrow(() => new Function(script), "the generated script must be syntactically valid");
+});

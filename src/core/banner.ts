@@ -8,11 +8,23 @@
  *
  *  - The band is a child of `<body>`, inserted before `#root`. React only owns
  *    the `#root` subtree, so nothing here can collide with reconciliation.
- *  - Its height is reserved with `body { padding-top }`. ZCode's own root uses
- *    percentage heights (`html,body,#root{height:100%}` from the shipped
- *    index.html), so a border-box padding reserves space without overflow.
+ *  - Its height is exposed as `--zcode-tarkov-banner-height` and reserved by a
+ *    `margin-top` on `#root` plus `height: calc(100dvh - <band>)` on `#root`
+ *    and on the app's own `100dvh` shells (`.h-dvh`), so band + app root add up
+ *    to the viewport exactly.
  *  - It is `position: fixed` + `-webkit-app-region: drag`, so the strip stays
  *    under the same window-drag behaviour the app's own title area has.
+ *
+ * The reservation shape is measured, not assumed. On ZCode 3.11.2 the shipped
+ * renderer CSS sets `#root { height: 100dvh; overflow: hidden }` on top of the
+ * inline `html, body, #root { height: 100% }`, and the app shells inside it are
+ * `height: 100dvh` too. A plain `body { padding-top }` therefore did not
+ * reserve anything: it moved the app down by the band height while the 100dvh
+ * boxes kept their full height, so the sidebar bottom, the composer and the
+ * bottom-left account area ended up below the window and `#root` overflowed by
+ * exactly the band height (56px on every tested width). `display: flow-root` on
+ * the body keeps the `#root` margin from collapsing through it, which would
+ * otherwise move the body box down and keep the document overflowing.
  *
  * Fail-soft rules: every DOM step is guarded, text writes are conditional (an
  * unconditional write mutates the tree and can re-trigger the observer in a
@@ -55,7 +67,24 @@ const INK = "#1c1207";
 
 export function buildBannerCss(opts: BannerOptions): string {
   return `
-html[data-zct-banner="1"] body { padding-top: ${opts.height}px; }
+/* Single source of truth for the reserved band: BannerOptions.height. */
+html[data-zct-banner="1"] { --zcode-tarkov-banner-height: ${opts.height}px; }
+/* flow-root keeps #root's margin-top from collapsing through the body; without
+   it the whole body box moves down by the band and the document keeps the band
+   height of scrollable overflow (measured on 3.11.2). */
+html[data-zct-banner="1"] body { display: flow-root; }
+/* #root is position: static in ZCode, so its space is reserved with a margin
+   and its 100dvh height is reduced by the same band height. */
+html[data-zct-banner="1"] #root {
+  margin-top: var(--zcode-tarkov-banner-height);
+  height: calc(100dvh - var(--zcode-tarkov-banner-height));
+}
+/* ZCode's app shells size themselves with the 100dvh utility, which does not
+   shrink when #root does; without this they stay a full viewport tall and the
+   bottom band of the UI (account area, composer) is clipped again. */
+html[data-zct-banner="1"] .h-dvh {
+  height: calc(100dvh - var(--zcode-tarkov-banner-height));
+}
 #${BANNER_ID} {
   position: fixed;
   top: 0;

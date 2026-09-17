@@ -47,12 +47,86 @@ test("banner CSS carries the Tarkov band design", () => {
   assert.match(css, /-webkit-app-region: drag/, "the strip stays draggable");
 });
 
-test("banner CSS reserves space only while the banner is mounted", () => {
+// The generated CSS is the only place the reservation lives, so the layout
+// invariant is pinned here: band + app root == viewport, expressed as one
+// custom property, with the root and the app's own 100dvh shells corrected by
+// exactly that property.
+function ruleBlocks(css) {
+  return css
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("}")
+    .map((chunk) => {
+      const brace = chunk.indexOf("{");
+      if (brace < 0) return null;
+      return { selector: chunk.slice(0, brace).trim(), body: chunk.slice(brace + 1) };
+    })
+    .filter(Boolean);
+}
+
+test("banner CSS exposes the band height as a Tarkov-scoped custom property", () => {
+  const css = buildBannerCss({ ...DEFAULT_BANNER, height: 42 });
+  assert.match(css, /html\[data-zct-banner="1"\] \{ --zcode-tarkov-banner-height: 42px; \}/);
+  assert.equal(css.includes("--zcode-tarkov-banner-height: 42px"), true);
+  // The band itself still uses the same single source of truth.
+  assert.match(css, new RegExp(`#${BANNER_ID} \\{[\\s\\S]*?height: 42px;`));
+});
+
+test("the root reserves the band and its height is reduced by the same property", () => {
   const css = buildBannerCss(DEFAULT_BANNER);
-  assert.match(css, /html\[data-zct-banner="1"\] body \{ padding-top: 56px; \}/);
-  assert.equal(css.includes("body { padding-top:"), true);
-  // Scoped to the attribute, so removing the banner restores the layout.
+  assert.match(
+    css,
+    /html\[data-zct-banner="1"\] #root \{\s*margin-top: var\(--zcode-tarkov-banner-height\);\s*height: calc\(100dvh - var\(--zcode-tarkov-banner-height\)\);\s*\}/,
+    "static #root must be moved down and shrunk by the band height"
+  );
+  // ZCode's own shells are 100dvh too; they have to shrink with the root or
+  // they keep overflowing by the band height.
+  assert.match(
+    css,
+    /html\[data-zct-banner="1"\] \.h-dvh \{\s*height: calc\(100dvh - var\(--zcode-tarkov-banner-height\)\);\s*\}/,
+    "the app's 100dvh shells must be corrected as well"
+  );
+});
+
+test("the fixed band reserves space instead of covering the app", () => {
+  const css = buildBannerCss(DEFAULT_BANNER);
+  const blocks = ruleBlocks(css);
+  const unscoped = blocks.filter(
+    (b) => !/#zcode-tarkov-banner/.test(b.selector) && /(^|[;\s])(margin|margin-top|height|min-height|max-height|padding|padding-top|display)\s*:/.test(b.body) && !b.selector.startsWith('html[data-zct-banner="1"]')
+  );
+  assert.deepEqual(unscoped, [], "every layout rule must be scoped under html[data-zct-banner=\"1\"]");
+  const band = blocks.find((b) => b.selector === `#${BANNER_ID}`);
+  assert.ok(band, "the band rule must exist");
+  assert.match(band.body, /position: fixed/);
+  assert.match(band.body, /top: 0/);
+});
+
+test("the old body padding reservation is gone", () => {
+  const css = buildBannerCss(DEFAULT_BANNER);
+  // The pre-fix reservation moved the app down without shrinking it (ZCode's
+  // #root is 100dvh), which clipped the sidebar bottom, composer and account
+  // area. The pairing that replaced it is the margin plus the root height.
+  assert.equal(/body\s*\{[^}]*padding-top/.test(css), false, "no body padding-top reservation may remain");
+  assert.equal(css.includes("padding-top: 56px"), false);
+  assert.match(css, /html\[data-zct-banner="1"\] body \{ display: flow-root; \}/, "the margin needs a formatting context");
+});
+
+test("banner layout rules stay scoped so Native and Monet geometry is untouched", () => {
+  const css = buildBannerCss(DEFAULT_BANNER);
+  const blocks = ruleBlocks(css);
+  for (const b of blocks) {
+    if (/#zcode-tarkov-banner/.test(b.selector)) continue;
+    if (!/--zcode-tarkov-banner-height|margin-top|height\s*:/.test(b.body)) continue;
+    assert.ok(
+      b.selector.startsWith('html[data-zct-banner="1"]'),
+      `layout rule must be scoped under the attribute, got: ${b.selector}`
+    );
+  }
   assert.equal(/^body \{ padding-top/m.test(css), false);
+});
+
+test("the install script switches the layout on with the attribute", () => {
+  const script = buildBannerScript(DEFAULT_BANNER);
+  assert.match(script, /document\.documentElement\.setAttribute\('data-zct-banner', '1'\)/);
 });
 
 test("install script uses a MutationObserver over the app root", () => {
