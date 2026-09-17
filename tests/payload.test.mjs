@@ -77,10 +77,10 @@ test("native with no wallpaper adds no color overrides at all", () => {
 
 test("tarkov payload emits the fixed palette plus the component skin", () => {
   const payload = buildPayload(config({ colorMode: "tarkov" }), assets());
-  assert.match(payload.css, /--color-primary:#e07930/);
+  assert.match(payload.css, /--color-primary:#ee8a3a/);
   assert.match(payload.css, /--color-foreground:#e8d9c8/);
   assert.match(payload.css, /\[data-slot="card"\]/);
-  assert.match(payload.css, /--tarkov-accent:#e07930/);
+  assert.match(payload.css, /--tarkov-accent:#ee8a3a/);
   assert.ok(payload.banner, "tarkov mode installs the banner");
 });
 
@@ -151,4 +151,33 @@ test("reset removes the banner along with the theme", () => {
   // The theme ids are emitted as marker + suffix, so assert on both parts.
   assert.match(reset, /zcode-beautify/);
   assert.match(reset, /'-style'|'-wallpaper'/);
+});
+
+// --- v0.2 banner modes -------------------------------------------------------
+
+test("the banner mode is authoritative over the legacy enabled boolean", () => {
+  // A payload of `enabled: true, mode: "off"` used to install a zero-height band
+  // with a one-pixel accent border and the reservation attribute set — a line
+  // across the top for a band that was meant to be absent. Deciding on `enabled`
+  // alone let that through; nothing in the shipped UI produces the combination,
+  // which is exactly why it is refused here.
+  assert.equal(resolveBanner(config({ colorMode: "tarkov", banner: { enabled: true, mode: "off" } })), null);
+  assert.equal(resolveBanner(config({ colorMode: "tarkov", banner: { enabled: false, mode: "off" } })), null);
+  assert.notEqual(resolveBanner(config({ colorMode: "tarkov", banner: { enabled: true, mode: "full" } })), null);
+  assert.notEqual(resolveBanner(config({ colorMode: "tarkov", banner: { enabled: true, mode: "compact" } })), null);
+  // A legacy payload with only `enabled` keeps working in both directions.
+  assert.equal(resolveBanner(config({ colorMode: "tarkov", banner: { enabled: false } })), null);
+  assert.notEqual(resolveBanner(config({ colorMode: "tarkov", banner: { enabled: true } })), null);
+});
+
+test("a non-Tarkov mode tears the band down regardless of its own settings", () => {
+  assert.equal(resolveBanner(config({ colorMode: "native", banner: { enabled: true, mode: "full" } })), null);
+  assert.equal(resolveBanner(config({ colorMode: "monet", banner: { enabled: true, mode: "compact" } })), null);
+});
+
+test("off mode produces a teardown rather than a band", () => {
+  const payload = buildPayload(config({ colorMode: "tarkov", banner: { enabled: true, mode: "off" } }), undefined);
+  assert.equal(payload.banner, null, "the payload must carry no banner to install");
+  // The palette still applies: the band is not the theme.
+  assert.match(payload.css, /--color-primary:#ee8a3a/);
 });

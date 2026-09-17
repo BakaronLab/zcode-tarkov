@@ -87,6 +87,28 @@ Exactly these keys, in this order, BOM-free UTF-8 with 2-space indentation:
 | `installedAt` | string | ISO 8601 UTC, preserved across re-installs |
 | `updatedAt` | string | ISO 8601 UTC, refreshed on every write |
 
+### The v0.2 user data root is deliberately not in this file
+
+v0.2 added a second data directory: the user media root at
+`%LOCALAPPDATA%\zcode-tarkov\data` (`music`, `sounds`, `voice`, `pet`, `status`,
+`prefs.json`), relocatable with `ZCODE_TARKOV_DATA_DIR`. It is **not** recorded
+here, and that is a decision rather than an omission:
+
+- `settings.json` describes how to *start* the service. The media root is
+  resolved by `src/core/dataRoot.ts` from the platform default, and the launcher
+  inherits an overridden `ZCODE_TARKOV_DATA_DIR` from the environment that
+  launched it.
+- A second copy of the path could only ever disagree with the first. The one
+  place a copy is genuinely needed is the *sign-in* entry, which is written by no
+  shell that has the variable — so `src/core/autostart.ts` bakes
+  `ZCODE_TARKOV_DATA_DIR` into that entry directly (VBScript process
+  environment, launchd `EnvironmentVariables`, or an `env` prefix in the Linux
+  `.desktop` `Exec`), exactly as it already did for `ZCODE_BEAUTIFY_DATA_DIR`.
+
+`install.ps1` and `repair.ps1` do create the root and its five subdirectories,
+and both report the resolved absolute path in their output and in their
+`-DryRun`/result JSON under `userDataDir`.
+
 Three writers implement this schema byte-compatibly: `install.ps1` (initial
 write and every re-install), the launcher (a best-effort refresh of `zcodeExe`,
 `zcodeInstallDir`, `zcodeResolvedBy` and `updatedAt` when the resolution moved)

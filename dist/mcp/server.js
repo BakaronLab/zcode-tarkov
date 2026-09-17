@@ -3276,8 +3276,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path5) {
-      let input2 = path5;
+    function removeDotSegments(path7) {
+      let input2 = path7;
       const output2 = [];
       let nextSlash = -1;
       let len = 0;
@@ -3686,8 +3686,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path5 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path5 && path5 !== "/" ? path5 : void 0;
+        const path7 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path7 && path7 !== "/" ? path7 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -4638,7 +4638,7 @@ var require_core = __commonJS({
       errorsText(errors = this.errors, { separator = ", ", dataVar = "data" } = {}) {
         if (!errors || errors.length === 0)
           return "No errors";
-        return errors.map((e2) => `${dataVar}${e2.instancePath} ${e2.message}`).reduce((text, msg) => text + separator + msg);
+        return errors.map((e2) => `${dataVar}${e2.instancePath} ${e2.message}`).reduce((text2, msg) => text2 + separator + msg);
       }
       $dataMetaSchema(metaSchema, keywordsJsonPointers) {
         const rules = this.RULES.all;
@@ -6584,7 +6584,7 @@ var require_discriminator = __commonJS({
       error: error62,
       code(cxt) {
         const { gen, data, schema, parentSchema, it } = cxt;
-        const { oneOf } = parentSchema;
+        const { oneOf: oneOf2 } = parentSchema;
         if (!it.opts.discriminator) {
           throw new Error("discriminator: requires discriminator option");
         }
@@ -6593,7 +6593,7 @@ var require_discriminator = __commonJS({
           throw new Error("discriminator: requires propertyName");
         if (schema.mapping)
           throw new Error("discriminator: mapping is not supported");
-        if (!oneOf)
+        if (!oneOf2)
           throw new Error("discriminator: requires oneOf keyword");
         const valid = gen.let("valid", false);
         const tag = gen.const("tag", (0, codegen_1._)`${data}${(0, codegen_1.getProperty)(tagName)}`);
@@ -6621,8 +6621,8 @@ var require_discriminator = __commonJS({
           const oneOfMapping = {};
           const topRequired = hasRequired(parentSchema);
           let tagRequired = true;
-          for (let i2 = 0; i2 < oneOf.length; i2++) {
-            let sch = oneOf[i2];
+          for (let i2 = 0; i2 < oneOf2.length; i2++) {
+            let sch = oneOf2[i2];
             if ((sch === null || sch === void 0 ? void 0 : sch.$ref) && !(0, util_1.schemaHasRulesButRef)(sch, it.self.RULES)) {
               const ref = sch.$ref;
               sch = compile_1.resolveRef.call(it.self, it.schemaEnv.root, it.baseId, ref);
@@ -7199,12 +7199,12 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f2;
     };
-    function addFormats(ajv, list, fs7, exportName) {
+    function addFormats(ajv, list, fs9, exportName) {
       var _a3;
       var _b;
       (_a3 = (_b = ajv.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f2 of list)
-        ajv.addFormat(f2, fs7[f2]);
+        ajv.addFormat(f2, fs9[f2]);
     }
     module.exports = exports = formatsPlugin;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7987,9 +7987,9 @@ var require_bitmapimage = __commonJS({
         for (let y2 = 0; y2 < sourceHeight; ++y2) {
           priorDestRowIndex = destIndex;
           for (let x2 = 0; x2 < sourceWidth; ++x2) {
-            const color = sourceBuf.readUInt32BE(sourceIndex, true);
+            const color2 = sourceBuf.readUInt32BE(sourceIndex, true);
             for (let cx = 0; cx < factor; ++cx) {
-              destBuf.writeUInt32BE(color, destIndex);
+              destBuf.writeUInt32BE(color2, destIndex);
               destIndex += 4;
             }
             sourceIndex += 4;
@@ -8826,19 +8826,19 @@ var require_image_q = __commonJS({
         this._pointContainer.setHeight(1);
         this._pointArray = this._pointContainer.getPointArray();
       }
-      add(color) {
-        this._pointArray.push(color);
+      add(color2) {
+        this._pointArray.push(color2);
         this._pointContainer.setWidth(this._pointArray.length);
       }
-      has(color) {
+      has(color2) {
         for (let i2 = this._pointArray.length - 1; i2 >= 0; i2--) {
-          if (color.uint32 === this._pointArray[i2].uint32)
+          if (color2.uint32 === this._pointArray[i2].uint32)
             return true;
         }
         return false;
       }
-      getNearestColor(colorDistanceCalculator, color) {
-        return this._pointArray[this._getNearestIndex(colorDistanceCalculator, color) | 0];
+      getNearestColor(colorDistanceCalculator, color2) {
+        return this._pointArray[this._getNearestIndex(colorDistanceCalculator, color2) | 0];
       }
       getPointContainer() {
         return this._pointContainer;
@@ -9522,12 +9522,12 @@ var require_image_q = __commonJS({
     __publicField2(ColorHistogram2, "_boxPixels", 2);
     __publicField2(ColorHistogram2, "_hueGroups", 10);
     var RemovedColor2 = class {
-      constructor(index, color, distance3) {
+      constructor(index, color2, distance3) {
         __publicField2(this, "index");
         __publicField2(this, "color");
         __publicField2(this, "distance");
         this.index = index;
-        this.color = color;
+        this.color = color2;
         this.distance = distance3;
       }
     };
@@ -9730,8 +9730,8 @@ var require_image_q = __commonJS({
             const g = this._greens[paletteIndex] / sum;
             const b = this._blues[paletteIndex] / sum;
             const a2 = this._alphas[paletteIndex] / sum;
-            const color = Point2.createByRGBA(r2 | 0, g | 0, b | 0, a2 | 0);
-            palette2.add(color);
+            const color2 = Point2.createByRGBA(r2 | 0, g | 0, b | 0, a2 | 0);
+            palette2.add(color2);
           }
         }
         palette2.sort();
@@ -9789,7 +9789,7 @@ var require_image_q = __commonJS({
         this._alphas = createArray1D2(this._colors + 1);
         this._sums = createArray1D2(this._colors + 1);
         for (let index = 0, l2 = this._pixels.length; index < l2; index++) {
-          const color = this._pixels[index];
+          const color2 = this._pixels[index];
           const match = -1;
           let bestMatch = match;
           let bestDistance = Number.MAX_VALUE;
@@ -9798,31 +9798,31 @@ var require_image_q = __commonJS({
             const foundGreen = lookupGreen[lookup];
             const foundBlue = lookupBlue[lookup];
             const foundAlpha = lookupAlpha[lookup];
-            const distance3 = this._distance.calculateRaw(foundRed, foundGreen, foundBlue, foundAlpha, color.r, color.g, color.b, color.a);
+            const distance3 = this._distance.calculateRaw(foundRed, foundGreen, foundBlue, foundAlpha, color2.r, color2.g, color2.b, color2.a);
             if (distance3 < bestDistance) {
               bestDistance = distance3;
               bestMatch = lookup;
             }
           }
-          this._reds[bestMatch] += color.r;
-          this._greens[bestMatch] += color.g;
-          this._blues[bestMatch] += color.b;
-          this._alphas[bestMatch] += color.a;
+          this._reds[bestMatch] += color2.r;
+          this._greens[bestMatch] += color2.g;
+          this._blues[bestMatch] += color2.b;
+          this._alphas[bestMatch] += color2.a;
           this._sums[bestMatch]++;
         }
       }
-      _addColor(color) {
+      _addColor(color2) {
         const bitsToRemove = 8 - this._significantBitsPerChannel;
-        const indexRed = (color.r >> bitsToRemove) + 1;
-        const indexGreen = (color.g >> bitsToRemove) + 1;
-        const indexBlue = (color.b >> bitsToRemove) + 1;
-        const indexAlpha = (color.a >> bitsToRemove) + 1;
+        const indexRed = (color2.r >> bitsToRemove) + 1;
+        const indexGreen = (color2.g >> bitsToRemove) + 1;
+        const indexBlue = (color2.b >> bitsToRemove) + 1;
+        const indexAlpha = (color2.a >> bitsToRemove) + 1;
         this._weights[indexAlpha][indexRed][indexGreen][indexBlue]++;
-        this._momentsRed[indexAlpha][indexRed][indexGreen][indexBlue] += color.r;
-        this._momentsGreen[indexAlpha][indexRed][indexGreen][indexBlue] += color.g;
-        this._momentsBlue[indexAlpha][indexRed][indexGreen][indexBlue] += color.b;
-        this._momentsAlpha[indexAlpha][indexRed][indexGreen][indexBlue] += color.a;
-        this._moments[indexAlpha][indexRed][indexGreen][indexBlue] += this._table[color.r] + this._table[color.g] + this._table[color.b] + this._table[color.a];
+        this._momentsRed[indexAlpha][indexRed][indexGreen][indexBlue] += color2.r;
+        this._momentsGreen[indexAlpha][indexRed][indexGreen][indexBlue] += color2.g;
+        this._momentsBlue[indexAlpha][indexRed][indexGreen][indexBlue] += color2.b;
+        this._momentsAlpha[indexAlpha][indexRed][indexGreen][indexBlue] += color2.a;
+        this._moments[indexAlpha][indexRed][indexGreen][indexBlue] += this._table[color2.r] + this._table[color2.g] + this._table[color2.b] + this._table[color2.a];
       }
       *_calculateMoments() {
         const area = [];
@@ -9901,20 +9901,20 @@ var require_image_q = __commonJS({
       static _volume(cube, moment) {
         return _WuQuant2._volumeFloat(cube, moment) | 0;
       }
-      static _top(cube, direction, position, moment) {
+      static _top(cube, direction, position2, moment) {
         let result;
         switch (direction) {
           case _WuQuant2._alpha:
-            result = moment[position][cube.redMaximum][cube.greenMaximum][cube.blueMaximum] - moment[position][cube.redMaximum][cube.greenMinimum][cube.blueMaximum] - moment[position][cube.redMinimum][cube.greenMaximum][cube.blueMaximum] + moment[position][cube.redMinimum][cube.greenMinimum][cube.blueMaximum] - (moment[position][cube.redMaximum][cube.greenMaximum][cube.blueMinimum] - moment[position][cube.redMaximum][cube.greenMinimum][cube.blueMinimum] - moment[position][cube.redMinimum][cube.greenMaximum][cube.blueMinimum] + moment[position][cube.redMinimum][cube.greenMinimum][cube.blueMinimum]);
+            result = moment[position2][cube.redMaximum][cube.greenMaximum][cube.blueMaximum] - moment[position2][cube.redMaximum][cube.greenMinimum][cube.blueMaximum] - moment[position2][cube.redMinimum][cube.greenMaximum][cube.blueMaximum] + moment[position2][cube.redMinimum][cube.greenMinimum][cube.blueMaximum] - (moment[position2][cube.redMaximum][cube.greenMaximum][cube.blueMinimum] - moment[position2][cube.redMaximum][cube.greenMinimum][cube.blueMinimum] - moment[position2][cube.redMinimum][cube.greenMaximum][cube.blueMinimum] + moment[position2][cube.redMinimum][cube.greenMinimum][cube.blueMinimum]);
             break;
           case _WuQuant2._red:
-            result = moment[cube.alphaMaximum][position][cube.greenMaximum][cube.blueMaximum] - moment[cube.alphaMaximum][position][cube.greenMinimum][cube.blueMaximum] - moment[cube.alphaMinimum][position][cube.greenMaximum][cube.blueMaximum] + moment[cube.alphaMinimum][position][cube.greenMinimum][cube.blueMaximum] - (moment[cube.alphaMaximum][position][cube.greenMaximum][cube.blueMinimum] - moment[cube.alphaMaximum][position][cube.greenMinimum][cube.blueMinimum] - moment[cube.alphaMinimum][position][cube.greenMaximum][cube.blueMinimum] + moment[cube.alphaMinimum][position][cube.greenMinimum][cube.blueMinimum]);
+            result = moment[cube.alphaMaximum][position2][cube.greenMaximum][cube.blueMaximum] - moment[cube.alphaMaximum][position2][cube.greenMinimum][cube.blueMaximum] - moment[cube.alphaMinimum][position2][cube.greenMaximum][cube.blueMaximum] + moment[cube.alphaMinimum][position2][cube.greenMinimum][cube.blueMaximum] - (moment[cube.alphaMaximum][position2][cube.greenMaximum][cube.blueMinimum] - moment[cube.alphaMaximum][position2][cube.greenMinimum][cube.blueMinimum] - moment[cube.alphaMinimum][position2][cube.greenMaximum][cube.blueMinimum] + moment[cube.alphaMinimum][position2][cube.greenMinimum][cube.blueMinimum]);
             break;
           case _WuQuant2._green:
-            result = moment[cube.alphaMaximum][cube.redMaximum][position][cube.blueMaximum] - moment[cube.alphaMaximum][cube.redMinimum][position][cube.blueMaximum] - moment[cube.alphaMinimum][cube.redMaximum][position][cube.blueMaximum] + moment[cube.alphaMinimum][cube.redMinimum][position][cube.blueMaximum] - (moment[cube.alphaMaximum][cube.redMaximum][position][cube.blueMinimum] - moment[cube.alphaMaximum][cube.redMinimum][position][cube.blueMinimum] - moment[cube.alphaMinimum][cube.redMaximum][position][cube.blueMinimum] + moment[cube.alphaMinimum][cube.redMinimum][position][cube.blueMinimum]);
+            result = moment[cube.alphaMaximum][cube.redMaximum][position2][cube.blueMaximum] - moment[cube.alphaMaximum][cube.redMinimum][position2][cube.blueMaximum] - moment[cube.alphaMinimum][cube.redMaximum][position2][cube.blueMaximum] + moment[cube.alphaMinimum][cube.redMinimum][position2][cube.blueMaximum] - (moment[cube.alphaMaximum][cube.redMaximum][position2][cube.blueMinimum] - moment[cube.alphaMaximum][cube.redMinimum][position2][cube.blueMinimum] - moment[cube.alphaMinimum][cube.redMaximum][position2][cube.blueMinimum] + moment[cube.alphaMinimum][cube.redMinimum][position2][cube.blueMinimum]);
             break;
           case _WuQuant2._blue:
-            result = moment[cube.alphaMaximum][cube.redMaximum][cube.greenMaximum][position] - moment[cube.alphaMaximum][cube.redMaximum][cube.greenMinimum][position] - moment[cube.alphaMaximum][cube.redMinimum][cube.greenMaximum][position] + moment[cube.alphaMaximum][cube.redMinimum][cube.greenMinimum][position] - (moment[cube.alphaMinimum][cube.redMaximum][cube.greenMaximum][position] - moment[cube.alphaMinimum][cube.redMaximum][cube.greenMinimum][position] - moment[cube.alphaMinimum][cube.redMinimum][cube.greenMaximum][position] + moment[cube.alphaMinimum][cube.redMinimum][cube.greenMinimum][position]);
+            result = moment[cube.alphaMaximum][cube.redMaximum][cube.greenMaximum][position2] - moment[cube.alphaMaximum][cube.redMaximum][cube.greenMinimum][position2] - moment[cube.alphaMaximum][cube.redMinimum][cube.greenMaximum][position2] + moment[cube.alphaMaximum][cube.redMinimum][cube.greenMinimum][position2] - (moment[cube.alphaMinimum][cube.redMaximum][cube.greenMaximum][position2] - moment[cube.alphaMinimum][cube.redMaximum][cube.greenMinimum][position2] - moment[cube.alphaMinimum][cube.redMinimum][cube.greenMaximum][position2] + moment[cube.alphaMinimum][cube.redMinimum][cube.greenMinimum][position2]);
             break;
           default:
             throw new Error("impossible");
@@ -9953,12 +9953,12 @@ var require_image_q = __commonJS({
         const bottomWeight = _WuQuant2._bottom(cube, direction, this._weights) | 0;
         let result = 0;
         let cutPosition = -1;
-        for (let position = first; position < last; ++position) {
-          let halfRed = bottomRed + _WuQuant2._top(cube, direction, position, this._momentsRed);
-          let halfGreen = bottomGreen + _WuQuant2._top(cube, direction, position, this._momentsGreen);
-          let halfBlue = bottomBlue + _WuQuant2._top(cube, direction, position, this._momentsBlue);
-          let halfAlpha = bottomAlpha + _WuQuant2._top(cube, direction, position, this._momentsAlpha);
-          let halfWeight = bottomWeight + _WuQuant2._top(cube, direction, position, this._weights);
+        for (let position2 = first; position2 < last; ++position2) {
+          let halfRed = bottomRed + _WuQuant2._top(cube, direction, position2, this._momentsRed);
+          let halfGreen = bottomGreen + _WuQuant2._top(cube, direction, position2, this._momentsGreen);
+          let halfBlue = bottomBlue + _WuQuant2._top(cube, direction, position2, this._momentsBlue);
+          let halfAlpha = bottomAlpha + _WuQuant2._top(cube, direction, position2, this._momentsAlpha);
+          let halfWeight = bottomWeight + _WuQuant2._top(cube, direction, position2, this._weights);
           if (halfWeight !== 0) {
             let halfDistance = halfRed * halfRed + halfGreen * halfGreen + halfBlue * halfBlue + halfAlpha * halfAlpha;
             let temp = halfDistance / halfWeight;
@@ -9972,7 +9972,7 @@ var require_image_q = __commonJS({
               temp += halfDistance / halfWeight;
               if (temp > result) {
                 result = temp;
-                cutPosition = position;
+                cutPosition = position2;
               }
             }
           }
@@ -11166,8 +11166,8 @@ var require_gifframe = __commonJS({
           if (buf[i2 + 3] === 0) {
             usesTransparency = true;
           } else {
-            const color = buf.readUInt32BE(i2, true) >> 8 & 16777215;
-            colorSet.add(color);
+            const color2 = buf.readUInt32BE(i2, true) >> 8 & 16777215;
+            colorSet.add(color2);
           }
           i2 += 4;
         }
@@ -11196,7 +11196,7 @@ var require_gifframe = __commonJS({
 var require_gifutil = __commonJS({
   "node_modules/gifwrap/src/gifutil.js"(exports) {
     "use strict";
-    var fs7 = __require("fs");
+    var fs9 = __require("fs");
     var ImageQ = require_image_q();
     var BitmapImage2 = require_bitmapimage();
     var { GifFrame: GifFrame2 } = require_gifframe();
@@ -11229,8 +11229,8 @@ var require_gifutil = __commonJS({
       }
       const globalColorSet = /* @__PURE__ */ new Set();
       palettes.forEach((palette2) => {
-        palette2.colors.forEach((color) => {
-          globalColorSet.add(color);
+        palette2.colors.forEach((color2) => {
+          globalColorSet.add(color2);
         });
       });
       let indexCount = globalColorSet.size;
@@ -11311,14 +11311,14 @@ var require_gifutil = __commonJS({
       jimpImage.bitmap.data = bitmapImageToShare.bitmap.data;
       return jimpImage;
     };
-    exports.write = function(path5, frames, spec, encoder) {
+    exports.write = function(path7, frames, spec, encoder) {
       encoder = encoder || defaultCodec;
-      const matches = path5.match(/\.[a-zA-Z]+$/);
+      const matches = path7.match(/\.[a-zA-Z]+$/);
       if (matches !== null && INVALID_SUFFIXES.includes(matches[0].toLowerCase())) {
-        throw new Error(`GIF '${path5}' has an unexpected suffix`);
+        throw new Error(`GIF '${path7}' has an unexpected suffix`);
       }
       return encoder.encodeGif(frames, spec).then((gif2) => {
-        return _writeBinary(path5, gif2.buffer).then(() => {
+        return _writeBinary(path7, gif2.buffer).then(() => {
           return gif2;
         });
       });
@@ -11390,9 +11390,9 @@ var require_gifutil = __commonJS({
         }
       }
     }
-    function _readBinary(path5) {
+    function _readBinary(path7) {
       return new Promise((resolve, reject) => {
-        fs7.readFile(path5, (err, buffer) => {
+        fs9.readFile(path7, (err, buffer) => {
           if (err) {
             return reject(err);
           }
@@ -11400,9 +11400,9 @@ var require_gifutil = __commonJS({
         });
       });
     }
-    function _writeBinary(path5, buffer) {
+    function _writeBinary(path7, buffer) {
       return new Promise((resolve, reject) => {
-        fs7.writeFile(path5, buffer, (err) => {
+        fs9.writeFile(path7, buffer, (err) => {
           if (err) {
             return reject(err);
           }
@@ -11609,17 +11609,17 @@ var require_gifcodec = __commonJS({
       }
     };
     exports.GifCodec = GifCodec2;
-    function _colorLookupLinear(colors, color) {
-      const index = colors.indexOf(color);
+    function _colorLookupLinear(colors, color2) {
+      const index = colors.indexOf(color2);
       return index === -1 ? null : index;
     }
-    function _colorLookupBinary(colors, color) {
+    function _colorLookupBinary(colors, color2) {
       var lo = 0, hi = colors.length - 1, mid;
       while (lo <= hi) {
         mid = Math.floor((lo + hi) / 2);
-        if (colors[mid] > color)
+        if (colors[mid] > color2)
           hi = mid - 1;
-        else if (colors[mid] < color)
+        else if (colors[mid] < color2)
           lo = mid + 1;
         else
           return mid;
@@ -11705,8 +11705,8 @@ var require_gifcodec = __commonJS({
       let i2 = 0, j = 0;
       while (i2 < colorBuffer.length) {
         if (colorBuffer[i2 + 3] !== 0) {
-          const color = colorBuffer.readUInt32BE(i2, true) >> 8 & 16777215;
-          indexBuffer[j] = colorToIndexFunc(colors, color);
+          const color2 = colorBuffer.readUInt32BE(i2, true) >> 8 & 16777215;
+          indexBuffer[j] = colorToIndexFunc(colors, color2);
         } else {
           indexBuffer[j] = transparentIndex;
         }
@@ -13381,9 +13381,9 @@ var require_decoder = __commonJS({
         return a2 < 0 ? 0 : a2 > 255 ? 255 : a2;
       }
       constructor.prototype = {
-        load: function load(path5) {
+        load: function load(path7) {
           var xhr = new XMLHttpRequest();
-          xhr.open("GET", path5, true);
+          xhr.open("GET", path7, true);
           xhr.responseType = "arraybuffer";
           xhr.onload = (function() {
             var data = new Uint8Array(xhr.response || xhr.mozResponseArrayBuffer);
@@ -14909,12 +14909,12 @@ var require_format_normaliser = __commonJS({
       let pxPos = 0;
       for (let y2 = 0; y2 < height; y2++) {
         for (let x2 = 0; x2 < width; x2++) {
-          let color = palette2[indata[pxPos]];
-          if (!color) {
+          let color2 = palette2[indata[pxPos]];
+          if (!color2) {
             throw new Error("index " + indata[pxPos] + " not in palette");
           }
           for (let i2 = 0; i2 < 4; i2++) {
-            outdata[pxPos + i2] = color[i2];
+            outdata[pxPos + i2] = color2[i2];
           }
           pxPos += 4;
         }
@@ -23810,11 +23810,11 @@ var require_Mime = __commonJS({
         }
       }
     };
-    Mime.prototype.getType = function(path5) {
-      path5 = String(path5);
-      let last = path5.replace(/^.*[/\\]/, "").toLowerCase();
+    Mime.prototype.getType = function(path7) {
+      path7 = String(path7);
+      let last = path7.replace(/^.*[/\\]/, "").toLowerCase();
       let ext = last.replace(/^.*\./, "").toLowerCase();
-      let hasPath = last.length < path5.length;
+      let hasPath = last.length < path7.length;
       let hasDot = ext.length < last.length - 1;
       return (hasDot || !hasPath) && this._types[ext] || null;
     };
@@ -25461,9 +25461,9 @@ var init_AbstractTokenizer = __esm({
        * @param position - If provided, the desired position in the tokenizer-stream
        * @returns Promise with token data
        */
-      async readToken(token, position = this.position) {
+      async readToken(token, position2 = this.position) {
         const uint8Array = new Uint8Array(token.len);
-        const len = await this.readBuffer(uint8Array, { position });
+        const len = await this.readBuffer(uint8Array, { position: position2 });
         if (len < token.len)
           throw new EndOfStreamError();
         return token.get(uint8Array, 0);
@@ -25474,9 +25474,9 @@ var init_AbstractTokenizer = __esm({
        * @param position - Offset where to begin reading within the file. If position is null, data will be read from the current file position.
        * @returns Promise with token data
        */
-      async peekToken(token, position = this.position) {
+      async peekToken(token, position2 = this.position) {
         const uint8Array = new Uint8Array(token.len);
-        const len = await this.peekBuffer(uint8Array, { position });
+        const len = await this.peekBuffer(uint8Array, { position: position2 });
         if (len < token.len)
           throw new EndOfStreamError();
         return token.get(uint8Array, 0);
@@ -25712,8 +25712,8 @@ var init_BufferTokenizer = __esm({
       supportsRandomAccess() {
         return true;
       }
-      setPosition(position) {
-        this.position = position;
+      setPosition(position2) {
+        this.position = position2;
       }
     };
   }
@@ -25772,8 +25772,8 @@ var init_BlobTokenizer = __esm({
       supportsRandomAccess() {
         return true;
       }
-      setPosition(position) {
-        this.position = position;
+      setPosition(position2) {
+        this.position = position2;
       }
     };
   }
@@ -25879,8 +25879,8 @@ var init_FileTokenizer = __esm({
         await this.fileHandle.close();
         return super.close();
       }
-      setPosition(position) {
-        this.position = position;
+      setPosition(position2) {
+        this.position = position2;
       }
       supportsRandomAccess() {
         return true;
@@ -30001,8 +30001,8 @@ function isTokenizerStreamBoundsError(error62) {
   }
   return /strtok3[/\\]lib[/\\]stream[/\\]/.test(error62.stack);
 }
-async function fileTypeFromFile(path5, options) {
-  return new FileTypeParser2(options).fromFile(path5, options);
+async function fileTypeFromFile(path7, options) {
+  return new FileTypeParser2(options).fromFile(path7, options);
 }
 async function fileTypeFromStream(stream, options) {
   return new FileTypeParser2(options).fromStream(stream);
@@ -30033,9 +30033,9 @@ var init_file_type = __esm({
           }
         }
       }
-      async fromFile(path5) {
+      async fromFile(path7) {
         this.options.signal?.throwIfAborted();
-        const fileHandle = await fs2.open(path5, fileSystemConstants.O_RDONLY | fileSystemConstants.O_NONBLOCK);
+        const fileHandle = await fs2.open(path7, fileSystemConstants.O_RDONLY | fileSystemConstants.O_NONBLOCK);
         const fileStat = await fileHandle.stat();
         if (!fileStat.isFile()) {
           await fileHandle.close();
@@ -30044,7 +30044,7 @@ var init_file_type = __esm({
         const tokenizer = new FileTokenizer(fileHandle, {
           ...this.getTokenizerOptions(),
           fileInfo: {
-            path: path5,
+            path: path7,
             size: fileStat.size
           }
         });
@@ -31092,14 +31092,14 @@ var require_XMLCData = __commonJS({
       XMLCharacterData = require_XMLCharacterData();
       module.exports = XMLCData = (function(superClass) {
         extend2(XMLCData2, superClass);
-        function XMLCData2(parent, text) {
+        function XMLCData2(parent, text2) {
           XMLCData2.__super__.constructor.call(this, parent);
-          if (text == null) {
+          if (text2 == null) {
             throw new Error("Missing CDATA text. " + this.debugInfo());
           }
           this.name = "#cdata-section";
           this.type = NodeType.CData;
-          this.value = this.stringify.cdata(text);
+          this.value = this.stringify.cdata(text2);
         }
         XMLCData2.prototype.clone = function() {
           return Object.create(this);
@@ -31133,14 +31133,14 @@ var require_XMLComment = __commonJS({
       XMLCharacterData = require_XMLCharacterData();
       module.exports = XMLComment = (function(superClass) {
         extend2(XMLComment2, superClass);
-        function XMLComment2(parent, text) {
+        function XMLComment2(parent, text2) {
           XMLComment2.__super__.constructor.call(this, parent);
-          if (text == null) {
+          if (text2 == null) {
             throw new Error("Missing comment text. " + this.debugInfo());
           }
           this.name = "#comment";
           this.type = NodeType.Comment;
-          this.value = this.stringify.comment(text);
+          this.value = this.stringify.comment(text2);
         }
         XMLComment2.prototype.clone = function() {
           return Object.create(this);
@@ -31648,13 +31648,13 @@ var require_XMLRaw = __commonJS({
       XMLNode = require_XMLNode();
       module.exports = XMLRaw = (function(superClass) {
         extend2(XMLRaw2, superClass);
-        function XMLRaw2(parent, text) {
+        function XMLRaw2(parent, text2) {
           XMLRaw2.__super__.constructor.call(this, parent);
-          if (text == null) {
+          if (text2 == null) {
             throw new Error("Missing raw text. " + this.debugInfo());
           }
           this.type = NodeType.Raw;
-          this.value = this.stringify.raw(text);
+          this.value = this.stringify.raw(text2);
         }
         XMLRaw2.prototype.clone = function() {
           return Object.create(this);
@@ -31688,14 +31688,14 @@ var require_XMLText = __commonJS({
       XMLCharacterData = require_XMLCharacterData();
       module.exports = XMLText = (function(superClass) {
         extend2(XMLText2, superClass);
-        function XMLText2(parent, text) {
+        function XMLText2(parent, text2) {
           XMLText2.__super__.constructor.call(this, parent);
-          if (text == null) {
+          if (text2 == null) {
             throw new Error("Missing element text. " + this.debugInfo());
           }
           this.name = "#text";
           this.type = NodeType.Text;
-          this.value = this.stringify.text(text);
+          this.value = this.stringify.text(text2);
         }
         Object.defineProperty(XMLText2.prototype, "isElementContentWhitespace", {
           get: function() {
@@ -32007,18 +32007,18 @@ var require_XMLNode = __commonJS({
           }
           return results;
         };
-        XMLNode2.prototype.element = function(name, attributes, text) {
+        XMLNode2.prototype.element = function(name, attributes, text2) {
           var childNode, item, j, k, key, lastChild, len, len1, ref2, ref3, val;
           lastChild = null;
-          if (attributes === null && text == null) {
-            ref2 = [{}, null], attributes = ref2[0], text = ref2[1];
+          if (attributes === null && text2 == null) {
+            ref2 = [{}, null], attributes = ref2[0], text2 = ref2[1];
           }
           if (attributes == null) {
             attributes = {};
           }
           attributes = getValue(attributes);
           if (!isObject2(attributes)) {
-            ref3 = [attributes, text], text = ref3[0], attributes = ref3[1];
+            ref3 = [attributes, text2], text2 = ref3[0], attributes = ref3[1];
           }
           if (name != null) {
             name = getValue(name);
@@ -32063,21 +32063,21 @@ var require_XMLNode = __commonJS({
                 lastChild = this.element(key, val);
               }
             }
-          } else if (!this.options.keepNullNodes && text === null) {
+          } else if (!this.options.keepNullNodes && text2 === null) {
             lastChild = this.dummy();
           } else {
             if (!this.options.ignoreDecorators && this.stringify.convertTextKey && name.indexOf(this.stringify.convertTextKey) === 0) {
-              lastChild = this.text(text);
+              lastChild = this.text(text2);
             } else if (!this.options.ignoreDecorators && this.stringify.convertCDataKey && name.indexOf(this.stringify.convertCDataKey) === 0) {
-              lastChild = this.cdata(text);
+              lastChild = this.cdata(text2);
             } else if (!this.options.ignoreDecorators && this.stringify.convertCommentKey && name.indexOf(this.stringify.convertCommentKey) === 0) {
-              lastChild = this.comment(text);
+              lastChild = this.comment(text2);
             } else if (!this.options.ignoreDecorators && this.stringify.convertRawKey && name.indexOf(this.stringify.convertRawKey) === 0) {
-              lastChild = this.raw(text);
+              lastChild = this.raw(text2);
             } else if (!this.options.ignoreDecorators && this.stringify.convertPIKey && name.indexOf(this.stringify.convertPIKey) === 0) {
-              lastChild = this.instruction(name.substr(this.stringify.convertPIKey.length), text);
+              lastChild = this.instruction(name.substr(this.stringify.convertPIKey.length), text2);
             } else {
-              lastChild = this.node(name, attributes, text);
+              lastChild = this.node(name, attributes, text2);
             }
           }
           if (lastChild == null) {
@@ -32085,7 +32085,7 @@ var require_XMLNode = __commonJS({
           }
           return lastChild;
         };
-        XMLNode2.prototype.insertBefore = function(name, attributes, text) {
+        XMLNode2.prototype.insertBefore = function(name, attributes, text2) {
           var child, i2, newChild, refChild, removed;
           if (name != null ? name.type : void 0) {
             newChild = name;
@@ -32106,19 +32106,19 @@ var require_XMLNode = __commonJS({
             }
             i2 = this.parent.children.indexOf(this);
             removed = this.parent.children.splice(i2);
-            child = this.parent.element(name, attributes, text);
+            child = this.parent.element(name, attributes, text2);
             Array.prototype.push.apply(this.parent.children, removed);
             return child;
           }
         };
-        XMLNode2.prototype.insertAfter = function(name, attributes, text) {
+        XMLNode2.prototype.insertAfter = function(name, attributes, text2) {
           var child, i2, removed;
           if (this.isRoot) {
             throw new Error("Cannot insert elements at root level. " + this.debugInfo(name));
           }
           i2 = this.parent.children.indexOf(this);
           removed = this.parent.children.splice(i2 + 1);
-          child = this.parent.element(name, attributes, text);
+          child = this.parent.element(name, attributes, text2);
           Array.prototype.push.apply(this.parent.children, removed);
           return child;
         };
@@ -32131,7 +32131,7 @@ var require_XMLNode = __commonJS({
           [].splice.apply(this.parent.children, [i2, i2 - i2 + 1].concat(ref2 = [])), ref2;
           return this.parent;
         };
-        XMLNode2.prototype.node = function(name, attributes, text) {
+        XMLNode2.prototype.node = function(name, attributes, text2) {
           var child, ref2;
           if (name != null) {
             name = getValue(name);
@@ -32139,11 +32139,11 @@ var require_XMLNode = __commonJS({
           attributes || (attributes = {});
           attributes = getValue(attributes);
           if (!isObject2(attributes)) {
-            ref2 = [attributes, text], text = ref2[0], attributes = ref2[1];
+            ref2 = [attributes, text2], text2 = ref2[0], attributes = ref2[1];
           }
           child = new XMLElement(this, name, attributes);
-          if (text != null) {
-            child.text(text);
+          if (text2 != null) {
+            child.text(text2);
           }
           this.children.push(child);
           return child;
@@ -32346,11 +32346,11 @@ var require_XMLNode = __commonJS({
             return "node: <" + name + ">, parent: <" + this.parent.name + ">";
           }
         };
-        XMLNode2.prototype.ele = function(name, attributes, text) {
-          return this.element(name, attributes, text);
+        XMLNode2.prototype.ele = function(name, attributes, text2) {
+          return this.element(name, attributes, text2);
         };
-        XMLNode2.prototype.nod = function(name, attributes, text) {
-          return this.node(name, attributes, text);
+        XMLNode2.prototype.nod = function(name, attributes, text2) {
+          return this.node(name, attributes, text2);
         };
         XMLNode2.prototype.txt = function(value) {
           return this.text(value);
@@ -32370,11 +32370,11 @@ var require_XMLNode = __commonJS({
         XMLNode2.prototype.dec = function(version2, encoding, standalone) {
           return this.declaration(version2, encoding, standalone);
         };
-        XMLNode2.prototype.e = function(name, attributes, text) {
-          return this.element(name, attributes, text);
+        XMLNode2.prototype.e = function(name, attributes, text2) {
+          return this.element(name, attributes, text2);
         };
-        XMLNode2.prototype.n = function(name, attributes, text) {
-          return this.node(name, attributes, text);
+        XMLNode2.prototype.n = function(name, attributes, text2) {
+          return this.node(name, attributes, text2);
         };
         XMLNode2.prototype.t = function(value) {
           return this.text(value);
@@ -33534,7 +33534,7 @@ var require_XMLDocumentCB = __commonJS({
         XMLDocumentCB2.prototype.dummy = function() {
           return this;
         };
-        XMLDocumentCB2.prototype.node = function(name, attributes, text) {
+        XMLDocumentCB2.prototype.node = function(name, attributes, text2) {
           var ref1;
           if (name == null) {
             throw new Error("Missing node name.");
@@ -33549,18 +33549,18 @@ var require_XMLDocumentCB = __commonJS({
           }
           attributes = getValue(attributes);
           if (!isObject2(attributes)) {
-            ref1 = [attributes, text], text = ref1[0], attributes = ref1[1];
+            ref1 = [attributes, text2], text2 = ref1[0], attributes = ref1[1];
           }
           this.currentNode = new XMLElement(this, name, attributes);
           this.currentNode.children = false;
           this.currentLevel++;
           this.openTags[this.currentLevel] = this.currentNode;
-          if (text != null) {
-            this.text(text);
+          if (text2 != null) {
+            this.text(text2);
           }
           return this;
         };
-        XMLDocumentCB2.prototype.element = function(name, attributes, text) {
+        XMLDocumentCB2.prototype.element = function(name, attributes, text2) {
           var child, i2, len, oldValidationFlag, ref1, root;
           if (this.currentNode && this.currentNode.type === NodeType.DocType) {
             this.dtdElement.apply(this, arguments);
@@ -33580,7 +33580,7 @@ var require_XMLDocumentCB = __commonJS({
                 }
               }
             } else {
-              this.node(name, attributes, text);
+              this.node(name, attributes, text2);
             }
           }
           return this;
@@ -33830,8 +33830,8 @@ var require_XMLDocumentCB = __commonJS({
         XMLDocumentCB2.prototype.ele = function() {
           return this.element.apply(this, arguments);
         };
-        XMLDocumentCB2.prototype.nod = function(name, attributes, text) {
-          return this.node(name, attributes, text);
+        XMLDocumentCB2.prototype.nod = function(name, attributes, text2) {
+          return this.node(name, attributes, text2);
         };
         XMLDocumentCB2.prototype.txt = function(value) {
           return this.text(value);
@@ -33851,11 +33851,11 @@ var require_XMLDocumentCB = __commonJS({
         XMLDocumentCB2.prototype.dtd = function(root, pubID, sysID) {
           return this.doctype(root, pubID, sysID);
         };
-        XMLDocumentCB2.prototype.e = function(name, attributes, text) {
-          return this.element(name, attributes, text);
+        XMLDocumentCB2.prototype.e = function(name, attributes, text2) {
+          return this.element(name, attributes, text2);
         };
-        XMLDocumentCB2.prototype.n = function(name, attributes, text) {
-          return this.node(name, attributes, text);
+        XMLDocumentCB2.prototype.n = function(name, attributes, text2) {
+          return this.node(name, attributes, text2);
         };
         XMLDocumentCB2.prototype.t = function(value) {
           return this.text(value);
@@ -34954,10 +34954,10 @@ var require_sax = __commonJS({
         if (parser.textNode) emit(parser, "ontext", parser.textNode);
         parser.textNode = "";
       }
-      function textopts(opt, text) {
-        if (opt.trim) text = text.trim();
-        if (opt.normalize) text = text.replace(/\s+/g, " ");
-        return text;
+      function textopts(opt, text2) {
+        if (opt.trim) text2 = text2.trim();
+        if (opt.normalize) text2 = text2.replace(/\s+/g, " ");
+        return text2;
       }
       function error62(parser, er) {
         closeText(parser);
@@ -36157,17 +36157,17 @@ var require_parser3 = __commonJS({
             };
           })(this);
           ontext = /* @__PURE__ */ (function(_this) {
-            return function(text) {
+            return function(text2) {
               var charChild, s2;
               s2 = stack[stack.length - 1];
               if (s2) {
-                s2[charkey] += text;
-                if (_this.options.explicitChildren && _this.options.preserveChildrenOrder && _this.options.charsAsChildren && (_this.options.includeWhiteChars || text.replace(/\\n/g, "").trim() !== "")) {
+                s2[charkey] += text2;
+                if (_this.options.explicitChildren && _this.options.preserveChildrenOrder && _this.options.charsAsChildren && (_this.options.includeWhiteChars || text2.replace(/\\n/g, "").trim() !== "")) {
                   s2[_this.options.childkey] = s2[_this.options.childkey] || [];
                   charChild = {
                     "#name": "__text__"
                   };
-                  charChild[charkey] = text;
+                  charChild[charkey] = text2;
                   if (_this.options.normalize) {
                     charChild[charkey] = charChild[charkey].replace(/\s{2,}/g, " ").trim();
                   }
@@ -36179,9 +36179,9 @@ var require_parser3 = __commonJS({
           })(this);
           this.saxParser.ontext = ontext;
           return this.saxParser.oncdata = /* @__PURE__ */ (function(_this) {
-            return function(text) {
+            return function(text2) {
               var s2;
-              s2 = ontext(text);
+              s2 = ontext(text2);
               if (s2) {
                 return s2.cdata = true;
               }
@@ -36470,11 +36470,11 @@ var require_parse_bmfont_binary = __commonJS({
     }
     function readPages(buf, i2, size) {
       var pages = [];
-      var text = readNameNT(buf, i2);
-      var len = text.length + 1;
+      var text2 = readNameNT(buf, i2);
+      var len = text2.length + 1;
       var count = size / len;
       for (var c3 = 0; c3 < count; c3++) {
-        pages[c3] = buf.slice(i2, i2 + text.length).toString("utf8");
+        pages[c3] = buf.slice(i2, i2 + text2.length).toString("utf8");
         i2 += len;
       }
       return pages;
@@ -37079,8 +37079,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -37195,11 +37195,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -41153,10 +41153,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path5) {
-  if (!path5)
+function getElementAtPath(obj, path7) {
+  if (!path7)
     return obj;
-  return path5.reduce((acc, key) => acc?.[key], obj);
+  return path7.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -41496,11 +41496,11 @@ function explicitlyAborted(x2, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path5, issues) {
+function prefixIssues(path7, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path5);
+    iss.path.unshift(path7);
     return iss;
   });
 }
@@ -41950,16 +41950,16 @@ function flattenError(error62, mapper = (issue2) => issue2.message) {
 }
 function formatError(error62, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error63, path5 = []) => {
+  const processError = (error63, path7 = []) => {
     for (const issue2 of error63.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path7, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
       } else {
-        const fullpath = [...path5, ...issue2.path];
+        const fullpath = [...path7, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -41998,17 +41998,17 @@ function formatError(error62, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error62, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error63, path5 = []) => {
+  const processError = (error63, path7 = []) => {
     var _a3;
     for (const issue2 of error63.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path7, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
       } else {
-        const fullpath = [...path5, ...issue2.path];
+        const fullpath = [...path7, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -42047,8 +42047,8 @@ function treeifyError(error62, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path5 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path5) {
+  const path7 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path7) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -45364,9 +45364,9 @@ var NONE = 0;
 var ASSUMED = 1;
 var PROVEN = 2;
 function isRecursive(inst, stack, resolve) {
-  const cached2 = recursive.get(inst);
-  if (cached2 !== void 0)
-    return cached2 ? PROVEN : NONE;
+  const cached3 = recursive.get(inst);
+  if (cached3 !== void 0)
+    return cached3 ? PROVEN : NONE;
   if (stack.has(inst))
     return PROVEN;
   stack.add(inst);
@@ -49646,8 +49646,8 @@ function ko_default() {
 }
 
 // node_modules/zod/v4/locales/lt.js
-var capitalizeFirstCharacter = (text) => {
-  return text.charAt(0).toUpperCase() + text.slice(1);
+var capitalizeFirstCharacter = (text2) => {
+  return text2.charAt(0).toUpperCase() + text2.slice(1);
 };
 function getUnitTypeFromNumber(number4) {
   const abs = Math.abs(number4);
@@ -57333,15 +57333,15 @@ function visit(schema, fnOrHandlers) {
   };
   const cache = /* @__PURE__ */ new Map();
   function run(s2) {
-    const cached2 = cache.get(s2);
-    if (cached2 === RESOLVING) {
+    const cached3 = cache.get(s2);
+    if (cached3 === RESOLVING) {
       return new $ZodLazy({
         type: "lazy",
         getter: () => cache.get(s2)
       });
     }
-    if (cached2 !== void 0)
-      return cached2;
+    if (cached3 !== void 0)
+      return cached3;
     cache.set(s2, RESOLVING);
     const inner = mapInner(s2);
     const mapped = fn(inner, inner !== s2);
@@ -57563,11 +57563,11 @@ function normalizeObjectSchema(schema) {
   }
   return void 0;
 }
-function getDotPath(path5) {
-  if (path5.length === 0) {
+function getDotPath(path7) {
+  if (path7.length === 0) {
     return "object root";
   }
-  return path5.reduce((acc, seg, index) => {
+  return path7.reduce((acc, seg, index) => {
     if (index === 0) {
       return String(seg);
     }
@@ -59794,13 +59794,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path5 = ref.slice(1).split("/").filter(Boolean);
-  if (path5.length === 0) {
+  const path7 = ref.slice(1).split("/").filter(Boolean);
+  if (path7.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path5[0] === defsKey) {
-    const key = path5[1] === void 0 ? void 0 : decodeJSONPointerSegment(path5[1]);
+  if (path7[0] === defsKey) {
+    const key = path7[1] === void 0 ? void 0 : decodeJSONPointerSegment(path7[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -65984,31 +65984,280 @@ var StdioServerTransport = class {
 };
 
 // dist/core/session.js
-import fs4 from "node:fs";
-import path2 from "node:path";
+import fs6 from "node:fs";
+import path4 from "node:path";
+
+// dist/themes/palette.js
+var TARKOV_ACCENT = "#ee8a3a";
+var TARKOV_ACCENT_RGB = "238, 138, 58";
+var TARKOV_INK = "#1c1207";
+var TARKOV_INK_RGB = "28, 18, 7";
+var TARKOV_BACKGROUND = "#1c1207";
+var DEFAULT_PALETTE = {
+  accent: TARKOV_ACCENT,
+  accentRgb: TARKOV_ACCENT_RGB,
+  deep: "#140d04",
+  deepRgb: "20, 13, 4",
+  background: TARKOV_BACKGROUND,
+  panelRgb: "26, 18, 10",
+  panelAltRgb: "30, 20, 10",
+  raisedRgb: "42, 29, 16",
+  popoverRgb: "46, 32, 18",
+  text: "#e8d9c8",
+  highlight: "#ffd7ae",
+  warning: "#ffb27a",
+  muted: "#8b877c",
+  mutedRgb: "139, 135, 124",
+  // Both match what the shipped theme already painted: dark ink on the accent,
+  // and the reference project's #111111 on the band. They are held as constants
+  // rather than recomputed so the default render stays byte-identical — the
+  // contrast logic below only runs once a colour has actually been chosen.
+  onAccent: "#1c1207",
+  bandInk: "#111111",
+  // Matches what the popover foreground already resolved to, so the shipped
+  // render is unchanged.
+  popoverText: "#e8d9c8"
+};
+function parseHex(value) {
+  if (typeof value !== "string")
+    return void 0;
+  const raw = value.trim().replace(/^#/, "");
+  if (/^[0-9a-fA-F]{3}$/.test(raw)) {
+    return {
+      r: Number.parseInt(raw[0] + raw[0], 16),
+      g: Number.parseInt(raw[1] + raw[1], 16),
+      b: Number.parseInt(raw[2] + raw[2], 16)
+    };
+  }
+  if (/^[0-9a-fA-F]{6}$/.test(raw)) {
+    return {
+      r: Number.parseInt(raw.slice(0, 2), 16),
+      g: Number.parseInt(raw.slice(2, 4), 16),
+      b: Number.parseInt(raw.slice(4, 6), 16)
+    };
+  }
+  return void 0;
+}
+function toHex({ r: r2, g, b }) {
+  const part = (v) => Math.min(255, Math.max(0, Math.round(v))).toString(16).padStart(2, "0");
+  return `#${part(r2)}${part(g)}${part(b)}`;
+}
+function toTriple({ r: r2, g, b }) {
+  const part = (v) => Math.min(255, Math.max(0, Math.round(v)));
+  return `${part(r2)}, ${part(g)}, ${part(b)}`;
+}
+function luminance({ r: r2, g, b }) {
+  const lin = (v) => {
+    const s2 = v / 255;
+    return s2 <= 0.03928 ? s2 / 12.92 : ((s2 + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(r2) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+var BLACK = { r: 0, g: 0, b: 0 };
+var WHITE = { r: 255, g: 255, b: 255 };
+function contrastRatio(a2, b) {
+  const la = luminance(a2);
+  const lb = luminance(b);
+  const lighter = Math.max(la, lb);
+  const darker = Math.min(la, lb);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+function roundRgb(color2) {
+  return { r: Math.round(color2.r), g: Math.round(color2.g), b: Math.round(color2.b) };
+}
+function compositeOver(foreground, background, alpha) {
+  const t2 = Math.min(1, Math.max(0, alpha));
+  return {
+    r: foreground.r * t2 + background.r * (1 - t2),
+    g: foreground.g * t2 + background.g * (1 - t2),
+    b: foreground.b * t2 + background.b * (1 - t2)
+  };
+}
+function readableInk(background, candidates) {
+  let best = candidates[0];
+  let bestRatio = -1;
+  for (const candidate of candidates) {
+    const ratio = contrastRatio(candidate, background);
+    if (ratio > bestRatio) {
+      bestRatio = ratio;
+      best = candidate;
+    }
+  }
+  return best;
+}
+function readableInkAll(backgrounds, candidates) {
+  const worstCase = (candidate) => Math.min(...backgrounds.map((background) => contrastRatio(candidate, background)));
+  let best = candidates[0];
+  let bestRatio = -1;
+  for (const candidate of candidates) {
+    const ratio = worstCase(candidate);
+    if (ratio > bestRatio) {
+      bestRatio = ratio;
+      best = candidate;
+    }
+  }
+  return best;
+}
+function clampLuminance(color2, base, min, max) {
+  const fits = (candidate) => {
+    const l2 = luminance(candidate);
+    return l2 >= min && l2 <= max;
+  };
+  if (fits(color2))
+    return color2;
+  let lo = 0;
+  let hi = 1;
+  let best = color2;
+  for (let i2 = 0; i2 < 24; i2 += 1) {
+    const mid = (lo + hi) / 2;
+    const candidate = compositeOver(base, color2, mid);
+    if (fits(candidate)) {
+      best = candidate;
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+  return roundRgb(best);
+}
+function ensureContrastAll(color2, backgrounds, target) {
+  const worstCase = (candidate) => Math.min(...backgrounds.map((background) => contrastRatio(candidate, background)));
+  const aim = target * 1.01;
+  if (worstCase(color2) >= aim)
+    return color2;
+  const extreme = worstCase(WHITE) >= worstCase(BLACK) ? WHITE : BLACK;
+  let current = color2;
+  for (let i2 = 0; i2 < 24 && worstCase(current) < aim; i2 += 1) {
+    current = compositeOver(extreme, current, 0.25);
+  }
+  return worstCase(current) >= aim ? current : extreme;
+}
+function ensureContrast(color2, background, target) {
+  const aim = target * 1.01;
+  if (contrastRatio(color2, background) >= aim)
+    return color2;
+  const extreme = contrastRatio(WHITE, background) >= contrastRatio(BLACK, background) ? WHITE : BLACK;
+  let current = color2;
+  for (let i2 = 0; i2 < 24 && contrastRatio(current, background) < aim; i2 += 1) {
+    current = compositeOver(extreme, current, 0.25);
+  }
+  return contrastRatio(current, background) >= aim ? current : extreme;
+}
+function shift(color2, amount) {
+  const target = amount >= 0 ? 255 : 0;
+  const t2 = Math.min(1, Math.abs(amount));
+  return {
+    r: color2.r + (target - color2.r) * t2,
+    g: color2.g + (target - color2.g) * t2,
+    b: color2.b + (target - color2.b) * t2
+  };
+}
+function isDefaultPalette(overrides) {
+  const background = parseHex(overrides.background);
+  const accent = parseHex(overrides.accent);
+  const defaultBackground = parseHex(TARKOV_BACKGROUND);
+  const defaultAccent = parseHex(TARKOV_ACCENT);
+  const sameBackground = !background || toHex(background) === toHex(defaultBackground);
+  const sameAccent = !accent || toHex(accent) === toHex(defaultAccent);
+  return sameBackground && sameAccent;
+}
+function resolvePalette(overrides = {}) {
+  if (isDefaultPalette(overrides))
+    return DEFAULT_PALETTE;
+  const background = parseHex(overrides.background) ?? parseHex(TARKOV_BACKGROUND);
+  const accent = parseHex(overrides.accent) ?? parseHex(TARKOV_ACCENT);
+  const light = luminance(background) > 0.4;
+  const inkIsDark = contrastRatio(BLACK, background) >= contrastRatio(WHITE, background);
+  const band = inkIsDark ? { min: 0.18, max: 1 } : { min: 0, max: 0.165 };
+  const toward = inkIsDark ? 1 : -1;
+  const fit = (shifted) => clampLuminance(roundRgb(shifted), background, band.min, band.max);
+  const surface = fit(shift(background, 0.05 * toward));
+  const panel = fit(shift(background, 0.1 * toward));
+  const raised = fit(shift(background, 0.22 * toward));
+  const popover = fit(shift(background, 0.28 * toward));
+  const textSurfaces = [surface, panel, raised];
+  const text2 = ensureContrastAll(readableInkAll(textSurfaces, [parseHex("#e8d9c8"), parseHex("#1b1410")]), textSurfaces, 4.5);
+  const muted = ensureContrastAll(readableInkAll(textSurfaces, [parseHex("#8b877c"), parseHex("#5c5348")]), textSurfaces, 3);
+  const highlight = ensureContrastAll(readableInkAll(textSurfaces, [shift(accent, 0.65), shift(accent, -0.3)]), textSurfaces, 4.5);
+  const warning = ensureContrastAll(readableInkAll(textSurfaces, [shift(accent, 0.45), shift(accent, -0.2)]), textSurfaces, 4.5);
+  const popoverText = ensureContrastAll(readableInkAll([popover], [parseHex("#e8d9c8"), parseHex("#1b1410")]), [popover], 4.5);
+  const onAccent = ensureContrast(readableInk(accent, [parseHex("#0d0a06"), parseHex("#ffffff")]), accent, 4.5);
+  const noticeSurface = roundRgb(compositeOver(accent, background, 0.62));
+  const bandInk = ensureContrast(readableInk(noticeSurface, [parseHex("#111111"), parseHex("#ffffff")]), noticeSurface, 4.5);
+  return {
+    accent: toHex(accent),
+    accentRgb: toTriple(accent),
+    deep: toHex(roundRgb(shift(background, -0.3 * (light ? -1 : 1)))),
+    deepRgb: toTriple(roundRgb(shift(background, -0.3 * (light ? -1 : 1)))),
+    background: toHex(background),
+    panelRgb: toTriple(surface),
+    panelAltRgb: toTriple(panel),
+    raisedRgb: toTriple(raised),
+    popoverRgb: toTriple(popover),
+    text: toHex(text2),
+    popoverText: toHex(popoverText),
+    highlight: toHex(highlight),
+    warning: toHex(warning),
+    muted: toHex(muted),
+    mutedRgb: toTriple(muted),
+    onAccent: toHex(onAccent),
+    bandInk: toHex(bandInk)
+  };
+}
+
+// dist/prefs/types.js
+var MEDIA_KINDS = ["music", "sounds", "voice", "pet", "status"];
+var SFX_EVENTS = ["start", "approval", "done", "error", "tool"];
+var BANNER_MODES = ["off", "compact", "full"];
+var COLOR_MODES = ["monet", "tarkov", "native"];
+var WALLPAPER_FITS = ["cover", "contain", "smart"];
+var STATUS_LANGUAGES = ["zh", "en"];
+var STATUS_TRIGGERS = ["reasoning", "tool", "progress"];
+var PREFS_VERSION = 2;
 
 // dist/core/banner.js
 var BANNER_ID = "zcode-tarkov-banner";
 var BANNER_STYLE_ID = "zcode-tarkov-banner-style";
 var BANNER_STATE_KEY = "__zcodeTarkovBanner";
+var COMPACT_BANNER_HEIGHT = 28;
 var DEFAULT_BANNER_TEXT = {
   line1: "ATTENTION! ZCODE TACTICAL INTERFACE ACTIVE",
   line2: "Experimental interface. Verify your task, tool calls and working tree before deployment."
 };
 var DEFAULT_BANNER = {
   enabled: true,
+  mode: "full",
   text1: DEFAULT_BANNER_TEXT.line1,
   text2: DEFAULT_BANNER_TEXT.line2,
   height: 56,
   opacity: 0.92
 };
-var ACCENT_RGB = "224, 121, 48";
-var ACCENT = "#e07930";
-var INK = "#1c1207";
+function bannerHeight(opts) {
+  if (opts.mode === "off")
+    return 0;
+  if (opts.mode === "compact")
+    return COMPACT_BANNER_HEIGHT;
+  return opts.height;
+}
+function resolveBannerMode(opts) {
+  if (opts.enabled === false)
+    return "off";
+  if (opts.mode && BANNER_MODES.includes(opts.mode))
+    return opts.mode;
+  return "full";
+}
 function buildBannerCss(opts) {
+  const mode = resolveBannerMode(opts);
+  const accentHex = opts.accent ?? TARKOV_ACCENT;
+  const bandInk = opts.accentInk ?? TARKOV_INK;
+  const accentTriple = opts.accentRgb ?? TARKOV_ACCENT_RGB;
+  const height = bannerHeight(opts);
   return `
 /* Single source of truth for the reserved band: BannerOptions.height. */
-html[data-zct-banner="1"] { --zcode-tarkov-banner-height: ${opts.height}px; }
+html[data-zct-banner="1"] { --zcode-tarkov-banner-height: ${height}px; }
+/* Off means zero, not absent: an unset property would make every calc() below
+   invalid rather than zero, which is how a band leaves a stale gap behind. */
+html:not([data-zct-banner="1"]) { --zcode-tarkov-banner-height: 0px; }
 /* flow-root keeps #root's margin-top from collapsing through the body; without
    it the whole body box moves down by the band and the document keeps the band
    height of scrollable overflow (measured on 3.11.2). */
@@ -66030,14 +66279,14 @@ html[data-zct-banner="1"] .h-dvh {
   top: 0;
   left: 0;
   right: 0;
-  height: ${opts.height}px;
+  height: ${height}px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: ${mode === "compact" ? "10px" : "14px"};
   padding: 0 16px;
-  background: rgba(${ACCENT_RGB}, ${opts.opacity});
-  border-bottom: 1px solid rgba(28, 18, 7, 0.45);
+  background: rgba(${accentTriple}, ${opts.opacity});
+  border-bottom: 1px solid rgba(${TARKOV_INK_RGB}, 0.45);
   z-index: 2147483000;
   overflow: hidden;
   user-select: none;
@@ -66046,15 +66295,15 @@ html[data-zct-banner="1"] .h-dvh {
   -webkit-app-region: drag;
 }
 #${BANNER_ID} .zct-banner-icon {
-  width: 34px;
-  height: 28px;
+  width: ${mode === "compact" ? "22px" : "34px"};
+  height: ${mode === "compact" ? "18px" : "28px"};
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${INK};
-  color: ${ACCENT};
-  font: 800 18px/1 system-ui, sans-serif;
+  background: ${bandInk};
+  color: ${accentHex};
+  font: 800 ${mode === "compact" ? "12px" : "18px"}/1 system-ui, sans-serif;
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
 }
 #${BANNER_ID} .zct-banner-text {
@@ -66064,17 +66313,17 @@ html[data-zct-banner="1"] .h-dvh {
   min-width: 0;
 }
 #${BANNER_ID} .zct-banner-line1 {
-  color: ${INK};
+  color: ${bandInk};
   font-weight: 700;
-  font-size: 13px;
+  font-size: ${mode === "compact" ? "11px" : "13px"};
   line-height: 1.35;
-  letter-spacing: 1.2px;
+  letter-spacing: ${mode === "compact" ? "0.9px" : "1.2px"};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 #${BANNER_ID} .zct-banner-line2 {
-  color: ${INK};
+  color: ${bandInk};
   font-size: 12px;
   line-height: 1.35;
   letter-spacing: 0.5px;
@@ -66085,13 +66334,15 @@ html[data-zct-banner="1"] .h-dvh {
 `.trim();
 }
 function buildBannerScript(opts) {
+  const mode = resolveBannerMode(opts);
   return `(function(){
   var ID = ${JSON.stringify(BANNER_ID)};
   var STYLE_ID = ${JSON.stringify(BANNER_STYLE_ID)};
   var STATE_KEY = ${JSON.stringify(BANNER_STATE_KEY)};
   var CSS = ${JSON.stringify(buildBannerCss(opts))};
   var T1 = ${JSON.stringify(opts.text1)};
-  var T2 = ${JSON.stringify(opts.text2)};
+  var T2 = ${JSON.stringify(mode === "compact" ? "" : opts.text2)};
+  var MODE = ${JSON.stringify(mode)};
 
   var previous = window[STATE_KEY];
   if (previous && typeof previous.destroy === 'function') {
@@ -66121,14 +66372,19 @@ function buildBannerScript(opts) {
     icon.textContent = '!';
     var l1 = document.createElement('span');
     l1.className = 'zct-banner-line1';
-    var l2 = document.createElement('span');
-    l2.className = 'zct-banner-line2';
     l1.textContent = T1;
-    l2.textContent = T2;
     var text = document.createElement('span');
     text.className = 'zct-banner-text';
     text.appendChild(l1);
-    text.appendChild(l2);
+    // The compact strip is one line by definition: the second span is not
+    // created at all, rather than created and hidden, so nothing measurable is
+    // left in the band.
+    if (T2) {
+      var l2 = document.createElement('span');
+      l2.className = 'zct-banner-line2';
+      l2.textContent = T2;
+      text.appendChild(l2);
+    }
     var node = document.createElement('div');
     node.id = ID;
     node.setAttribute('role', 'status');
@@ -66154,6 +66410,13 @@ function buildBannerScript(opts) {
         body.insertBefore(node, body.firstChild);
       }
       document.documentElement.setAttribute('data-zct-banner', '1');
+      // Clear any inline compensation an earlier build wrote. Inline outranks
+      // the author rule below, so a stale "0px" left on <html> would keep the
+      // reservation at zero while the band is showing \u2014 the band would then
+      // paint over the app's top strip instead of above it.
+      if (document.documentElement.style.getPropertyValue('--zcode-tarkov-banner-height') !== '') {
+        document.documentElement.style.removeProperty('--zcode-tarkov-banner-height');
+      }
 
       // Conditional writes only: assigning textContent unconditionally
       // replaces the text node, which mutates the tree, which re-triggers the
@@ -66161,7 +66424,7 @@ function buildBannerScript(opts) {
       var l1 = node.querySelector('.zct-banner-line1');
       if (l1 && l1.textContent !== T1) l1.textContent = T1;
       var l2 = node.querySelector('.zct-banner-line2');
-      if (l2 && l2.textContent !== T2) l2.textContent = T2;
+      if (l2 && T2 && l2.textContent !== T2) l2.textContent = T2;
     } catch (e) { /* fail soft */ }
   }
 
@@ -66211,13 +66474,14 @@ function buildBannerScript(opts) {
     }, 1000);
   }
 
-  window[STATE_KEY] = { refresh: tick, destroy: destroy };
+  window[STATE_KEY] = { refresh: tick, destroy: destroy, mode: MODE };
   tick();
 })();`;
 }
 function buildBannerTeardownScript() {
   return `(function(){
   var STATE_KEY = ${JSON.stringify(BANNER_STATE_KEY)};
+  var STYLE_ID = ${JSON.stringify(BANNER_STYLE_ID)};
   var st = window[STATE_KEY];
   if (st && typeof st.destroy === 'function') {
     try { st.destroy(); } catch (e) {}
@@ -66225,9 +66489,24 @@ function buildBannerTeardownScript() {
   try {
     var n = document.getElementById(${JSON.stringify(BANNER_ID)});
     if (n && n.parentNode) n.parentNode.removeChild(n);
-    var s = document.getElementById(${JSON.stringify(BANNER_STYLE_ID)});
-    if (s && s.parentNode) s.parentNode.removeChild(s);
     document.documentElement.removeAttribute('data-zct-banner');
+    // Any inline value a previous build wrote is cleared: inline outranks the
+    // author rule below, so a stale one would keep the reservation wrong.
+    document.documentElement.style.removeProperty('--zcode-tarkov-banner-height');
+    // The stylesheet is *not* removed. Removing it was what left the variable
+    // undefined rather than zero, and "undefined" is not the same as "no space":
+    // any remaining reader of the property \u2014 the pet, which keeps itself clear
+    // of the band \u2014 gets an empty string and has to guess. A single rule keeps
+    // the answer explicit while every reservation rule, being scoped to the
+    // attribute just removed, stays inert.
+    var s = document.getElementById(STYLE_ID);
+    if (!s) {
+      s = document.createElement('style');
+      s.id = STYLE_ID;
+      (document.head || document.documentElement).appendChild(s);
+    }
+    var zero = 'html:not([data-zct-banner="1"]) { --zcode-tarkov-banner-height: 0px; }';
+    if (s.textContent !== zero) s.textContent = zero;
   } catch (e) {}
 })();`;
 }
@@ -66811,8 +67090,8 @@ var BmpDecoder = class {
 function createInteger(numbers) {
   return numbers.reduce((final, n2) => final << 1 | n2, 0);
 }
-function createColor(color) {
-  return color.quad << 24 | color.red << 16 | color.green << 8 | color.blue;
+function createColor(color2) {
+  return color2.quad << 24 | color2.red << 16 | color2.green << 8 | color2.blue;
 }
 var BmpEncoder = class {
   fileSize;
@@ -67007,9 +67286,9 @@ var BmpEncoder = class {
       const b = this.buffer[i2++] / 8;
       const g = this.buffer[i2++] / 8;
       const r2 = this.buffer[i2++] / 8;
-      const color = r2 << 10 | g << 5 | b;
-      this.data[p2] = color & 255;
-      this.data[p2 + 1] = (color & 65280) >> 8;
+      const color2 = r2 << 10 | g << 5 | b;
+      this.data[p2] = color2 & 255;
+      this.data[p2 + 1] = (color2 & 65280) >> 8;
       return i2;
     });
   }
@@ -67080,17 +67359,17 @@ function _typeof(obj) {
 }
 var trimLeft = /^\s+/;
 var trimRight = /\s+$/;
-function tinycolor(color, opts) {
-  color = color ? color : "";
+function tinycolor(color2, opts) {
+  color2 = color2 ? color2 : "";
   opts = opts || {};
-  if (color instanceof tinycolor) {
-    return color;
+  if (color2 instanceof tinycolor) {
+    return color2;
   }
   if (!(this instanceof tinycolor)) {
-    return new tinycolor(color, opts);
+    return new tinycolor(color2, opts);
   }
-  var rgb = inputToRGB(color);
-  this._originalInput = color, this._r = rgb.r, this._g = rgb.g, this._b = rgb.b, this._a = rgb.a, this._roundA = Math.round(100 * this._a) / 100, this._format = opts.format || rgb.format;
+  var rgb = inputToRGB(color2);
+  this._originalInput = color2, this._r = rgb.r, this._g = rgb.g, this._b = rgb.b, this._a = rgb.a, this._roundA = Math.round(100 * this._a) / 100, this._format = opts.format || rgb.format;
   this._gradientType = opts.gradientType;
   if (this._r < 1) this._r = Math.round(this._r);
   if (this._g < 1) this._g = Math.round(this._g);
@@ -67167,7 +67446,7 @@ tinycolor.prototype = {
     var h = Math.round(hsl.h * 360), s2 = Math.round(hsl.s * 100), l2 = Math.round(hsl.l * 100);
     return this._a == 1 ? "hsl(" + h + ", " + s2 + "%, " + l2 + "%)" : "hsla(" + h + ", " + s2 + "%, " + l2 + "%, " + this._roundA + ")";
   },
-  toHex: function toHex(allow3Char) {
+  toHex: function toHex2(allow3Char) {
     return rgbToHex(this._r, this._g, this._b, allow3Char);
   },
   toHexString: function toHexString(allow3Char) {
@@ -67265,11 +67544,11 @@ tinycolor.prototype = {
     return tinycolor(this.toString());
   },
   _applyModification: function _applyModification(fn, args) {
-    var color = fn.apply(null, [this].concat([].slice.call(args)));
-    this._r = color._r;
-    this._g = color._g;
-    this._b = color._b;
-    this.setAlpha(color._a);
+    var color2 = fn.apply(null, [this].concat([].slice.call(args)));
+    this._r = color2._r;
+    this._g = color2._g;
+    this._b = color2._b;
+    this.setAlpha(color2._a);
     return this;
   },
   lighten: function lighten() {
@@ -67319,23 +67598,23 @@ tinycolor.prototype = {
     return this._applyCombination(polyad, [4]);
   }
 };
-tinycolor.fromRatio = function(color, opts) {
-  if (_typeof(color) == "object") {
+tinycolor.fromRatio = function(color2, opts) {
+  if (_typeof(color2) == "object") {
     var newColor = {};
-    for (var i2 in color) {
-      if (color.hasOwnProperty(i2)) {
+    for (var i2 in color2) {
+      if (color2.hasOwnProperty(i2)) {
         if (i2 === "a") {
-          newColor[i2] = color[i2];
+          newColor[i2] = color2[i2];
         } else {
-          newColor[i2] = convertToPercentage(color[i2]);
+          newColor[i2] = convertToPercentage(color2[i2]);
         }
       }
     }
-    color = newColor;
+    color2 = newColor;
   }
-  return tinycolor(color, opts);
+  return tinycolor(color2, opts);
 };
-function inputToRGB(color) {
+function inputToRGB(color2) {
   var rgb = {
     r: 0,
     g: 0,
@@ -67347,35 +67626,35 @@ function inputToRGB(color) {
   var l2 = null;
   var ok = false;
   var format = false;
-  if (typeof color == "string") {
-    color = stringInputToObject(color);
+  if (typeof color2 == "string") {
+    color2 = stringInputToObject(color2);
   }
-  if (_typeof(color) == "object") {
-    if (isValidCSSUnit(color.r) && isValidCSSUnit(color.g) && isValidCSSUnit(color.b)) {
-      rgb = rgbToRgb(color.r, color.g, color.b);
+  if (_typeof(color2) == "object") {
+    if (isValidCSSUnit(color2.r) && isValidCSSUnit(color2.g) && isValidCSSUnit(color2.b)) {
+      rgb = rgbToRgb(color2.r, color2.g, color2.b);
       ok = true;
-      format = String(color.r).substr(-1) === "%" ? "prgb" : "rgb";
-    } else if (isValidCSSUnit(color.h) && isValidCSSUnit(color.s) && isValidCSSUnit(color.v)) {
-      s2 = convertToPercentage(color.s);
-      v = convertToPercentage(color.v);
-      rgb = hsvToRgb(color.h, s2, v);
+      format = String(color2.r).substr(-1) === "%" ? "prgb" : "rgb";
+    } else if (isValidCSSUnit(color2.h) && isValidCSSUnit(color2.s) && isValidCSSUnit(color2.v)) {
+      s2 = convertToPercentage(color2.s);
+      v = convertToPercentage(color2.v);
+      rgb = hsvToRgb(color2.h, s2, v);
       ok = true;
       format = "hsv";
-    } else if (isValidCSSUnit(color.h) && isValidCSSUnit(color.s) && isValidCSSUnit(color.l)) {
-      s2 = convertToPercentage(color.s);
-      l2 = convertToPercentage(color.l);
-      rgb = hslToRgb(color.h, s2, l2);
+    } else if (isValidCSSUnit(color2.h) && isValidCSSUnit(color2.s) && isValidCSSUnit(color2.l)) {
+      s2 = convertToPercentage(color2.s);
+      l2 = convertToPercentage(color2.l);
+      rgb = hslToRgb(color2.h, s2, l2);
       ok = true;
       format = "hsl";
     }
-    if (color.hasOwnProperty("a")) {
-      a2 = color.a;
+    if (color2.hasOwnProperty("a")) {
+      a2 = color2.a;
     }
   }
   a2 = boundAlpha(a2);
   return {
     ok,
-    format: color.format || format,
+    format: color2.format || format,
     r: Math.min(255, Math.max(rgb.r, 0)),
     g: Math.min(255, Math.max(rgb.g, 0)),
     b: Math.min(255, Math.max(rgb.b, 0)),
@@ -67517,62 +67796,62 @@ tinycolor.random = function() {
     b: Math.random()
   });
 };
-function _desaturate(color, amount) {
+function _desaturate(color2, amount) {
   amount = amount === 0 ? 0 : amount || 10;
-  var hsl = tinycolor(color).toHsl();
+  var hsl = tinycolor(color2).toHsl();
   hsl.s -= amount / 100;
   hsl.s = clamp01(hsl.s);
   return tinycolor(hsl);
 }
-function _saturate(color, amount) {
+function _saturate(color2, amount) {
   amount = amount === 0 ? 0 : amount || 10;
-  var hsl = tinycolor(color).toHsl();
+  var hsl = tinycolor(color2).toHsl();
   hsl.s += amount / 100;
   hsl.s = clamp01(hsl.s);
   return tinycolor(hsl);
 }
-function _greyscale(color) {
-  return tinycolor(color).desaturate(100);
+function _greyscale(color2) {
+  return tinycolor(color2).desaturate(100);
 }
-function _lighten(color, amount) {
+function _lighten(color2, amount) {
   amount = amount === 0 ? 0 : amount || 10;
-  var hsl = tinycolor(color).toHsl();
+  var hsl = tinycolor(color2).toHsl();
   hsl.l += amount / 100;
   hsl.l = clamp01(hsl.l);
   return tinycolor(hsl);
 }
-function _brighten(color, amount) {
+function _brighten(color2, amount) {
   amount = amount === 0 ? 0 : amount || 10;
-  var rgb = tinycolor(color).toRgb();
+  var rgb = tinycolor(color2).toRgb();
   rgb.r = Math.max(0, Math.min(255, rgb.r - Math.round(255 * -(amount / 100))));
   rgb.g = Math.max(0, Math.min(255, rgb.g - Math.round(255 * -(amount / 100))));
   rgb.b = Math.max(0, Math.min(255, rgb.b - Math.round(255 * -(amount / 100))));
   return tinycolor(rgb);
 }
-function _darken(color, amount) {
+function _darken(color2, amount) {
   amount = amount === 0 ? 0 : amount || 10;
-  var hsl = tinycolor(color).toHsl();
+  var hsl = tinycolor(color2).toHsl();
   hsl.l -= amount / 100;
   hsl.l = clamp01(hsl.l);
   return tinycolor(hsl);
 }
-function _spin(color, amount) {
-  var hsl = tinycolor(color).toHsl();
+function _spin(color2, amount) {
+  var hsl = tinycolor(color2).toHsl();
   var hue = (hsl.h + amount) % 360;
   hsl.h = hue < 0 ? 360 + hue : hue;
   return tinycolor(hsl);
 }
-function _complement(color) {
-  var hsl = tinycolor(color).toHsl();
+function _complement(color2) {
+  var hsl = tinycolor(color2).toHsl();
   hsl.h = (hsl.h + 180) % 360;
   return tinycolor(hsl);
 }
-function polyad(color, number4) {
+function polyad(color2, number4) {
   if (isNaN(number4) || number4 <= 0) {
     throw new Error("Argument to polyad must be a positive number");
   }
-  var hsl = tinycolor(color).toHsl();
-  var result = [tinycolor(color)];
+  var hsl = tinycolor(color2).toHsl();
+  var result = [tinycolor(color2)];
   var step = 360 / number4;
   for (var i2 = 1; i2 < number4; i2++) {
     result.push(tinycolor({
@@ -67583,10 +67862,10 @@ function polyad(color, number4) {
   }
   return result;
 }
-function _splitcomplement(color) {
-  var hsl = tinycolor(color).toHsl();
+function _splitcomplement(color2) {
+  var hsl = tinycolor(color2).toHsl();
   var h = hsl.h;
-  return [tinycolor(color), tinycolor({
+  return [tinycolor(color2), tinycolor({
     h: (h + 72) % 360,
     s: hsl.s,
     l: hsl.l
@@ -67596,21 +67875,21 @@ function _splitcomplement(color) {
     l: hsl.l
   })];
 }
-function _analogous(color, results, slices) {
+function _analogous(color2, results, slices) {
   results = results || 6;
   slices = slices || 30;
-  var hsl = tinycolor(color).toHsl();
+  var hsl = tinycolor(color2).toHsl();
   var part = 360 / slices;
-  var ret = [tinycolor(color)];
+  var ret = [tinycolor(color2)];
   for (hsl.h = (hsl.h - (part * results >> 1) + 720) % 360; --results; ) {
     hsl.h = (hsl.h + part) % 360;
     ret.push(tinycolor(hsl));
   }
   return ret;
 }
-function _monochromatic(color, results) {
+function _monochromatic(color2, results) {
   results = results || 6;
-  var hsv = tinycolor(color).toHsv();
+  var hsv = tinycolor(color2).toHsv();
   var h = hsv.h, s2 = hsv.s, v = hsv.v;
   var ret = [];
   var modification = 1 / results;
@@ -67914,16 +68193,16 @@ var matchers = (function() {
     hex8: /^#?([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/
   };
 })();
-function isValidCSSUnit(color) {
-  return !!matchers.CSS_UNIT.exec(color);
+function isValidCSSUnit(color2) {
+  return !!matchers.CSS_UNIT.exec(color2);
 }
-function stringInputToObject(color) {
-  color = color.replace(trimLeft, "").replace(trimRight, "").toLowerCase();
+function stringInputToObject(color2) {
+  color2 = color2.replace(trimLeft, "").replace(trimRight, "").toLowerCase();
   var named = false;
-  if (names[color]) {
-    color = names[color];
+  if (names[color2]) {
+    color2 = names[color2];
     named = true;
-  } else if (color == "transparent") {
+  } else if (color2 == "transparent") {
     return {
       r: 0,
       g: 0,
@@ -67933,14 +68212,14 @@ function stringInputToObject(color) {
     };
   }
   var match;
-  if (match = matchers.rgb.exec(color)) {
+  if (match = matchers.rgb.exec(color2)) {
     return {
       r: match[1],
       g: match[2],
       b: match[3]
     };
   }
-  if (match = matchers.rgba.exec(color)) {
+  if (match = matchers.rgba.exec(color2)) {
     return {
       r: match[1],
       g: match[2],
@@ -67948,14 +68227,14 @@ function stringInputToObject(color) {
       a: match[4]
     };
   }
-  if (match = matchers.hsl.exec(color)) {
+  if (match = matchers.hsl.exec(color2)) {
     return {
       h: match[1],
       s: match[2],
       l: match[3]
     };
   }
-  if (match = matchers.hsla.exec(color)) {
+  if (match = matchers.hsla.exec(color2)) {
     return {
       h: match[1],
       s: match[2],
@@ -67963,14 +68242,14 @@ function stringInputToObject(color) {
       a: match[4]
     };
   }
-  if (match = matchers.hsv.exec(color)) {
+  if (match = matchers.hsv.exec(color2)) {
     return {
       h: match[1],
       s: match[2],
       v: match[3]
     };
   }
-  if (match = matchers.hsva.exec(color)) {
+  if (match = matchers.hsva.exec(color2)) {
     return {
       h: match[1],
       s: match[2],
@@ -67978,7 +68257,7 @@ function stringInputToObject(color) {
       a: match[4]
     };
   }
-  if (match = matchers.hex8.exec(color)) {
+  if (match = matchers.hex8.exec(color2)) {
     return {
       r: parseIntFromHex(match[1]),
       g: parseIntFromHex(match[2]),
@@ -67987,7 +68266,7 @@ function stringInputToObject(color) {
       format: named ? "name" : "hex8"
     };
   }
-  if (match = matchers.hex6.exec(color)) {
+  if (match = matchers.hex6.exec(color2)) {
     return {
       r: parseIntFromHex(match[1]),
       g: parseIntFromHex(match[2]),
@@ -67995,7 +68274,7 @@ function stringInputToObject(color) {
       format: named ? "name" : "hex"
     };
   }
-  if (match = matchers.hex4.exec(color)) {
+  if (match = matchers.hex4.exec(color2)) {
     return {
       r: parseIntFromHex(match[1] + "" + match[1]),
       g: parseIntFromHex(match[2] + "" + match[2]),
@@ -68004,7 +68283,7 @@ function stringInputToObject(color) {
       format: named ? "name" : "hex8"
     };
   }
-  if (match = matchers.hex3.exec(color)) {
+  if (match = matchers.hex3.exec(color2)) {
     return {
       r: parseIntFromHex(match[1] + "" + match[1]),
       g: parseIntFromHex(match[2] + "" + match[2]),
@@ -68786,8 +69065,8 @@ function getErrorMap3() {
 
 // node_modules/@jimp/types/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue2 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -68903,11 +69182,11 @@ var errorUtil2;
 
 // node_modules/@jimp/types/node_modules/zod/v3/types.js
 var ParseInputLazyPath2 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -72842,8 +73121,8 @@ function getErrorMap4() {
 
 // node_modules/@jimp/plugin-blit/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue3 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -72959,11 +73238,11 @@ var errorUtil3;
 
 // node_modules/@jimp/plugin-blit/node_modules/zod/v3/types.js
 var ParseInputLazyPath3 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -77668,8 +77947,8 @@ function getErrorMap5() {
 
 // node_modules/@jimp/plugin-circle/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue4 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -77785,11 +78064,11 @@ var errorUtil4;
 
 // node_modules/@jimp/plugin-circle/node_modules/zod/v3/types.js
 var ParseInputLazyPath4 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -81751,8 +82030,8 @@ function getErrorMap6() {
 
 // node_modules/@jimp/plugin-color/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue5 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -81868,11 +82147,11 @@ var errorUtil5;
 
 // node_modules/@jimp/plugin-color/node_modules/zod/v3/types.js
 var ParseInputLazyPath5 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -86588,9 +86867,9 @@ function createJimp({ plugins: pluginsArg, formats: formatsArg } = {}) {
      * await image.write("test/output.png");
      * ```
      */
-    async write(path5, options) {
-      const mimeType = import_lite.default.getType(path5);
-      await writeFile(path5, await this.getBuffer(mimeType, options));
+    async write(path7, options) {
+      const mimeType = import_lite.default.getType(path7);
+      await writeFile(path7, await this.getBuffer(mimeType, options));
     }
     /**
      * Clone the image into a new Jimp instance.
@@ -87281,8 +87560,8 @@ function getErrorMap7() {
 
 // node_modules/@jimp/plugin-resize/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue6 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -87398,11 +87677,11 @@ var errorUtil6;
 
 // node_modules/@jimp/plugin-resize/node_modules/zod/v3/types.js
 var ParseInputLazyPath6 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -91954,8 +92233,8 @@ function getErrorMap8() {
 
 // node_modules/@jimp/plugin-contain/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue7 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -92071,11 +92350,11 @@ var errorUtil7;
 
 // node_modules/@jimp/plugin-contain/node_modules/zod/v3/types.js
 var ParseInputLazyPath7 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -96046,8 +96325,8 @@ function getErrorMap9() {
 
 // node_modules/@jimp/plugin-crop/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue8 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -96163,11 +96442,11 @@ var errorUtil8;
 
 // node_modules/@jimp/plugin-crop/node_modules/zod/v3/types.js
 var ParseInputLazyPath8 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -100268,8 +100547,8 @@ function getErrorMap10() {
 
 // node_modules/@jimp/plugin-cover/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue9 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -100385,11 +100664,11 @@ var errorUtil9;
 
 // node_modules/@jimp/plugin-cover/node_modules/zod/v3/types.js
 var ParseInputLazyPath9 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -104356,8 +104635,8 @@ function getErrorMap11() {
 
 // node_modules/@jimp/plugin-displace/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue10 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -104473,11 +104752,11 @@ var errorUtil10;
 
 // node_modules/@jimp/plugin-displace/node_modules/zod/v3/types.js
 var ParseInputLazyPath10 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -108477,8 +108756,8 @@ function getErrorMap12() {
 
 // node_modules/@jimp/plugin-fisheye/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue11 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -108594,11 +108873,11 @@ var errorUtil11;
 
 // node_modules/@jimp/plugin-fisheye/node_modules/zod/v3/types.js
 var ParseInputLazyPath11 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -112070,8 +112349,8 @@ var methods11 = {
       const sinA = (hy - 0.5) / rActual;
       const newX = Math.round((rn * cosA + 0.5) * width);
       const newY = Math.round((rn * sinA + 0.5) * height);
-      const color = source.getPixelColor(newX, newY);
-      image2.setPixelColor(color, x2, y2);
+      const color2 = source.getPixelColor(newX, newY);
+      image2.setPixelColor(color2, x2, y2);
     });
     image2.setPixelColor(source.getPixelColor(width / 2, height / 2), width / 2, height / 2);
     return image2;
@@ -112556,8 +112835,8 @@ function getErrorMap13() {
 
 // node_modules/@jimp/plugin-flip/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue12 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -112673,11 +112952,11 @@ var errorUtil12;
 
 // node_modules/@jimp/plugin-flip/node_modules/zod/v3/types.js
 var ParseInputLazyPath12 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -116789,8 +117068,8 @@ function getErrorMap14() {
 
 // node_modules/@jimp/plugin-mask/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue13 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -116906,11 +117185,11 @@ var errorUtil13;
 
 // node_modules/@jimp/plugin-mask/node_modules/zod/v3/types.js
 var ParseInputLazyPath13 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -120887,8 +121166,8 @@ function getErrorMap15() {
 
 // node_modules/@jimp/plugin-print/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue14 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -121004,11 +121283,11 @@ var errorUtil14;
 
 // node_modules/@jimp/plugin-print/node_modules/zod/v3/types.js
 var ParseInputLazyPath14 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -124451,22 +124730,22 @@ var coerce13 = {
 var NEVER14 = INVALID15;
 
 // node_modules/@jimp/plugin-print/dist/esm/measure-text.js
-function measureText(font, text) {
+function measureText(font, text2) {
   let x2 = 0;
-  for (let i2 = 0; i2 < text.length; i2++) {
-    const char = text[i2];
+  for (let i2 = 0; i2 < text2.length; i2++) {
+    const char = text2[i2];
     const fontChar = font.chars[char];
     if (fontChar) {
       const fontKerning = font.kernings[char];
-      const nextChar = text[i2 + 1];
+      const nextChar = text2[i2 + 1];
       const kerning = fontKerning && nextChar && fontKerning[nextChar] ? fontKerning[nextChar] || 0 : 0;
       x2 += (fontChar.xadvance || 0) + kerning;
     }
   }
   return x2;
 }
-function splitLines(font, text, maxWidth) {
-  const words = text.replace(/[\r\n]+/g, " \n").split(" ");
+function splitLines(font, text2, maxWidth) {
+  const words = text2.replace(/[\r\n]+/g, " \n").split(" ");
   const lines = [];
   let currentLine = [];
   let longestLine = 0;
@@ -124510,8 +124789,8 @@ function splitLines(font, text, maxWidth) {
     longestLine
   };
 }
-function measureTextHeight(font, text, maxWidth) {
-  const { lines } = splitLines(font, text, maxWidth);
+function measureTextHeight(font, text2, maxWidth) {
+  const { lines } = splitLines(font, text2, maxWidth);
   return lines.length * font.common.lineHeight;
 }
 
@@ -124563,9 +124842,9 @@ function drawCharacter(image2, font, x2, y2, char) {
   }
   return image2;
 }
-function printText(image2, font, x2, y2, text, defaultCharWidth) {
-  for (let i2 = 0; i2 < text.length; i2++) {
-    const stringChar = text[i2];
+function printText(image2, font, x2, y2, text2, defaultCharWidth) {
+  for (let i2 = 0; i2 < text2.length; i2++) {
+    const stringChar = text2[i2];
     let char;
     if (font.chars[stringChar]) {
       char = stringChar;
@@ -124579,7 +124858,7 @@ function printText(image2, font, x2, y2, text, defaultCharWidth) {
     if (fontChar) {
       drawCharacter(image2, font, x2, y2, fontChar);
     }
-    const nextChar = text[i2 + 1];
+    const nextChar = text2[i2 + 1];
     const kerning = fontKerning && nextChar && fontKerning[nextChar] ? fontKerning[nextChar] || 0 : 0;
     x2 += kerning + (fontChar.xadvance || defaultCharWidth);
   }
@@ -124606,7 +124885,7 @@ var methods15 = {
       // eslint-disable-next-line prefer-const
       x: x2,
       y: y2,
-      text,
+      text: text2,
       // eslint-disable-next-line prefer-const
       maxWidth = Infinity,
       // eslint-disable-next-line prefer-const
@@ -124617,28 +124896,28 @@ var methods15 = {
     } = PrintOptionsSchema.parse(options);
     let alignmentX;
     let alignmentY;
-    if (typeof text === "object" && text.text !== null && text.text !== void 0) {
-      alignmentX = text.alignmentX || HorizontalAlign.LEFT;
-      alignmentY = text.alignmentY || VerticalAlign.TOP;
-      ({ text } = text);
+    if (typeof text2 === "object" && text2.text !== null && text2.text !== void 0) {
+      alignmentX = text2.alignmentX || HorizontalAlign.LEFT;
+      alignmentY = text2.alignmentY || VerticalAlign.TOP;
+      ({ text: text2 } = text2);
     } else {
       alignmentX = HorizontalAlign.LEFT;
       alignmentY = VerticalAlign.TOP;
-      text = text.toString();
+      text2 = text2.toString();
     }
-    if (typeof text === "number") {
-      text = text.toString();
+    if (typeof text2 === "number") {
+      text2 = text2.toString();
     }
     if (maxHeight !== Infinity && alignmentY === VerticalAlign.BOTTOM) {
-      y2 += maxHeight - measureTextHeight(font, text, maxWidth);
+      y2 += maxHeight - measureTextHeight(font, text2, maxWidth);
     } else if (maxHeight !== Infinity && alignmentY === VerticalAlign.MIDDLE) {
-      y2 += maxHeight / 2 - measureTextHeight(font, text, maxWidth) / 2;
+      y2 += maxHeight / 2 - measureTextHeight(font, text2, maxWidth) / 2;
     }
     const defaultCharWidth = Object.entries(font.chars).find((c3) => c3[1].xadvance)?.[1].xadvance;
     if (typeof defaultCharWidth !== "number") {
       throw new Error("Could not find default character width");
     }
-    const { lines, longestLine } = splitLines(font, text, maxWidth);
+    const { lines, longestLine } = splitLines(font, text2, maxWidth);
     lines.forEach((line) => {
       const lineString = line.join(" ");
       const alignmentWidth = xOffsetBasedOnAlignment(font, lineString, maxWidth, alignmentX);
@@ -125128,8 +125407,8 @@ function getErrorMap16() {
 
 // node_modules/@jimp/plugin-rotate/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue15 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -125245,11 +125524,11 @@ var errorUtil15;
 
 // node_modules/@jimp/plugin-rotate/node_modules/zod/v3/types.js
 var ParseInputLazyPath15 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -129330,8 +129609,8 @@ function getErrorMap17() {
 
 // node_modules/@jimp/plugin-threshold/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue16 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -129447,11 +129726,11 @@ var errorUtil16;
 
 // node_modules/@jimp/plugin-threshold/node_modules/zod/v3/types.js
 var ParseInputLazyPath16 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -133625,19 +133904,19 @@ var Palette = class {
     this._pointContainer.setHeight(1);
     this._pointArray = this._pointContainer.getPointArray();
   }
-  add(color) {
-    this._pointArray.push(color);
+  add(color2) {
+    this._pointArray.push(color2);
     this._pointContainer.setWidth(this._pointArray.length);
   }
-  has(color) {
+  has(color2) {
     for (let i2 = this._pointArray.length - 1; i2 >= 0; i2--) {
-      if (color.uint32 === this._pointArray[i2].uint32)
+      if (color2.uint32 === this._pointArray[i2].uint32)
         return true;
     }
     return false;
   }
-  getNearestColor(colorDistanceCalculator, color) {
-    return this._pointArray[this._getNearestIndex(colorDistanceCalculator, color) | 0];
+  getNearestColor(colorDistanceCalculator, color2) {
+    return this._pointArray[this._getNearestIndex(colorDistanceCalculator, color2) | 0];
   }
   getPointContainer() {
     return this._pointContainer;
@@ -134321,12 +134600,12 @@ __publicField(ColorHistogram, "_boxSize", [64, 64]);
 __publicField(ColorHistogram, "_boxPixels", 2);
 __publicField(ColorHistogram, "_hueGroups", 10);
 var RemovedColor = class {
-  constructor(index, color, distance3) {
+  constructor(index, color2, distance3) {
     __publicField(this, "index");
     __publicField(this, "color");
     __publicField(this, "distance");
     this.index = index;
-    this.color = color;
+    this.color = color2;
     this.distance = distance3;
   }
 };
@@ -134529,8 +134808,8 @@ var _WuQuant = class extends AbstractPaletteQuantizer {
         const g = this._greens[paletteIndex] / sum;
         const b = this._blues[paletteIndex] / sum;
         const a2 = this._alphas[paletteIndex] / sum;
-        const color = Point.createByRGBA(r2 | 0, g | 0, b | 0, a2 | 0);
-        palette2.add(color);
+        const color2 = Point.createByRGBA(r2 | 0, g | 0, b | 0, a2 | 0);
+        palette2.add(color2);
       }
     }
     palette2.sort();
@@ -134588,7 +134867,7 @@ var _WuQuant = class extends AbstractPaletteQuantizer {
     this._alphas = createArray1D(this._colors + 1);
     this._sums = createArray1D(this._colors + 1);
     for (let index = 0, l2 = this._pixels.length; index < l2; index++) {
-      const color = this._pixels[index];
+      const color2 = this._pixels[index];
       const match = -1;
       let bestMatch = match;
       let bestDistance = Number.MAX_VALUE;
@@ -134597,31 +134876,31 @@ var _WuQuant = class extends AbstractPaletteQuantizer {
         const foundGreen = lookupGreen[lookup];
         const foundBlue = lookupBlue[lookup];
         const foundAlpha = lookupAlpha[lookup];
-        const distance3 = this._distance.calculateRaw(foundRed, foundGreen, foundBlue, foundAlpha, color.r, color.g, color.b, color.a);
+        const distance3 = this._distance.calculateRaw(foundRed, foundGreen, foundBlue, foundAlpha, color2.r, color2.g, color2.b, color2.a);
         if (distance3 < bestDistance) {
           bestDistance = distance3;
           bestMatch = lookup;
         }
       }
-      this._reds[bestMatch] += color.r;
-      this._greens[bestMatch] += color.g;
-      this._blues[bestMatch] += color.b;
-      this._alphas[bestMatch] += color.a;
+      this._reds[bestMatch] += color2.r;
+      this._greens[bestMatch] += color2.g;
+      this._blues[bestMatch] += color2.b;
+      this._alphas[bestMatch] += color2.a;
       this._sums[bestMatch]++;
     }
   }
-  _addColor(color) {
+  _addColor(color2) {
     const bitsToRemove = 8 - this._significantBitsPerChannel;
-    const indexRed = (color.r >> bitsToRemove) + 1;
-    const indexGreen = (color.g >> bitsToRemove) + 1;
-    const indexBlue = (color.b >> bitsToRemove) + 1;
-    const indexAlpha = (color.a >> bitsToRemove) + 1;
+    const indexRed = (color2.r >> bitsToRemove) + 1;
+    const indexGreen = (color2.g >> bitsToRemove) + 1;
+    const indexBlue = (color2.b >> bitsToRemove) + 1;
+    const indexAlpha = (color2.a >> bitsToRemove) + 1;
     this._weights[indexAlpha][indexRed][indexGreen][indexBlue]++;
-    this._momentsRed[indexAlpha][indexRed][indexGreen][indexBlue] += color.r;
-    this._momentsGreen[indexAlpha][indexRed][indexGreen][indexBlue] += color.g;
-    this._momentsBlue[indexAlpha][indexRed][indexGreen][indexBlue] += color.b;
-    this._momentsAlpha[indexAlpha][indexRed][indexGreen][indexBlue] += color.a;
-    this._moments[indexAlpha][indexRed][indexGreen][indexBlue] += this._table[color.r] + this._table[color.g] + this._table[color.b] + this._table[color.a];
+    this._momentsRed[indexAlpha][indexRed][indexGreen][indexBlue] += color2.r;
+    this._momentsGreen[indexAlpha][indexRed][indexGreen][indexBlue] += color2.g;
+    this._momentsBlue[indexAlpha][indexRed][indexGreen][indexBlue] += color2.b;
+    this._momentsAlpha[indexAlpha][indexRed][indexGreen][indexBlue] += color2.a;
+    this._moments[indexAlpha][indexRed][indexGreen][indexBlue] += this._table[color2.r] + this._table[color2.g] + this._table[color2.b] + this._table[color2.a];
   }
   *_calculateMoments() {
     const area = [];
@@ -134700,20 +134979,20 @@ var _WuQuant = class extends AbstractPaletteQuantizer {
   static _volume(cube, moment) {
     return _WuQuant._volumeFloat(cube, moment) | 0;
   }
-  static _top(cube, direction, position, moment) {
+  static _top(cube, direction, position2, moment) {
     let result;
     switch (direction) {
       case _WuQuant._alpha:
-        result = moment[position][cube.redMaximum][cube.greenMaximum][cube.blueMaximum] - moment[position][cube.redMaximum][cube.greenMinimum][cube.blueMaximum] - moment[position][cube.redMinimum][cube.greenMaximum][cube.blueMaximum] + moment[position][cube.redMinimum][cube.greenMinimum][cube.blueMaximum] - (moment[position][cube.redMaximum][cube.greenMaximum][cube.blueMinimum] - moment[position][cube.redMaximum][cube.greenMinimum][cube.blueMinimum] - moment[position][cube.redMinimum][cube.greenMaximum][cube.blueMinimum] + moment[position][cube.redMinimum][cube.greenMinimum][cube.blueMinimum]);
+        result = moment[position2][cube.redMaximum][cube.greenMaximum][cube.blueMaximum] - moment[position2][cube.redMaximum][cube.greenMinimum][cube.blueMaximum] - moment[position2][cube.redMinimum][cube.greenMaximum][cube.blueMaximum] + moment[position2][cube.redMinimum][cube.greenMinimum][cube.blueMaximum] - (moment[position2][cube.redMaximum][cube.greenMaximum][cube.blueMinimum] - moment[position2][cube.redMaximum][cube.greenMinimum][cube.blueMinimum] - moment[position2][cube.redMinimum][cube.greenMaximum][cube.blueMinimum] + moment[position2][cube.redMinimum][cube.greenMinimum][cube.blueMinimum]);
         break;
       case _WuQuant._red:
-        result = moment[cube.alphaMaximum][position][cube.greenMaximum][cube.blueMaximum] - moment[cube.alphaMaximum][position][cube.greenMinimum][cube.blueMaximum] - moment[cube.alphaMinimum][position][cube.greenMaximum][cube.blueMaximum] + moment[cube.alphaMinimum][position][cube.greenMinimum][cube.blueMaximum] - (moment[cube.alphaMaximum][position][cube.greenMaximum][cube.blueMinimum] - moment[cube.alphaMaximum][position][cube.greenMinimum][cube.blueMinimum] - moment[cube.alphaMinimum][position][cube.greenMaximum][cube.blueMinimum] + moment[cube.alphaMinimum][position][cube.greenMinimum][cube.blueMinimum]);
+        result = moment[cube.alphaMaximum][position2][cube.greenMaximum][cube.blueMaximum] - moment[cube.alphaMaximum][position2][cube.greenMinimum][cube.blueMaximum] - moment[cube.alphaMinimum][position2][cube.greenMaximum][cube.blueMaximum] + moment[cube.alphaMinimum][position2][cube.greenMinimum][cube.blueMaximum] - (moment[cube.alphaMaximum][position2][cube.greenMaximum][cube.blueMinimum] - moment[cube.alphaMaximum][position2][cube.greenMinimum][cube.blueMinimum] - moment[cube.alphaMinimum][position2][cube.greenMaximum][cube.blueMinimum] + moment[cube.alphaMinimum][position2][cube.greenMinimum][cube.blueMinimum]);
         break;
       case _WuQuant._green:
-        result = moment[cube.alphaMaximum][cube.redMaximum][position][cube.blueMaximum] - moment[cube.alphaMaximum][cube.redMinimum][position][cube.blueMaximum] - moment[cube.alphaMinimum][cube.redMaximum][position][cube.blueMaximum] + moment[cube.alphaMinimum][cube.redMinimum][position][cube.blueMaximum] - (moment[cube.alphaMaximum][cube.redMaximum][position][cube.blueMinimum] - moment[cube.alphaMaximum][cube.redMinimum][position][cube.blueMinimum] - moment[cube.alphaMinimum][cube.redMaximum][position][cube.blueMinimum] + moment[cube.alphaMinimum][cube.redMinimum][position][cube.blueMinimum]);
+        result = moment[cube.alphaMaximum][cube.redMaximum][position2][cube.blueMaximum] - moment[cube.alphaMaximum][cube.redMinimum][position2][cube.blueMaximum] - moment[cube.alphaMinimum][cube.redMaximum][position2][cube.blueMaximum] + moment[cube.alphaMinimum][cube.redMinimum][position2][cube.blueMaximum] - (moment[cube.alphaMaximum][cube.redMaximum][position2][cube.blueMinimum] - moment[cube.alphaMaximum][cube.redMinimum][position2][cube.blueMinimum] - moment[cube.alphaMinimum][cube.redMaximum][position2][cube.blueMinimum] + moment[cube.alphaMinimum][cube.redMinimum][position2][cube.blueMinimum]);
         break;
       case _WuQuant._blue:
-        result = moment[cube.alphaMaximum][cube.redMaximum][cube.greenMaximum][position] - moment[cube.alphaMaximum][cube.redMaximum][cube.greenMinimum][position] - moment[cube.alphaMaximum][cube.redMinimum][cube.greenMaximum][position] + moment[cube.alphaMaximum][cube.redMinimum][cube.greenMinimum][position] - (moment[cube.alphaMinimum][cube.redMaximum][cube.greenMaximum][position] - moment[cube.alphaMinimum][cube.redMaximum][cube.greenMinimum][position] - moment[cube.alphaMinimum][cube.redMinimum][cube.greenMaximum][position] + moment[cube.alphaMinimum][cube.redMinimum][cube.greenMinimum][position]);
+        result = moment[cube.alphaMaximum][cube.redMaximum][cube.greenMaximum][position2] - moment[cube.alphaMaximum][cube.redMaximum][cube.greenMinimum][position2] - moment[cube.alphaMaximum][cube.redMinimum][cube.greenMaximum][position2] + moment[cube.alphaMaximum][cube.redMinimum][cube.greenMinimum][position2] - (moment[cube.alphaMinimum][cube.redMaximum][cube.greenMaximum][position2] - moment[cube.alphaMinimum][cube.redMaximum][cube.greenMinimum][position2] - moment[cube.alphaMinimum][cube.redMinimum][cube.greenMaximum][position2] + moment[cube.alphaMinimum][cube.redMinimum][cube.greenMinimum][position2]);
         break;
       default:
         throw new Error("impossible");
@@ -134752,12 +135031,12 @@ var _WuQuant = class extends AbstractPaletteQuantizer {
     const bottomWeight = _WuQuant._bottom(cube, direction, this._weights) | 0;
     let result = 0;
     let cutPosition = -1;
-    for (let position = first; position < last; ++position) {
-      let halfRed = bottomRed + _WuQuant._top(cube, direction, position, this._momentsRed);
-      let halfGreen = bottomGreen + _WuQuant._top(cube, direction, position, this._momentsGreen);
-      let halfBlue = bottomBlue + _WuQuant._top(cube, direction, position, this._momentsBlue);
-      let halfAlpha = bottomAlpha + _WuQuant._top(cube, direction, position, this._momentsAlpha);
-      let halfWeight = bottomWeight + _WuQuant._top(cube, direction, position, this._weights);
+    for (let position2 = first; position2 < last; ++position2) {
+      let halfRed = bottomRed + _WuQuant._top(cube, direction, position2, this._momentsRed);
+      let halfGreen = bottomGreen + _WuQuant._top(cube, direction, position2, this._momentsGreen);
+      let halfBlue = bottomBlue + _WuQuant._top(cube, direction, position2, this._momentsBlue);
+      let halfAlpha = bottomAlpha + _WuQuant._top(cube, direction, position2, this._momentsAlpha);
+      let halfWeight = bottomWeight + _WuQuant._top(cube, direction, position2, this._weights);
       if (halfWeight !== 0) {
         let halfDistance = halfRed * halfRed + halfGreen * halfGreen + halfBlue * halfBlue + halfAlpha * halfAlpha;
         let temp = halfDistance / halfWeight;
@@ -134771,7 +135050,7 @@ var _WuQuant = class extends AbstractPaletteQuantizer {
           temp += halfDistance / halfWeight;
           if (temp > result) {
             result = temp;
-            cutPosition = position;
+            cutPosition = position2;
           }
         }
       }
@@ -136302,8 +136581,8 @@ function getErrorMap18() {
 
 // node_modules/@jimp/plugin-quantize/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue17 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -136419,11 +136698,11 @@ var errorUtil17;
 
 // node_modules/@jimp/plugin-quantize/node_modules/zod/v3/types.js
 var ParseInputLazyPath17 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -143633,8 +143912,8 @@ var QuantizerWu = class {
         const r2 = Math.round(this.volume(cube, this.momentsR) / weight);
         const g = Math.round(this.volume(cube, this.momentsG) / weight);
         const b = Math.round(this.volume(cube, this.momentsB) / weight);
-        const color = 255 << 24 | (r2 & 255) << 16 | (g & 255) << 8 | b & 255;
-        colors.push(color);
+        const color2 = 255 << 24 | (r2 & 255) << 16 | (g & 255) << 8 | b & 255;
+        colors.push(color2);
       }
     }
     return colors;
@@ -143753,14 +144032,14 @@ var QuantizerWu = class {
         throw new Error("unexpected direction $direction");
     }
   }
-  top(cube, direction, position, moment) {
+  top(cube, direction, position2, moment) {
     switch (direction) {
       case directions.RED:
-        return moment[this.getIndex(position, cube.g1, cube.b1)] - moment[this.getIndex(position, cube.g1, cube.b0)] - moment[this.getIndex(position, cube.g0, cube.b1)] + moment[this.getIndex(position, cube.g0, cube.b0)];
+        return moment[this.getIndex(position2, cube.g1, cube.b1)] - moment[this.getIndex(position2, cube.g1, cube.b0)] - moment[this.getIndex(position2, cube.g0, cube.b1)] + moment[this.getIndex(position2, cube.g0, cube.b0)];
       case directions.GREEN:
-        return moment[this.getIndex(cube.r1, position, cube.b1)] - moment[this.getIndex(cube.r1, position, cube.b0)] - moment[this.getIndex(cube.r0, position, cube.b1)] + moment[this.getIndex(cube.r0, position, cube.b0)];
+        return moment[this.getIndex(cube.r1, position2, cube.b1)] - moment[this.getIndex(cube.r1, position2, cube.b0)] - moment[this.getIndex(cube.r0, position2, cube.b1)] + moment[this.getIndex(cube.r0, position2, cube.b0)];
       case directions.BLUE:
-        return moment[this.getIndex(cube.r1, cube.g1, position)] - moment[this.getIndex(cube.r1, cube.g0, position)] - moment[this.getIndex(cube.r0, cube.g1, position)] + moment[this.getIndex(cube.r0, cube.g0, position)];
+        return moment[this.getIndex(cube.r1, cube.g1, position2)] - moment[this.getIndex(cube.r1, cube.g0, position2)] - moment[this.getIndex(cube.r0, cube.g1, position2)] + moment[this.getIndex(cube.r0, cube.g0, position2)];
       default:
         throw new Error("unexpected direction $direction");
     }
@@ -144527,17 +144806,17 @@ function themeFromSourceColor(source, customColors = []) {
     customColors: customColors.map((c3) => customColor(source, c3))
   };
 }
-function customColor(source, color) {
-  let value = color.value;
+function customColor(source, color2) {
+  let value = color2.value;
   const from = value;
   const to2 = source;
-  if (color.blend) {
+  if (color2.blend) {
     value = Blend.harmonize(from, to2);
   }
   const palette2 = CorePalette.of(value);
   const tones = palette2.a1;
   return {
-    color,
+    color: color2,
     value,
     light: {
       color: tones.tone(40),
@@ -144646,9 +144925,9 @@ function argbToCss(argb, alpha = 1) {
   const r2 = (argb & 16711680) >> 16;
   const g = (argb & 65280) >> 8;
   const b = argb & 255;
-  return alpha >= 1 ? `#${toHex2(r2)}${toHex2(g)}${toHex2(b)}` : `rgba(${r2}, ${g}, ${b}, ${round2(alpha)})`;
+  return alpha >= 1 ? `#${toHex3(r2)}${toHex3(g)}${toHex3(b)}` : `rgba(${r2}, ${g}, ${b}, ${round2(alpha)})`;
 }
-function toHex2(v) {
+function toHex3(v) {
   return v.toString(16).padStart(2, "0");
 }
 function round2(v) {
@@ -144746,27 +145025,17 @@ function tokenRows(theme, mode, opts) {
 }
 
 // dist/themes/tarkov.js
-var TARKOV_PALETTE = {
-  accent: "#e07930",
-  deep: "#140d04",
-  background: "#1c1207",
-  panelRgb: "26, 18, 10",
-  panelAltRgb: "30, 20, 10",
-  raisedRgb: "42, 29, 16",
-  popoverRgb: "46, 32, 18",
-  text: "#e8d9c8",
-  highlight: "#ffd7ae",
-  warning: "#ffb27a",
-  muted: "#8b877c"
-};
-var ACCENT_RGB2 = "224, 121, 48";
-var MUTED_RGB = "139, 135, 124";
+var TARKOV_PALETTE = DEFAULT_PALETTE;
 var TARKOV_GREETING = {
   line1: "\u6CE8\u610F\uFF01\u8FD9\u662F\u201CZCode\u201D\u7684Beta\u6D4B\u8BD5\u7248\u672C\u3002",
   line2: "Beta\u6D4B\u8BD5\u7248\u672C\u4E0D\u4EE3\u8868\u672C\u4EA7\u54C1\u7684\u6700\u7EC8\u8D28\u91CF\u3002\u611F\u8C22\u60A8\u7684\u7406\u89E3\u548C\u652F\u6301\uFF0C\u795D\u4F60\u597D\u8FD0\uFF01"
 };
+var DEFAULT_GREETING = {
+  line1: TARKOV_GREETING.line1,
+  line2: TARKOV_GREETING.line2
+};
 function cssString(value) {
-  const escaped = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, "\\a ");
+  const escaped = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n\f]/g, "\\a ");
   return `"${escaped}"`;
 }
 function rgba(rgb, alpha) {
@@ -144779,7 +145048,9 @@ function clamp012(v) {
   return Math.min(1, Math.max(0, v));
 }
 function tarkovTokenRows(opts) {
-  const p2 = TARKOV_PALETTE;
+  const p2 = opts.palette ?? TARKOV_PALETTE;
+  const ACCENT_RGB = p2.accentRgb;
+  const MUTED_RGB = p2.mutedRgb;
   const visible = opts.wallpaperVisible;
   const surfaceAlpha = visible ? 0.72 : 1;
   const panelAlpha = visible ? 0.62 : 1;
@@ -144796,57 +145067,57 @@ function tarkovTokenRows(opts) {
     `--color-sidebar:${rgba(p2.panelAltRgb, panelAlpha)};`,
     `--color-header:${rgba(p2.panelRgb, panelAlpha)};`,
     `--color-surface:${rgba(p2.raisedRgb, surfaceAlpha)};`,
-    `--color-surface-hover:${rgba(ACCENT_RGB2, visible ? 0.18 : 0.14)};`,
-    `--color-hover:${rgba(ACCENT_RGB2, visible ? 0.18 : 0.14)};`,
-    `--color-selected:${rgba(ACCENT_RGB2, visible ? 0.24 : 0.2)};`,
+    `--color-surface-hover:${rgba(ACCENT_RGB, visible ? 0.18 : 0.14)};`,
+    `--color-hover:${rgba(ACCENT_RGB, visible ? 0.18 : 0.14)};`,
+    `--color-selected:${rgba(ACCENT_RGB, visible ? 0.24 : 0.2)};`,
     `--color-card:${rgba(p2.raisedRgb, surfaceAlpha)};`,
-    `--color-card-selected:${rgba(ACCENT_RGB2, visible ? 0.26 : 0.22)};`,
-    `--color-card-border:${rgba(ACCENT_RGB2, 0.3)};`,
+    `--color-card-selected:${rgba(ACCENT_RGB, visible ? 0.26 : 0.22)};`,
+    `--color-card-border:${rgba(ACCENT_RGB, 0.3)};`,
     `--color-popover:${rgba(p2.popoverRgb, popoverAlpha)};`,
-    `--color-popover-foreground:${p2.text};`,
+    `--color-popover-foreground:${p2.popoverText};`,
     `--color-popover-header:${rgba(p2.panelAltRgb, popoverAlpha)};`,
-    `--color-popover-border:${rgba(ACCENT_RGB2, 0.32)};`,
+    `--color-popover-border:${rgba(ACCENT_RGB, 0.32)};`,
     `--color-menu:${rgba(p2.popoverRgb, popoverAlpha)};`,
-    `--color-menu-hover:${rgba(ACCENT_RGB2, 0.2)};`,
+    `--color-menu-hover:${rgba(ACCENT_RGB, 0.2)};`,
     `--color-tab:${rgba(p2.panelRgb, panelAlpha)};`,
     `--color-tab-active:${rgba(p2.raisedRgb, surfaceAlpha)};`,
-    `--color-tab-border:${rgba(ACCENT_RGB2, 0.3)};`,
-    `--color-input:${rgba(p2.deep, inputAlpha)};`,
-    `--color-input-focused:${rgba(p2.deep, clamp012(inputAlpha + 0.2))};`,
-    `--color-input-border:${rgba(ACCENT_RGB2, 0.32)};`,
-    `--color-input-border-hover:${rgba(ACCENT_RGB2, 0.5)};`,
+    `--color-tab-border:${rgba(ACCENT_RGB, 0.3)};`,
+    `--color-input:${rgba(p2.deepRgb, inputAlpha)};`,
+    `--color-input-focused:${rgba(p2.deepRgb, clamp012(inputAlpha + 0.2))};`,
+    `--color-input-border:${rgba(ACCENT_RGB, 0.32)};`,
+    `--color-input-border-hover:${rgba(ACCENT_RGB, 0.5)};`,
     `--color-input-border-focused:${p2.accent};`,
     `--color-foreground:${p2.text};`,
     `--color-foreground-subtle:${p2.muted};`,
     `--color-foreground-subtlest:${rgba(MUTED_RGB, 0.72)};`,
     `--color-foreground-inverse:${p2.background};`,
     `--color-primary:${p2.accent};`,
-    `--color-primary-foreground:${p2.background};`,
-    `--color-secondary:${rgba(ACCENT_RGB2, 0.16)};`,
+    `--color-primary-foreground:${p2.onAccent};`,
+    `--color-secondary:${rgba(ACCENT_RGB, 0.16)};`,
     `--color-accent:${p2.warning};`,
     `--color-brand:${p2.accent};`,
-    `--color-border:${rgba(ACCENT_RGB2, 0.28)};`,
-    `--color-border-hover:${rgba(ACCENT_RGB2, 0.5)};`,
-    `--color-border-color-interactive:${rgba(ACCENT_RGB2, 0.36)};`,
-    `--color-border-color-interactive-hover:${rgba(ACCENT_RGB2, 0.6)};`,
+    `--color-border:${rgba(ACCENT_RGB, 0.28)};`,
+    `--color-border-hover:${rgba(ACCENT_RGB, 0.5)};`,
+    `--color-border-color-interactive:${rgba(ACCENT_RGB, 0.36)};`,
+    `--color-border-color-interactive-hover:${rgba(ACCENT_RGB, 0.6)};`,
     `--color-border-color-interactive-active:${p2.accent};`,
-    `--divider-color:${rgba(ACCENT_RGB2, 0.2)};`,
-    `--color-find-highlight:${rgba(ACCENT_RGB2, 0.3)};`,
-    `--color-find-highlight-active:${rgba(ACCENT_RGB2, 0.5)};`,
-    `--color-tag:${rgba(ACCENT_RGB2, 0.14)};`,
+    `--divider-color:${rgba(ACCENT_RGB, 0.2)};`,
+    `--color-find-highlight:${rgba(ACCENT_RGB, 0.3)};`,
+    `--color-find-highlight-active:${rgba(ACCENT_RGB, 0.5)};`,
+    `--color-tag:${rgba(ACCENT_RGB, 0.14)};`,
     // Inline code only gets a warm chip; the syntax palette is untouched.
-    `--color-markdown-inline-code:${rgba(ACCENT_RGB2, 0.12)};`,
+    `--color-markdown-inline-code:${rgba(ACCENT_RGB, 0.12)};`,
     `--color-tooltip:${rgba(p2.popoverRgb, visible ? 0.97 : 1)};`,
-    `--color-tooltip-foreground:${p2.text};`,
+    `--color-tooltip-foreground:${p2.popoverText};`,
     `--color-toast:${rgba(p2.popoverRgb, visible ? 0.97 : 1)};`,
     `--color-terminal-bg:${p2.deep};`,
     `--color-terminal-fg:${p2.text};`,
     // Local hooks for the component skin below; not ZCode tokens.
     `--tarkov-accent:${p2.accent};`,
-    `--tarkov-accent-soft:${rgba(ACCENT_RGB2, visible ? 0.2 : 0.16)};`,
-    `--tarkov-hover:${rgba(ACCENT_RGB2, visible ? 0.18 : 0.14)};`,
+    `--tarkov-accent-soft:${rgba(ACCENT_RGB, visible ? 0.2 : 0.16)};`,
+    `--tarkov-hover:${rgba(ACCENT_RGB, visible ? 0.18 : 0.14)};`,
     `--tarkov-highlight:${p2.highlight};`,
-    `--tarkov-panel-border:${rgba(ACCENT_RGB2, 0.3)};`,
+    `--tarkov-panel-border:${rgba(ACCENT_RGB, 0.3)};`,
     opts.dim > 0 ? `--zcode-beautify-dim:${opts.dim / 100};` : ""
   ].filter(Boolean);
 }
@@ -144855,7 +145126,118 @@ function buildTarkovVariableOverrides(opts) {
   return `${LIGHT_SCOPES}{${rows}}
 ${DARK_SCOPES}{${rows}}`;
 }
-function buildTarkovComponentCss() {
+function greetingCss(p2, greeting) {
+  const ACCENT_RGB = p2.accentRgb;
+  return `
+/* Tarkov: the empty-chat beta notice.
+ *
+ * Visual language is dsh-theme-tarkov's own #tarkov-beta-banner (MIT; see
+ * THIRD_PARTY_NOTICES.md): a translucent orange warning band, a dark hexagonal
+ * "!" badge and two black lines \u2014 nothing else, no plate, no frame, no blur.
+ * Its fixed pixel sizes are re-expressed against ZCode's greeting font-size
+ * variable, so at that variable's 30px default they resolve to the reference
+ * values: badge 43.5x37.5 (reference 42x36), line 1 18px/700, line 2 15px/400,
+ * both #111111 with the reference's 1.5px letter-spacing and 5px line gap.
+ *
+ * Anchor: p[data-v4-draft-greeting="true"] \u2014 a semantic data attribute emitted by
+ * ZCode's own empty-chat component (verified live; see docs/dev/zcode-dom-notes.md).
+ * No hashed class names are involved.
+ *
+ * The element becomes the band itself, so no extra DOM is created and there is
+ * nothing to tear down. ZCode's own visible greeting span becomes the text
+ * column: its text is never rewritten, only collapsed to zero size, and the two
+ * lines are drawn by that span's pseudo-elements. Dropping the stylesheet \u2014
+ * which is exactly what leaving Tarkov mode does \u2014 restores the real greeting
+ * byte for byte.
+ *
+ * Every rule also requires that two-span structure (the aria-hidden measuring
+ * span plus the visible one) through :has(), and targets only the last span, so
+ * if that markup ever changes the whole notice stops matching and the stock
+ * greeting is drawn instead of a half-painted band. Nothing here can duplicate
+ * itself either. The element only mounts on the empty-chat screen, so opening a
+ * real session stops matching too.
+ */
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-sizing: border-box;
+  width: min(94%, 720px);
+  margin: 18px auto 10px;
+  padding: 15px 22px 15px 16px;
+  border-radius: 6px;
+  text-align: left;
+  /* The band itself. One knob for its strength, as in the reference project,
+     which ships the same variable \u2014 at 0.55, its own default.
+   Measured on a real renderer over ZCode's empty-chat backdrop, the painted
+   band is rgb(160,86,35) at 0.55 and rgb(171,94,37) at 0.62, against #111111
+   text: 3.5:1 and 3.9:1, so both clear the 3:1 large-text bar.
+   v0.2 raises the accent itself (see themes/palette.ts), which raises the band
+   with it: the hue is unchanged, the band is still translucent, and the ink on
+   it gains contrast rather than losing it.
+   The --zct-banner-opacity variable remains the single knob for tuning it. */
+  background: rgba(${ACCENT_RGB}, var(--zct-banner-opacity, 0.62));
+}
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child)::before {
+  /* The warning badge: the reference's hexagon, cut from the deepest surface
+     tone with the accent as the glyph colour. */
+  content: "!";
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--v4-draft-greeting-font-size, 30px) * 1.45);
+  height: calc(var(--v4-draft-greeting-font-size, 30px) * 1.25);
+  background: ${p2.background};
+  color: ${p2.accent};
+  font-weight: 800;
+  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.8);
+  line-height: 1;
+  font-family: system-ui, "Microsoft YaHei", sans-serif;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child {
+  /* ZCode's own greeting span doubles as the notice's text column: collapsed to
+     zero size so its text cannot paint, but never emptied, so the real greeting
+     is still in the DOM to come back to. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  font-size: 0;
+  line-height: 0;
+}
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child::before {
+  content: ${cssString(greeting.line1)};
+  display: block;
+  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.6);
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 1.5px;
+  color: ${p2.bandInk};
+}
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child::after {
+  content: ${cssString(greeting.line2)};
+  display: block;
+  /* The reference project's 5px gap between the two lines, at ZCode's scale. */
+  margin-top: calc(var(--v4-draft-greeting-font-size, 30px) * 0.1667);
+  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.5);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1.5px;
+  color: ${p2.bandInk};
+}
+p[data-v4-draft-greeting="true"] > span[aria-hidden="true"] {
+  /* ZCode keeps this one purely to measure the greeting's width, so its box has
+     to survive (no display: none); it is only made non-painting. */
+  visibility: hidden;
+}
+`.trim();
+}
+function buildTarkovComponentCss(opts = {}) {
+  const p2 = opts.palette ?? TARKOV_PALETTE;
+  const ACCENT_RGB = p2.accentRgb;
+  const greetingBlock = opts.greeting === null ? "" : greetingCss(p2, opts.greeting ?? DEFAULT_GREETING);
   const containerSlots = [
     '[data-slot="card"]',
     '[data-slot="dialog-content"]',
@@ -144919,109 +145301,7 @@ ${itemActive} {
 [data-slot="progress-indicator"] { background-color: var(--tarkov-accent); }
 [data-slot="switch"][data-state="checked"] { background-color: var(--color-primary); }
 
-/* Tarkov: the empty-chat beta notice.
- *
- * Visual language is dsh-theme-tarkov's own #tarkov-beta-banner (MIT; see
- * THIRD_PARTY_NOTICES.md): a translucent orange warning band, a dark hexagonal
- * "!" badge and two black lines \u2014 nothing else, no plate, no frame, no blur.
- * Its fixed pixel sizes are re-expressed against ZCode's greeting font-size
- * variable, so at that variable's 30px default they resolve to the reference
- * values: badge 43.5x37.5 (reference 42x36), line 1 18px/700, line 2 15px/400,
- * both #111111 with the reference's 1.5px letter-spacing and 5px line gap.
- *
- * Anchor: p[data-v4-draft-greeting="true"] \u2014 a semantic data attribute emitted by
- * ZCode's own empty-chat component (verified live; see docs/dev/zcode-dom-notes.md).
- * No hashed class names are involved.
- *
- * The element becomes the band itself, so no extra DOM is created and there is
- * nothing to tear down. ZCode's own visible greeting span becomes the text
- * column: its text is never rewritten, only collapsed to zero size, and the two
- * lines are drawn by that span's pseudo-elements. Dropping the stylesheet \u2014
- * which is exactly what leaving Tarkov mode does \u2014 restores the real greeting
- * byte for byte.
- *
- * Every rule also requires that two-span structure (the aria-hidden measuring
- * span plus the visible one) through :has(), and targets only the last span, so
- * if that markup ever changes the whole notice stops matching and the stock
- * greeting is drawn instead of a half-painted band. Nothing here can duplicate
- * itself either. The element only mounts on the empty-chat screen, so opening a
- * real session stops matching too.
- */
-p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  box-sizing: border-box;
-  width: min(94%, 720px);
-  margin: 18px auto 10px;
-  padding: 15px 22px 15px 16px;
-  border-radius: 6px;
-  text-align: left;
-  /* The band itself. One knob for its strength, as in the reference project,
-     which ships the same variable \u2014 at 0.55, its own default.
-     Measured on a real renderer over ZCode's empty-chat backdrop, the painted
-     band is rgb(160,86,35) at 0.55 and rgb(171,94,37) at 0.62, against #111111
-     text: 3.5:1 and 3.9:1, so both clear the 3:1 large-text bar.
-     Shipped at the top of the agreed 0.45-0.62 range (0.62) because the owner
-     read the 0.55 band as slightly dark on a real display: the hue and RGB stay
-     #e07930, only the strength changes, and the band is still translucent.
-     The --zct-banner-opacity variable remains the single knob for tuning it. */
-  background: rgba(224, 121, 48, var(--zct-banner-opacity, 0.62));
-}
-p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child)::before {
-  /* The warning badge: the reference's hexagon, cut from the deepest surface
-     tone with the accent as the glyph colour. */
-  content: "!";
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: calc(var(--v4-draft-greeting-font-size, 30px) * 1.45);
-  height: calc(var(--v4-draft-greeting-font-size, 30px) * 1.25);
-  background: #1c1207;
-  color: #e07930;
-  font-weight: 800;
-  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.8);
-  line-height: 1;
-  font-family: system-ui, "Microsoft YaHei", sans-serif;
-  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-}
-p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child {
-  /* ZCode's own greeting span doubles as the notice's text column: collapsed to
-     zero size so its text cannot paint, but never emptied, so the real greeting
-     is still in the DOM to come back to. */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-  font-size: 0;
-  line-height: 0;
-}
-p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child::before {
-  content: ${cssString(TARKOV_GREETING.line1)};
-  display: block;
-  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.6);
-  font-weight: 700;
-  line-height: 1.5;
-  letter-spacing: 1.5px;
-  color: #111111;
-}
-p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child::after {
-  content: ${cssString(TARKOV_GREETING.line2)};
-  display: block;
-  /* The reference project's 5px gap between the two lines, at ZCode's scale. */
-  margin-top: calc(var(--v4-draft-greeting-font-size, 30px) * 0.1667);
-  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.5);
-  font-weight: 400;
-  line-height: 1.5;
-  letter-spacing: 1.5px;
-  color: #111111;
-}
-p[data-v4-draft-greeting="true"] > span[aria-hidden="true"] {
-  /* ZCode keeps this one purely to measure the greeting's width, so its box has
-     to survive (no display: none); it is only made non-painting. */
-  visibility: hidden;
-}
+${greetingBlock}
 
 /* Deliberately NOT styled: code blocks, success/warning/destructive states,
    git/diff colors. Readability and semantics outrank the theme. */
@@ -145029,10 +145309,10 @@ p[data-v4-draft-greeting="true"] > span[aria-hidden="true"] {
 }
 
 // dist/core/colorMode.js
-var COLOR_MODES = ["monet", "tarkov", "native"];
+var COLOR_MODES2 = ["monet", "tarkov", "native"];
 var DEFAULT_COLOR_MODE = "monet";
 function isColorMode(value) {
-  return typeof value === "string" && COLOR_MODES.includes(value);
+  return typeof value === "string" && COLOR_MODES2.includes(value);
 }
 function migrateColorMode(stored) {
   if (isColorMode(stored?.colorMode))
@@ -145044,10 +145324,6 @@ function migrateColorMode(stored) {
 function legacyMonetFlag(mode) {
   return mode === "monet";
 }
-function withColorMode(stored) {
-  const mode = migrateColorMode(stored);
-  return { ...stored, colorMode: mode, monet: legacyMonetFlag(mode) };
-}
 
 // dist/core/inject.js
 var DEFAULT_CONFIG = {
@@ -145058,7 +145334,10 @@ var DEFAULT_CONFIG = {
   colorMode: DEFAULT_COLOR_MODE,
   wallpaperVisible: true,
   fit: "cover",
-  banner: DEFAULT_BANNER
+  banner: DEFAULT_BANNER,
+  background: DEFAULT_PALETTE.background,
+  accent: DEFAULT_PALETTE.accent,
+  greeting: { enabled: true, ...DEFAULT_GREETING }
 };
 function resolveColorMode(config2) {
   return config2.colorMode ?? (config2.monet ? "monet" : "native");
@@ -145067,14 +145346,20 @@ function resolveBanner(config2) {
   if (resolveColorMode(config2) !== "tarkov")
     return null;
   const banner = config2.banner ?? DEFAULT_BANNER;
-  return banner.enabled ? banner : null;
+  if (resolveBannerMode(banner) === "off")
+    return null;
+  const palette2 = resolvePalette({ background: config2.background, accent: config2.accent });
+  const bandRgb = parseHex(palette2.background) ?? parseHex(TARKOV_BACKGROUND);
+  const surface = roundRgb(compositeOver(parseHex(palette2.accent), bandRgb, banner.opacity));
+  const accentInk = toHex(ensureContrast(readableInk(surface, [parseHex(TARKOV_INK), { r: 255, g: 255, b: 255 }]), surface, 4.5));
+  return { ...banner, accent: palette2.accent, accentRgb: palette2.accentRgb, accentInk };
 }
 function buildPayload(config2, assets) {
   const parts = [];
   const resolved = config2.fit === "smart" ? assets?.focus.fit ?? "cover" : config2.fit === "contain" ? "contain" : "cover";
   const focusX = config2.fit === "smart" ? assets?.focus.x ?? 0.5 : 0.5;
   const focusY = config2.fit === "smart" ? assets?.focus.y ?? 0.5 : 0.5;
-  const position = `${Math.round(focusX * 100)}% ${Math.round(focusY * 100)}%`;
+  const position2 = `${Math.round(focusX * 100)}% ${Math.round(focusY * 100)}%`;
   parts.push(`
 html, body { background: transparent !important; }
 #zcode-beautify-wallpaper {
@@ -145082,7 +145367,7 @@ html, body { background: transparent !important; }
   inset: 0;
   z-index: -2147483646;
   background-size: ${resolved};
-  background-position: ${resolved === "contain" ? "center" : position};
+  background-position: ${resolved === "contain" ? "center" : position2};
   background-repeat: no-repeat;
   pointer-events: none;
   filter: blur(${config2.blur}px);
@@ -145111,11 +145396,18 @@ html, body { background: transparent !important; }
   }
   const mode = resolveColorMode(config2);
   if (mode === "tarkov") {
+    const palette2 = resolvePalette({ background: config2.background, accent: config2.accent });
     parts.push(buildTarkovVariableOverrides({
       dim: config2.dim,
-      wallpaperVisible: config2.wallpaperVisible
+      wallpaperVisible: config2.wallpaperVisible,
+      palette: palette2
     }));
-    parts.push(buildTarkovComponentCss());
+    parts.push(buildTarkovComponentCss({
+      palette: palette2,
+      // Null omits the notice's rules entirely, which is what brings ZCode's
+      // own greeting back.
+      greeting: config2.greeting.enabled ? { line1: config2.greeting.line1, line2: config2.greeting.line2 } : null
+    }));
   } else if (mode === "monet") {
     if (assets) {
       parts.push(buildVariableOverrides(assets.theme, {
@@ -145171,51 +145463,519 @@ async function resetZCode(port) {
 // dist/core/launch.js
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
+import fs5 from "node:fs";
+import os2 from "node:os";
+import path3 from "node:path";
+
+// dist/core/dataRoot.js
 import fs3 from "node:fs";
 import os from "node:os";
 import path from "node:path";
-var LEGACY_DATA_DIRS = ["zcode-beautify@zcode-beautify", "zcode-beautify"];
-function dataDir() {
-  const override = process.env.ZCODE_BEAUTIFY_DATA_DIR;
-  if (override)
-    return override;
-  const root = path.join(os.homedir(), ".zcode", "cli", "plugins", "data");
-  const pluginScoped = path.join(root, "zcode-tarkov@zcode-tarkov");
-  if (fs3.existsSync(pluginScoped))
-    return pluginScoped;
-  const own2 = path.join(root, "zcode-tarkov");
-  if (fs3.existsSync(own2))
-    return own2;
-  for (const legacy of LEGACY_DATA_DIRS) {
-    const dir = path.join(root, legacy);
-    if (fs3.existsSync(dir))
-      return dir;
+var DATA_DIR_ENV = "ZCODE_TARKOV_DATA_DIR";
+var APP_DIR_NAME = "zcode-tarkov";
+function dataRootOverride() {
+  const raw = process.env[DATA_DIR_ENV];
+  return raw && raw.trim().length > 0 ? path.resolve(raw.trim()) : void 0;
+}
+function platformBase() {
+  const home = os.homedir();
+  if (process.platform === "win32") {
+    const local = process.env.LOCALAPPDATA;
+    return local && local.trim().length > 0 ? local : path.join(home, "AppData", "Local");
   }
-  return own2;
+  if (process.platform === "darwin")
+    return path.join(home, "Library", "Application Support");
+  const xdg = process.env.XDG_DATA_HOME;
+  return xdg && xdg.trim().length > 0 ? xdg : path.join(home, ".local", "share");
 }
-function configFile() {
-  return path.join(dataDir(), "config.json");
+function dataRoot() {
+  return dataRootOverride() ?? path.join(platformBase(), APP_DIR_NAME, "data");
 }
-function readJsonFile(file2) {
+function prefsFile() {
+  return path.join(dataRoot(), "prefs.json");
+}
+function ensureDataRoot() {
+  const root = dataRoot();
+  fs3.mkdirSync(root, { recursive: true });
+  for (const kind of MEDIA_KINDS)
+    fs3.mkdirSync(path.join(root, kind), { recursive: true });
+  return root;
+}
+
+// dist/prefs/prefs.js
+import fs4 from "node:fs";
+import path2 from "node:path";
+
+// dist/media/paths.js
+function isSafeBasename(name) {
+  if (typeof name !== "string")
+    return false;
+  if (name.length === 0 || name.length > 200)
+    return false;
+  if (name === "." || name === "..")
+    return false;
+  if (name.includes("/") || name.includes("\\") || name.includes("\0"))
+    return false;
+  if (name.includes(":"))
+    return false;
+  if (/[. ]$/.test(name))
+    return false;
+  if (/[\u0000-\u001f\u007f]/.test(name))
+    return false;
+  return true;
+}
+
+// dist/prefs/defaults.js
+var DEFAULT_BANNER_TEXT2 = {
+  line1: "ATTENTION! ZCODE TACTICAL INTERFACE ACTIVE",
+  line2: "Experimental interface. Verify your task, tool calls and working tree before deployment."
+};
+function defaultBanner() {
+  return {
+    // v0.1 always showed the band; v0.2 keeps that as the default, and the
+    // switch exists so a user who finds it noisy can remove it completely.
+    mode: "full",
+    text1: DEFAULT_BANNER_TEXT2.line1,
+    text2: DEFAULT_BANNER_TEXT2.line2,
+    height: 56,
+    opacity: 0.92
+  };
+}
+function defaultPrefs() {
+  return {
+    version: PREFS_VERSION,
+    appearance: {
+      colorMode: "tarkov",
+      wallpaperVisible: false,
+      blur: 0,
+      dim: 22,
+      fit: "cover",
+      wallpaperPath: void 0,
+      banner: defaultBanner(),
+      // The shipped colours. While these two are unchanged the theme renders the
+      // hand-tuned palette byte-for-byte; a derivation only runs once the user
+      // actually picks a colour, so upgrading cannot shift anyone's theme.
+      background: TARKOV_BACKGROUND,
+      accent: TARKOV_ACCENT,
+      greeting: {
+        enabled: true,
+        line1: DEFAULT_GREETING.line1,
+        line2: DEFAULT_GREETING.line2
+      }
+    },
+    audio: {
+      enabled: true,
+      masterVolume: 0.7,
+      bgm: {
+        enabled: true,
+        volume: 0.35,
+        shuffle: true,
+        repeat: "all",
+        trackId: void 0,
+        disabledTracks: []
+      },
+      sfx: {
+        enabled: true,
+        volume: 0.55,
+        // Every event starts on; `tool` is the noisy one and can be switched off
+        // from the panel without touching the other four.
+        events: { start: true, approval: true, done: true, error: true, tool: true }
+      },
+      voice: {
+        enabled: true,
+        volume: 0.75,
+        chance: 1
+      }
+    },
+    pet: {
+      enabled: true,
+      scale: 84,
+      opacity: 0.95,
+      position: void 0,
+      voiceOnClick: true
+    },
+    status: {
+      // Off by default, unlike every other subsystem, and for a specific
+      // reason rather than caution in general: ZCode 3.12.3 exposes no stable
+      // handle on the element that carries the running status text, so the
+      // takeover resolves it structurally and cannot be proven safe on every
+      // build. A feature that might not act is better shipped off, labelled in
+      // the settings centre, and turned on deliberately — the alternative is a
+      // silent no-op that users report as a bug. See
+      // docs/dev/zcode-runtime-signals.md §3.6.
+      enabled: false,
+      language: "zh",
+      triggers: { reasoning: true, tool: true, progress: true },
+      anyTheme: false
+    }
+  };
+}
+
+// dist/prefs/prefs.js
+function readJson(file2) {
   try {
-    const raw = fs3.readFileSync(file2, "utf8").replace(/^\uFEFF/, "");
+    const raw = fs4.readFileSync(file2, "utf8").replace(/^\uFEFF/, "");
     return JSON.parse(raw);
   } catch {
     return void 0;
   }
 }
+function isRecord(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+function clampNumber(value, min, max, fallback) {
+  const n2 = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n2))
+    return fallback;
+  return Math.min(max, Math.max(min, n2));
+}
+function oneOf(value, allowed, fallback) {
+  return typeof value === "string" && allowed.includes(value) ? value : fallback;
+}
+function boolOr(value, fallback) {
+  return typeof value === "boolean" ? value : fallback;
+}
+function text(value, maxLength, fallback) {
+  if (typeof value !== "string")
+    return fallback;
+  const cleaned = value.replace(/[\u0000-\u001f\u007f]/g, "").trim();
+  if (cleaned.length === 0)
+    return fallback;
+  return cleaned.length > maxLength ? cleaned.slice(0, maxLength) : cleaned;
+}
+function position(value) {
+  if (!isRecord(value))
+    return void 0;
+  const x2 = Number(value.x);
+  const y2 = Number(value.y);
+  if (!Number.isFinite(x2) || !Number.isFinite(y2))
+    return void 0;
+  return { x: Math.round(x2), y: Math.round(y2) };
+}
+function nameList(value, limit = 2e3) {
+  if (!Array.isArray(value))
+    return [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const entry of value) {
+    if (typeof entry !== "string")
+      continue;
+    if (!isSafeBasename(entry))
+      continue;
+    seen.add(entry);
+    if (seen.size >= limit)
+      break;
+  }
+  return [...seen];
+}
+function eventSwitches(value, allowed, fallback) {
+  const out = {};
+  for (const key of allowed) {
+    out[key] = isRecord(value) && typeof value[key] === "boolean" ? value[key] : fallback[key] !== false;
+  }
+  return out;
+}
+function validateBanner(raw) {
+  const d = defaultBanner();
+  if (!isRecord(raw))
+    return d;
+  return {
+    mode: oneOf(raw.mode, BANNER_MODES, d.mode),
+    text1: text(raw.text1, 240, d.text1),
+    text2: text(raw.text2, 400, d.text2),
+    height: Math.round(clampNumber(raw.height, 24, 160, d.height)),
+    opacity: clampNumber(raw.opacity, 0, 1, d.opacity)
+  };
+}
+function color(value, fallback) {
+  const parsed = parseHex(value);
+  return parsed ? toHex(parsed) : fallback;
+}
+function validateGreeting(raw) {
+  const d = defaultPrefs().appearance.greeting;
+  if (!isRecord(raw))
+    return d;
+  return {
+    enabled: boolOr(raw.enabled, d.enabled),
+    line1: text(raw.line1, 240, d.line1),
+    line2: text(raw.line2, 400, d.line2)
+  };
+}
+function validateAppearance(raw) {
+  const d = defaultPrefs().appearance;
+  if (!isRecord(raw))
+    return d;
+  const wallpaperPath = typeof raw.wallpaperPath === "string" && raw.wallpaperPath.trim().length > 0 ? raw.wallpaperPath : void 0;
+  return {
+    colorMode: oneOf(raw.colorMode, COLOR_MODES, d.colorMode),
+    wallpaperVisible: boolOr(raw.wallpaperVisible, d.wallpaperVisible),
+    blur: clampNumber(raw.blur, 0, 100, d.blur),
+    dim: clampNumber(raw.dim, 0, 100, d.dim),
+    fit: oneOf(raw.fit, WALLPAPER_FITS, d.fit),
+    wallpaperPath,
+    banner: validateBanner(raw.banner),
+    background: color(raw.background, d.background),
+    accent: color(raw.accent, d.accent),
+    greeting: validateGreeting(raw.greeting)
+  };
+}
+function validateAudio(raw) {
+  const d = defaultPrefs().audio;
+  if (!isRecord(raw))
+    return d;
+  const bgm = isRecord(raw.bgm) ? raw.bgm : {};
+  const sfx = isRecord(raw.sfx) ? raw.sfx : {};
+  const voice = isRecord(raw.voice) ? raw.voice : {};
+  return {
+    enabled: boolOr(raw.enabled, d.enabled),
+    masterVolume: clampNumber(raw.masterVolume, 0, 1, d.masterVolume),
+    bgm: {
+      enabled: boolOr(bgm.enabled, d.bgm.enabled),
+      volume: clampNumber(bgm.volume, 0, 1, d.bgm.volume),
+      shuffle: boolOr(bgm.shuffle, d.bgm.shuffle),
+      repeat: bgm.repeat === "one" ? "one" : d.bgm.repeat,
+      trackId: typeof bgm.trackId === "string" && bgm.trackId.length > 0 ? bgm.trackId : void 0,
+      disabledTracks: nameList(bgm.disabledTracks)
+    },
+    sfx: {
+      enabled: boolOr(sfx.enabled, d.sfx.enabled),
+      volume: clampNumber(sfx.volume, 0, 1, d.sfx.volume),
+      events: eventSwitches(sfx.events, SFX_EVENTS, d.sfx.events)
+    },
+    voice: {
+      enabled: boolOr(voice.enabled, d.voice.enabled),
+      volume: clampNumber(voice.volume, 0, 1, d.voice.volume),
+      chance: clampNumber(voice.chance, 0, 1, d.voice.chance)
+    }
+  };
+}
+function validatePet(raw) {
+  const d = defaultPrefs().pet;
+  if (!isRecord(raw))
+    return d;
+  return {
+    enabled: boolOr(raw.enabled, d.enabled),
+    scale: Math.round(clampNumber(raw.scale, 24, 320, d.scale)),
+    opacity: clampNumber(raw.opacity, 0.1, 1, d.opacity),
+    position: position(raw.position),
+    voiceOnClick: boolOr(raw.voiceOnClick, d.voiceOnClick)
+  };
+}
+function validateStatus(raw) {
+  const d = defaultPrefs().status;
+  if (!isRecord(raw))
+    return d;
+  return {
+    enabled: boolOr(raw.enabled, d.enabled),
+    language: oneOf(raw.language, STATUS_LANGUAGES, d.language),
+    triggers: eventSwitches(raw.triggers, STATUS_TRIGGERS, d.triggers),
+    anyTheme: boolOr(raw.anyTheme, d.anyTheme)
+  };
+}
+function validatePrefs(raw) {
+  if (!isRecord(raw))
+    return defaultPrefs();
+  return {
+    version: PREFS_VERSION,
+    appearance: validateAppearance(raw.appearance),
+    audio: validateAudio(raw.audio),
+    pet: validatePet(raw.pet),
+    status: validateStatus(raw.status)
+  };
+}
+function migrateV01Appearance(legacy) {
+  const d = defaultPrefs().appearance;
+  if (!isRecord(legacy))
+    return d;
+  const legacyBanner = isRecord(legacy.banner) ? legacy.banner : void 0;
+  const banner = legacyBanner ? {
+    mode: legacyBanner.enabled === false ? "off" : "full",
+    text1: text(legacyBanner.text1, 240, d.banner.text1),
+    text2: text(legacyBanner.text2, 400, d.banner.text2),
+    height: Math.round(clampNumber(legacyBanner.height, 24, 160, d.banner.height)),
+    opacity: clampNumber(legacyBanner.opacity, 0, 1, d.banner.opacity)
+  } : d.banner;
+  const colorMode = legacy.colorMode !== void 0 ? oneOf(legacy.colorMode, COLOR_MODES, d.colorMode) : typeof legacy.monet === "boolean" ? legacy.monet ? "monet" : "native" : d.colorMode;
+  return {
+    colorMode,
+    wallpaperVisible: boolOr(legacy.wallpaperVisible, d.wallpaperVisible),
+    blur: clampNumber(legacy.blur, 0, 100, d.blur),
+    dim: clampNumber(legacy.dim, 0, 100, d.dim),
+    fit: oneOf(legacy.fit, WALLPAPER_FITS, d.fit),
+    wallpaperPath: typeof legacy.wallpaperPath === "string" && legacy.wallpaperPath.trim().length > 0 ? legacy.wallpaperPath : void 0,
+    banner,
+    // The v0.1 file had no concept of a custom palette or an editable greeting,
+    // so a migrated install keeps the shipped colours and the shipped notice —
+    // which is exactly what it was showing before the upgrade.
+    background: d.background,
+    accent: d.accent,
+    greeting: d.greeting
+  };
+}
+function timestampSuffix() {
+  return (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
+}
+function quarantine(file2) {
+  try {
+    if (!fs4.existsSync(file2))
+      return void 0;
+    const dest = `${file2}.bak-${timestampSuffix()}`;
+    fs4.copyFileSync(file2, dest);
+    return dest;
+  } catch {
+    return void 0;
+  }
+}
+function loadPrefs(legacyConfigPath2) {
+  const file2 = prefsFile();
+  const raw = readJson(file2);
+  if (raw === void 0) {
+    if (fs4.existsSync(file2)) {
+      const backup = quarantine(file2);
+      return {
+        prefs: defaultPrefs(),
+        recovered: { reason: "prefs.json could not be parsed; defaults restored", backup }
+      };
+    }
+    if (legacyConfigPath2 && fs4.existsSync(legacyConfigPath2)) {
+      const legacyRaw = readJson(legacyConfigPath2);
+      if (isRecord(legacyRaw)) {
+        const base = defaultPrefs();
+        return {
+          prefs: { ...base, appearance: migrateV01Appearance(legacyRaw) },
+          migratedFrom: legacyConfigPath2
+        };
+      }
+    }
+    return { prefs: defaultPrefs() };
+  }
+  return { prefs: validatePrefs(raw) };
+}
+function serializePrefs(prefs) {
+  return `${JSON.stringify(prefs, null, 2)}
+`;
+}
+function savePrefs(prefs) {
+  const root = ensureDataRoot();
+  const file2 = prefsFile();
+  const tmp = path2.join(root, `.prefs.${process.pid}.${Date.now()}.tmp`);
+  fs4.writeFileSync(tmp, serializePrefs(prefs));
+  fs4.renameSync(tmp, file2);
+}
+
+// dist/prefs/store.js
+var cached2;
+var loadInfo;
+var legacyConfigPath;
+function setLegacyConfigPath(file2) {
+  legacyConfigPath = file2;
+  cached2 = void 0;
+  loadInfo = void 0;
+}
+function getPrefs() {
+  if (!cached2) {
+    loadInfo = loadPrefs(legacyConfigPath);
+    cached2 = loadInfo.prefs;
+  }
+  return cached2;
+}
+function setPrefs(next) {
+  const validated = validatePrefs(next);
+  savePrefs(validated);
+  cached2 = validated;
+  return validated;
+}
+
+// dist/core/launch.js
+var LEGACY_DATA_DIRS = ["zcode-beautify@zcode-beautify", "zcode-beautify"];
+function dataDir() {
+  const override = process.env.ZCODE_BEAUTIFY_DATA_DIR;
+  if (override)
+    return override;
+  const root = path3.join(os2.homedir(), ".zcode", "cli", "plugins", "data");
+  const pluginScoped = path3.join(root, "zcode-tarkov@zcode-tarkov");
+  if (fs5.existsSync(pluginScoped))
+    return pluginScoped;
+  const own2 = path3.join(root, "zcode-tarkov");
+  if (fs5.existsSync(own2))
+    return own2;
+  for (const legacy of LEGACY_DATA_DIRS) {
+    const dir = path3.join(root, legacy);
+    if (fs5.existsSync(dir))
+      return dir;
+  }
+  return own2;
+}
+function legacyConfigFile() {
+  return path3.join(dataDir(), "config.json");
+}
+var legacyRegistered = false;
+function registerLegacyPath() {
+  if (legacyRegistered)
+    return;
+  legacyRegistered = true;
+  setLegacyConfigPath(legacyConfigFile());
+}
+function appearanceToConfig(appearance) {
+  return {
+    wallpaperPath: appearance.wallpaperPath,
+    blur: appearance.blur,
+    dim: appearance.dim,
+    fit: appearance.fit,
+    colorMode: appearance.colorMode,
+    // Kept in sync on read as well as on write: a v0.1 consumer reading an
+    // in-memory config still resolves an equivalent appearance from the boolean.
+    monet: appearance.colorMode === "monet",
+    wallpaperVisible: appearance.wallpaperVisible,
+    banner: { enabled: appearance.banner.mode !== "off", ...appearance.banner },
+    // The palette and the greeting are what the payload builder paints with, so
+    // they have to travel with every read — not only through the v0.2 prefs
+    // route. Leaving them out here would render the shipped colours no matter
+    // what the user chose.
+    background: appearance.background,
+    accent: appearance.accent,
+    greeting: appearance.greeting
+  };
+}
+function configToAppearance(config2, base) {
+  const banner = config2.banner ?? { ...base.banner, enabled: base.banner.mode !== "off" };
+  const mode = banner.enabled === false ? "off" : banner.mode && BANNER_MODES.includes(banner.mode) ? banner.mode : base.banner.mode;
+  return {
+    colorMode: config2.colorMode ?? base.colorMode,
+    wallpaperVisible: config2.wallpaperVisible ?? base.wallpaperVisible,
+    blur: config2.blur ?? base.blur,
+    dim: config2.dim ?? base.dim,
+    fit: config2.fit ?? base.fit,
+    // Not `?? base`: clearing the wallpaper is a real operation (`/api/reset`),
+    // and an absent key is how the caller says so.
+    wallpaperPath: config2.wallpaperPath,
+    banner: {
+      mode,
+      text1: banner.text1 ?? base.banner.text1,
+      text2: banner.text2 ?? base.banner.text2,
+      height: banner.height ?? base.banner.height,
+      opacity: banner.opacity ?? base.banner.opacity
+    },
+    // Carried through from the stored appearance: the v0.1 `/api/config` route
+    // has no concept of these, and a config write (blur, dim, wallpaper) must
+    // not reset a palette or greeting the user chose in the v0.2 panel.
+    background: base.background,
+    accent: base.accent,
+    greeting: base.greeting
+  };
+}
 function loadConfig() {
-  const stored = readJsonFile(configFile());
-  return stored ? withColorMode(stored) : {};
+  registerLegacyPath();
+  return appearanceToConfig(getPrefs().appearance);
 }
 function saveConfig(config2) {
-  fs3.mkdirSync(dataDir(), { recursive: true });
-  fs3.writeFileSync(configFile(), JSON.stringify(withColorMode(config2), null, 2));
+  registerLegacyPath();
+  const prefs = getPrefs();
+  setPrefs({ ...prefs, appearance: configToAppearance(config2, prefs.appearance) });
 }
 var ZCODE_EXE_CANDIDATES = process.platform === "win32" ? [
-  process.env.ZCODE_WINDOWS_APP_INSTALL_DIR ? path.join(process.env.ZCODE_WINDOWS_APP_INSTALL_DIR, "ZCode.exe") : void 0,
+  process.env.ZCODE_WINDOWS_APP_INSTALL_DIR ? path3.join(process.env.ZCODE_WINDOWS_APP_INSTALL_DIR, "ZCode.exe") : void 0,
   "C:\\Program Files\\ZCode\\ZCode.exe",
-  path.join(os.homedir(), "AppData", "Local", "Programs", "ZCode", "ZCode.exe")
+  path3.join(os2.homedir(), "AppData", "Local", "Programs", "ZCode", "ZCode.exe")
 ].filter(Boolean) : process.platform === "darwin" ? ["/Applications/ZCode.app/Contents/MacOS/ZCode"] : ["/usr/bin/zcode", "/opt/ZCode/zcode"];
 var execFileAsync = promisify(execFile);
 
@@ -145240,14 +146000,14 @@ async function reapplyStored() {
   return applyToZCode(config2, await buildPayloadFromConfig(config2));
 }
 async function applyWallpaper(imagePath, opts) {
-  const abs = path2.resolve(imagePath);
-  if (!fs4.existsSync(abs))
+  const abs = path4.resolve(imagePath);
+  if (!fs6.existsSync(abs))
     throw new Error(`Image not found: ${abs}`);
   const config2 = mergedConfig(opts);
-  fs4.mkdirSync(dataDir(), { recursive: true });
-  const dest = path2.join(dataDir(), "wallpaper" + path2.extname(abs).toLowerCase());
+  fs6.mkdirSync(dataDir(), { recursive: true });
+  const dest = path4.join(dataDir(), "wallpaper" + path4.extname(abs).toLowerCase());
   if (dest !== abs)
-    fs4.copyFileSync(abs, dest);
+    fs6.copyFileSync(abs, dest);
   const assets = await loadWallpaper(dest);
   const payload = buildPayload(config2, assets);
   saveConfig({ ...config2, wallpaperPath: dest });
@@ -145267,32 +146027,32 @@ async function resetAppearance(port) {
 }
 async function buildPayloadFromConfig(config2) {
   let assets;
-  if (config2.wallpaperPath && fs4.existsSync(config2.wallpaperPath)) {
+  if (config2.wallpaperPath && fs6.existsSync(config2.wallpaperPath)) {
     assets = await loadWallpaper(config2.wallpaperPath);
   }
   return buildPayload(config2, assets);
 }
 
 // dist/core/autostart.js
-import fs5 from "node:fs";
-import os2 from "node:os";
-import path3 from "node:path";
+import fs7 from "node:fs";
+import os3 from "node:os";
+import path5 from "node:path";
 var AUTOSTART_ID = "zcode-beautify";
 var AUTOSTART_LABEL = "com.logocceai.zcode-beautify";
 function startupDir() {
-  const appData = process.env.APPDATA ?? path3.join(os2.homedir(), "AppData", "Roaming");
-  return path3.join(appData, "Microsoft", "Windows", "Start Menu", "Programs", "Startup");
+  const appData = process.env.APPDATA ?? path5.join(os3.homedir(), "AppData", "Roaming");
+  return path5.join(appData, "Microsoft", "Windows", "Start Menu", "Programs", "Startup");
 }
 function launchAgentPath() {
-  return path3.join(os2.homedir(), "Library", "LaunchAgents", `${AUTOSTART_LABEL}.plist`);
+  return path5.join(os3.homedir(), "Library", "LaunchAgents", `${AUTOSTART_LABEL}.plist`);
 }
 function xdgAutostartPath() {
-  const configHome = process.env.XDG_CONFIG_HOME ?? path3.join(os2.homedir(), ".config");
-  return path3.join(configHome, "autostart", `${AUTOSTART_ID}.desktop`);
+  const configHome = process.env.XDG_CONFIG_HOME ?? path5.join(os3.homedir(), ".config");
+  return path5.join(configHome, "autostart", `${AUTOSTART_ID}.desktop`);
 }
 function autostartEntryPath() {
   if (process.platform === "win32")
-    return path3.join(startupDir(), `${AUTOSTART_ID}.vbs`);
+    return path5.join(startupDir(), `${AUTOSTART_ID}.vbs`);
   if (process.platform === "darwin")
     return launchAgentPath();
   if (process.platform === "linux")
@@ -145321,6 +146081,9 @@ function windowsScript(spec) {
   if (spec.dataDir) {
     lines.push(`CreateObject("WScript.Shell").Environment("PROCESS")("ZCODE_BEAUTIFY_DATA_DIR") = ${vbsLiteral(spec.dataDir)}`);
   }
+  if (spec.userDataDir) {
+    lines.push(`CreateObject("WScript.Shell").Environment("PROCESS")("ZCODE_TARKOV_DATA_DIR") = ${vbsLiteral(spec.userDataDir)}`);
+  }
   lines.push(`CreateObject("WScript.Shell").Run ${vbsLiteral(command)}, 0, False`, ``);
   return lines.join("\r\n");
 }
@@ -145328,10 +146091,15 @@ function xmlText(value) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 function macosScript(spec) {
-  const envBlock = spec.dataDir ? `  <key>EnvironmentVariables</key>
+  const envKeys = [
+    spec.dataDir ? `    <key>ZCODE_BEAUTIFY_DATA_DIR</key>
+    <string>${xmlText(spec.dataDir)}</string>` : "",
+    spec.userDataDir ? `    <key>ZCODE_TARKOV_DATA_DIR</key>
+    <string>${xmlText(spec.userDataDir)}</string>` : ""
+  ].filter(Boolean);
+  const envBlock = envKeys.length ? `  <key>EnvironmentVariables</key>
   <dict>
-    <key>ZCODE_BEAUTIFY_DATA_DIR</key>
-    <string>${xmlText(spec.dataDir)}</string>
+${envKeys.join("\n")}
   </dict>
 ` : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -145363,7 +146131,11 @@ function desktopArg(part) {
 }
 function linuxScript(spec) {
   const exec = [spec.nodePath, spec.cliPath, "serve", "--port", String(spec.cdpPort), "--api-port", String(spec.apiPort)].map(desktopArg).join(" ");
-  const dataEnv = spec.dataDir ? `env ${desktopArg(`ZCODE_BEAUTIFY_DATA_DIR=${spec.dataDir}`)} ` : "";
+  const envAssignments = [
+    spec.dataDir ? `ZCODE_BEAUTIFY_DATA_DIR=${spec.dataDir}` : "",
+    spec.userDataDir ? `ZCODE_TARKOV_DATA_DIR=${spec.userDataDir}` : ""
+  ].filter(Boolean);
+  const dataEnv = envAssignments.length ? `env ${envAssignments.map(desktopArg).join(" ")} ` : "";
   return `[Desktop Entry]
 Type=Application
 Name=ZCode Beautify
@@ -145379,47 +146151,47 @@ function getAutostartStatus() {
   if (!entryPath) {
     return { platform, supported: false, installed: false, note: `autostart is not implemented for ${platform}` };
   }
-  return { platform, supported: true, installed: fs5.existsSync(entryPath), entryPath };
+  return { platform, supported: true, installed: fs7.existsSync(entryPath), entryPath };
 }
 function installAutostart(spec) {
   const entryPath = autostartEntryPath();
   if (!entryPath)
     return getAutostartStatus();
   const script = process.platform === "win32" ? windowsScript(spec) : process.platform === "darwin" ? macosScript(spec) : linuxScript(spec);
-  fs5.mkdirSync(path3.dirname(entryPath), { recursive: true });
-  fs5.writeFileSync(entryPath, script);
+  fs7.mkdirSync(path5.dirname(entryPath), { recursive: true });
+  fs7.writeFileSync(entryPath, script);
   return getAutostartStatus();
 }
 function uninstallAutostart() {
   const entryPath = autostartEntryPath();
   if (!entryPath)
     return getAutostartStatus();
-  fs5.rmSync(entryPath, { force: true });
+  fs7.rmSync(entryPath, { force: true });
   return getAutostartStatus();
 }
 
 // dist/core/recovery.js
-import fs6 from "node:fs";
-import path4 from "node:path";
+import fs8 from "node:fs";
+import path6 from "node:path";
 var RECOVERY_MODES = ["off", "on-start", "always"];
 var DEFAULT_RECOVERY_MODE = "on-start";
 function normalizeMode(value) {
   return typeof value === "string" && RECOVERY_MODES.includes(value) ? value : void 0;
 }
 function recoveryFile() {
-  return path4.join(dataDir(), "recovery.json");
+  return path6.join(dataDir(), "recovery.json");
 }
 function loadRecovery() {
   try {
-    const raw = JSON.parse(fs6.readFileSync(recoveryFile(), "utf8"));
+    const raw = JSON.parse(fs8.readFileSync(recoveryFile(), "utf8"));
     return { mode: normalizeMode(raw.mode) ?? DEFAULT_RECOVERY_MODE, updatedAt: raw.updatedAt };
   } catch {
     return { mode: DEFAULT_RECOVERY_MODE };
   }
 }
 function saveRecovery(config2) {
-  fs6.mkdirSync(dataDir(), { recursive: true });
-  fs6.writeFileSync(recoveryFile(), JSON.stringify(config2, null, 2));
+  fs8.mkdirSync(dataDir(), { recursive: true });
+  fs8.writeFileSync(recoveryFile(), JSON.stringify(config2, null, 2));
 }
 function setRecoveryMode(mode) {
   const next = { mode, updatedAt: (/* @__PURE__ */ new Date()).toISOString() };
@@ -145572,7 +146344,7 @@ async function repairLaunchers(opts) {
 // dist/mcp/server.js
 var server = new McpServer({
   name: "zcode-tarkov",
-  version: "0.1.0"
+  version: "0.2.0"
 });
 server.registerTool("set_background", {
   title: "Set ZCode wallpaper",

@@ -26,6 +26,10 @@ const pluginFiles = [
   "skills/beautify/SKILL.md",
   "dist/cli.js",
   "dist/mcp/server.js",
+  // The injected client. Without it the theme still applies but audio, the dock,
+  // the pet, the status text and the settings centre are all missing, so it is
+  // part of the installable set rather than an optional extra.
+  "dist/client.js",
   "README.md",
   "README.zh-CN.md",
   "LICENSE",

@@ -7,6 +7,11 @@
 #   "ZCode Tarkov" launcher shortcut and (unless -NoService) register the
 #   resident theme service. This hides `node dist/cli.js ...` from the user: the
 #   shortcut starts ZCode with the CDP debug port and keeps the theme applied.
+#   It also creates the v0.2 user data root (%LOCALAPPDATA%\zcode-tarkov\data
+#   with music, sounds, voice, pet and status). That root is where the user's
+#   own files live (v0.1 kept them in ZCode's plugin data directory, which a
+#   ZCode update may replace); the installer creates the folders and never
+#   writes into or deletes anything that is already in them.
 #
 # Usage
 #   powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1
@@ -39,8 +44,9 @@
 #   persistent environment variable, never modifies ZCode's installation files,
 #   and never creates, changes or deletes an official ZCode shortcut. The entry
 #   it creates is a separate file named "ZCode Tarkov.lnk". Everything written
-#   lives in -InstallDir, in -ShortcutDir, and (unless -NoService) in the
-#   per-user autostart entry the plugin's own CLI registers.
+#   lives in -InstallDir, in -ShortcutDir, in the user data root (only the five
+#   media folders are created there, never filled), and (unless -NoService) in
+#   the per-user autostart entry the plugin's own CLI registers.
 #
 #   It never reads from stdin, never pauses and never prompts.
 #
@@ -77,6 +83,33 @@ if (-not [string]::IsNullOrWhiteSpace($DataDir)) {
     try { $DataDir = [System.IO.Path]::GetFullPath($DataDir) } catch { }
     if ($DataDir.EndsWith('\') -and $DataDir.Length -gt 3) { $DataDir = $DataDir.TrimEnd('\') }
 }
+
+# The v0.2 user data root: music, sounds, voice, pet art, status texts and
+# prefs.json, in a directory this product owns rather than in ZCode's plugin
+# data directory (which a ZCode update may replace). Same rule as dataRoot() in
+# src/core/dataRoot.ts, including the ZCODE_TARKOV_DATA_DIR override the
+# lifecycle harness and the CDP tools point at a scratch tree. The default is
+# what every real install gets: nothing here relies on that variable being set.
+function Get-ZctUserDataRoot {
+    if (-not [string]::IsNullOrWhiteSpace($env:ZCODE_TARKOV_DATA_DIR)) {
+        $root = $env:ZCODE_TARKOV_DATA_DIR
+        try { $root = [System.IO.Path]::GetFullPath($root) } catch { }
+        if ($root.EndsWith('\') -and $root.Length -gt 3) { $root = $root.TrimEnd('\') }
+        return $root
+    }
+    $base = $env:LOCALAPPDATA
+    if ([string]::IsNullOrWhiteSpace($base)) {
+        if ([string]::IsNullOrWhiteSpace($env:USERPROFILE)) { return '' }
+        $base = Join-Path $env:USERPROFILE 'AppData\Local'
+    }
+    return (Join-Path $base 'zcode-tarkov\data')
+}
+
+$userDataRoot = Get-ZctUserDataRoot
+# The five directories of the closed media set (MEDIA_KINDS in
+# src/prefs/types.ts); created empty so the settings panel and the media
+# pickers find them on a fresh install.
+$userDataSubdirs = @('music', 'sounds', 'voice', 'pet', 'status')
 
 $settingsPath = Join-Path $InstallDir 'settings.json'
 $cliPath = Join-Path $InstallDir 'dist\cli.js'
@@ -140,6 +173,7 @@ function Get-ResultObject {
         ok              = ($failureList.Count -eq 0)
         version         = $version
         installDir      = $InstallDir
+        userDataDir     = $userDataRoot
         zcodeExe        = $(if ($null -ne $zcode) { [string]$zcode.Path } else { $null })
         zcodeResolvedBy = $(if ($null -ne $zcode) { [string]$zcode.ResolvedBy } else { $null })
         cdpPort         = $CdpPort
@@ -250,6 +284,7 @@ function Complete-Install {
             Write-Host ('Result: FAILED - ' + $failureList.Count + ' item(s) above must be fixed; warnings: ' + $warningList.Count + '.')
         } else {
             Write-Host ('Result: installed zcode-tarkov ' + $version + ' into ' + $InstallDir + ' (warnings: ' + $warningList.Count + ').')
+            Write-Host ('User data root (music, sounds, voice, pet, status, prefs.json): ' + $userDataRoot)
         }
         Write-NextSteps
     }
@@ -395,6 +430,11 @@ if (-not (Test-Path -LiteralPath $discoveryPath -PathType Leaf)) {
 $requiredPayload = @(
     'dist\cli.js',
     'dist\mcp\server.js',
+    # The injected v0.2 client. It is required rather than optional: without it
+    # the theme still applies, but audio, the dock, the pet, the status text and
+    # the settings centre are all absent, which is a silently degraded install
+    # rather than a visible failure.
+    'dist\client.js',
     'launcher\zcode-tarkov-discovery.ps1',
     'launcher\zcode-tarkov-launch.ps1',
     'launcher\zcode-tarkov-launch.vbs',
@@ -635,7 +675,57 @@ if ($DryRun) {
 
 if (@(Get-RowStrings 'fail').Count -gt 0) { Complete-Install -Code 1 }
 
-# ---------------------------------------------------------------- 4. service ---
+# ------------------------------------------------------- 4. user data root ----
+# v0.2 keeps every file the user can see or change in %LOCALAPPDATA%\
+# zcode-tarkov\data (or ZCODE_TARKOV_DATA_DIR), not in the plugin data
+# directory a ZCode update may replace. Creating the five folders is the whole
+# job here: they are created only when they are missing, so 4 GB of music, a
+# hand-edited prefs.json or a previously downloaded voice pack is never
+# overwritten, moved or deleted by an install or a re-install.
+if ([string]::IsNullOrWhiteSpace($userDataRoot)) {
+    Add-Row -Status 'fail' -What 'user data' -Detail 'the user data root cannot be determined (%LOCALAPPDATA% and %USERPROFILE% are both unset)'
+} elseif ($DryRun) {
+    $missingUserDirs = New-Object System.Collections.ArrayList
+    foreach ($sub in $userDataSubdirs) {
+        if (-not (Test-Path -LiteralPath (Join-Path $userDataRoot $sub) -PathType Container)) { [void]$missingUserDirs.Add($sub) }
+    }
+    Add-Row -Status 'ok' -What 'user data' -Detail ('dry run: would create ' + $missingUserDirs.Count + ' missing media director(y/ies) below ' + $userDataRoot + '; nothing there would be written or deleted')
+} else {
+    $userDataCreated = New-Object System.Collections.ArrayList
+    $userDataFailure = ''
+    foreach ($sub in $userDataSubdirs) {
+        $path = Join-Path $userDataRoot $sub
+        if (Test-Path -LiteralPath $path -PathType Container) { continue }
+        # A file where a media folder belongs is user data; it is reported,
+        # never removed or replaced to make room.
+        if (Test-Path -LiteralPath $path) {
+            $userDataFailure = $path + ' exists but is not a directory; it was not replaced'
+            break
+        }
+        try {
+            New-Item -ItemType Directory -Path $path -Force -ErrorAction Stop | Out-Null
+        } catch {
+            $userDataFailure = $path + ': ' + $_.Exception.Message
+            break
+        }
+        # Windows PowerShell 5.1: New-Item -Force silently does nothing when the
+        # name is already taken, so the directory is verified afterwards.
+        if (-not (Test-Path -LiteralPath $path -PathType Container)) {
+            $userDataFailure = $path + ' could not be created; nothing was replaced'
+            break
+        }
+        [void]$userDataCreated.Add($sub)
+    }
+    if (-not [string]::IsNullOrWhiteSpace($userDataFailure)) {
+        Add-Row -Status 'fail' -What 'user data' -Detail ('cannot create ' + $userDataFailure)
+    } else {
+        Add-Row -Status 'ok' -What 'user data' -Detail ($userDataRoot + ' (' + $userDataCreated.Count + ' media director(y/ies) created; existing files were not touched)')
+    }
+}
+
+if (@(Get-RowStrings 'fail').Count -gt 0) { Complete-Install -Code 1 }
+
+# ---------------------------------------------------------------- 5. service ---
 $autostartEntry = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Startup\zcode-beautify.vbs'
 if ($NoService) {
     Add-Row -Status 'ok' -What 'autostart' -Detail 'skipped (-NoService)'
@@ -707,6 +797,6 @@ if ($NoService) {
     }
 }
 
-# ------------------------------------------------------------------ 5. report --
+# ------------------------------------------------------------------ 6. report --
 if (@(Get-RowStrings 'fail').Count -gt 0) { Complete-Install -Code 1 }
 Complete-Install -Code 0

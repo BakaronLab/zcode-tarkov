@@ -54,15 +54,19 @@ Commands:
 const MODE_LIST = COLOR_MODES.join(" | ");
 
 function autostartSpec(cdpPort: number, apiPort = 9223): AutostartSpec {
-  // The data directory has to reach the sign-in daemon too: ZCODE_BEAUTIFY_DATA_DIR
-  // is how install.ps1 and the launcher pin it, and without it a service started
-  // at sign-in would serve the CLI's own default data directory after a reboot.
+  // The data directories have to reach the sign-in daemon too: ZCODE_BEAUTIFY_DATA_DIR
+  // is how install.ps1 and the launcher pin the plugin's own state, and
+  // ZCODE_TARKOV_DATA_DIR is the v0.2 user media root. Without them a service
+  // started at sign-in would resolve the CLI's own defaults after a reboot —
+  // and for the media root that means a user who moved their library would find
+  // it empty, which looks like data loss rather than a misconfiguration.
   return {
     nodePath: process.execPath,
     cliPath: cliEntryPath(),
     cdpPort,
     apiPort,
     dataDir: process.env.ZCODE_BEAUTIFY_DATA_DIR,
+    userDataDir: process.env.ZCODE_TARKOV_DATA_DIR,
   };
 }
 

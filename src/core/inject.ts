@@ -8,7 +8,20 @@ import { loadWallpaper, type WallpaperAssets } from "./monet.js";
 import { buildVariableOverrides, buildTransparencyOverrides } from "./tokens.js";
 import { buildTarkovVariableOverrides, buildTarkovComponentCss } from "../themes/tarkov.js";
 import { DEFAULT_COLOR_MODE, type ColorMode } from "./colorMode.js";
-import { DEFAULT_BANNER, type BannerOptions } from "./banner.js";
+import { DEFAULT_BANNER, resolveBannerMode, type BannerOptions } from "./banner.js";
+import {
+  DEFAULT_PALETTE,
+  TARKOV_BACKGROUND,
+  TARKOV_INK,
+  compositeOver,
+  ensureContrast,
+  parseHex,
+  readableInk,
+  resolvePalette,
+  roundRgb,
+  toHex,
+} from "../themes/palette.js";
+import { DEFAULT_GREETING, type GreetingText } from "../themes/tarkov.js";
 
 export type WallpaperFit = "cover" | "contain" | "smart";
 
@@ -28,6 +41,12 @@ export interface BeautifyConfig {
   fit: WallpaperFit;
   /** Tarkov-only beta banner. Ignored in the other modes. */
   banner: BannerOptions;
+  /** Base surface colour for the Tarkov palette, as `#rrggbb`. */
+  background: string;
+  /** Accent for the Tarkov palette, as `#rrggbb`. */
+  accent: string;
+  /** The beta notice drawn in place of the empty-chat greeting. */
+  greeting: GreetingText & { enabled: boolean };
 }
 
 export const DEFAULT_CONFIG: BeautifyConfig = {
@@ -39,6 +58,9 @@ export const DEFAULT_CONFIG: BeautifyConfig = {
   wallpaperVisible: true,
   fit: "cover",
   banner: DEFAULT_BANNER,
+  background: DEFAULT_PALETTE.background,
+  accent: DEFAULT_PALETTE.accent,
+  greeting: { enabled: true, ...DEFAULT_GREETING },
 };
 
 export interface BuiltPayload {
@@ -62,11 +84,41 @@ export function resolveColorMode(config: Pick<BeautifyConfig, "colorMode" | "mon
   return config.colorMode ?? (config.monet ? "monet" : "native");
 }
 
-/** The banner is a Tarkov-mode feature only; other modes tear it down. */
+/**
+ * The banner to install, or null to tear any existing one down.
+ *
+ * The mode is authoritative, not the legacy `enabled` boolean. Deciding on
+ * `enabled` alone let a payload of `enabled: true, mode: "off"` install a band
+ * with a zero height and a one-pixel border — an accent line across the top of
+ * the app and the reservation attribute set for a band that was supposed to be
+ * absent. Nothing in the shipped UI produces that combination, which is exactly
+ * why it is worth refusing here rather than relying on every caller to keep the
+ * two fields in step.
+ */
 export function resolveBanner(config: BeautifyConfig): BannerOptions | null {
   if (resolveColorMode(config) !== "tarkov") return null;
   const banner = config.banner ?? DEFAULT_BANNER;
-  return banner.enabled ? banner : null;
+  if (resolveBannerMode(banner) === "off") return null;
+  // The band carries the resolved accent, so a colour the user picked reaches it
+  // without the banner module having to know the palette exists.
+  const palette = resolvePalette({ background: config.background, accent: config.accent });
+
+  // The band's ink is derived here rather than taken from the palette, because
+  // the two bands are painted at different alphas and so are not the same
+  // colour. The top band uses `banner.opacity` — 0.92 by default, adjustable to
+  // 1 — while the empty-chat notice uses its own 0.62. Reusing the notice's ink
+  // measured 1.90:1 up here for a dark accent over a light background, because a
+  // higher alpha puts the band much closer to the raw accent.
+  const bandRgb = parseHex(palette.background) ?? parseHex(TARKOV_BACKGROUND)!;
+  const surface = roundRgb(compositeOver(parseHex(palette.accent)!, bandRgb, banner.opacity));
+  // The near-black candidate is the shipped ink, so an untouched theme renders
+  // exactly the colour it always did; the derivation only changes the answer once
+  // a colour has actually been chosen.
+  const accentInk = toHex(
+    ensureContrast(readableInk(surface, [parseHex(TARKOV_INK)!, { r: 255, g: 255, b: 255 }]), surface, 4.5)
+  );
+
+  return { ...banner, accent: palette.accent, accentRgb: palette.accentRgb, accentInk };
 }
 
 export function buildPayload(config: BeautifyConfig, assets?: WallpaperAssets): BuiltPayload {
@@ -117,16 +169,28 @@ html, body { background: transparent !important; }
 
   const mode = resolveColorMode(config);
   if (mode === "tarkov") {
-    // The Tarkov palette is fixed, so it never consults the wallpaper: it
-    // applies whether or not an image is loaded, and swapping the wallpaper
-    // cannot shift the UI colors.
+    // The Tarkov palette never consults the wallpaper: it applies whether or not
+    // an image is loaded, and swapping the wallpaper cannot shift the UI colors.
+    // A user-chosen background and accent resolve here, once, so every module
+    // downstream paints from one palette object rather than re-deriving.
+    const palette = resolvePalette({ background: config.background, accent: config.accent });
     parts.push(
       buildTarkovVariableOverrides({
         dim: config.dim,
         wallpaperVisible: config.wallpaperVisible,
+        palette,
       })
     );
-    parts.push(buildTarkovComponentCss());
+    parts.push(
+      buildTarkovComponentCss({
+        palette,
+        // Null omits the notice's rules entirely, which is what brings ZCode's
+        // own greeting back.
+        greeting: config.greeting.enabled
+          ? { line1: config.greeting.line1, line2: config.greeting.line2 }
+          : null,
+      })
+    );
   } else if (mode === "monet") {
     // Monet recolors the UI from the wallpaper, so it needs the extracted theme.
     if (assets) {

@@ -1,4 +1,4 @@
-// The v0.1.0 freeze: every manifest has to agree on one product name and one
+// The v0.2.0 freeze: every manifest has to agree on one product name and one
 // version. Four files carry a copy of it (package.json, the plugin manifest,
 // the marketplace entry twice, plus the lockfile), and a release that ships
 // three of them updated is worse than one that fails here.
@@ -18,7 +18,7 @@ const marketplace = readJson("marketplace.json");
 const lock = readJson("package-lock.json");
 
 const PRODUCT_NAME = "zcode-tarkov";
-const PRODUCT_VERSION = "0.1.0";
+const PRODUCT_VERSION = "0.2.0";
 
 test("package.json carries the frozen product identity", () => {
   assert.equal(pkg.name, PRODUCT_NAME);

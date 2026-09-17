@@ -9,7 +9,13 @@
 #   wrote, restores official ZCode launcher entries that an earlier playtest
 #   build had added --remote-debugging-port to, and removes the install
 #   directory that carries our settings.json marker. With -RemoveData it also
-#   deletes the files the CLI stored in its data directory.
+#   deletes the files the CLI stored in its old data directory.
+#
+#   The v0.2 user data root - music, sounds, voice, pet art, status texts and
+#   prefs.json below %LOCALAPPDATA%\zcode-tarkov\data - is a different matter:
+#   it holds files the user put there, so it is always kept and only deleted
+#   when -PurgeUserData says so explicitly. An uninstall must never be able to
+#   destroy a media library by being run.
 #
 #   Every destructive step is identity-verified first (marker file, exact path,
 #   exact argument token, inspected command line). When identity cannot be
@@ -20,13 +26,19 @@
 #   powershell -NoProfile -ExecutionPolicy Bypass -File uninstall.ps1
 #   powershell -NoProfile -ExecutionPolicy Bypass -File uninstall.ps1 -DryRun
 #   powershell -NoProfile -ExecutionPolicy Bypass -File uninstall.ps1 -RemoveData
+#   powershell -NoProfile -ExecutionPolicy Bypass -File uninstall.ps1 -PurgeUserData
 #   powershell -NoProfile -ExecutionPolicy Bypass -File uninstall.ps1 -InstallDir <dir> -ApiPort 19333 -ShortcutDir <dir>
 #
 #   -InstallDir            default %LOCALAPPDATA%\Programs\zcode-tarkov
 #   -DataDir               default: settings.json, then the CLI's own location
 #   -CdpPort / -ApiPort    0 = read settings.json, then 9222 / 9223
 #   -ShortcutDir           extra directories to sweep for "ZCode Tarkov.lnk"
-#   -RemoveData            also delete the CLI's known files in the data dir
+#   -RemoveData            also delete the CLI's known files in the old data dir
+#   -PurgeUserData         also delete the v0.2 user data root
+#                          (%LOCALAPPDATA%\zcode-tarkov\data, or
+#                          ZCODE_TARKOV_DATA_DIR): music, sounds, voice, pet,
+#                          status and prefs.json. Without this switch the whole
+#                          root is kept untouched, bit for bit.
 #   -KeepLegacyShortcut    keep a "ZCode Tarkov.lnk" that points straight at
 #                          ZCode.exe (the older playtest launcher entry)
 #   -KeepOfficialShortcuts keep official shortcuts and handler values untouched
@@ -34,7 +46,9 @@
 #   -Force                 remove an install directory that carries no
 #                          zcode-tarkov settings.json, delete a directory
 #                          reparse point instead of refusing it, and skip the
-#                          %LOCALAPPDATA%/%TEMP% location guard
+#                          %LOCALAPPDATA%/%TEMP% location guard (the same
+#                          override applies to the -PurgeUserData guards; a
+#                          drive root is still never deleted)
 #   -Json                  print only a machine-readable JSON summary
 #
 # Exit codes
@@ -57,6 +71,11 @@
 #   removed again. A recursive delete never follows a directory reparse point
 #   (junction/symlink): the link is skipped and reported instead.
 #
+#   The v0.2 user data root holds files the user put there, so it is not part
+#   of the default sweep at all: only -PurgeUserData deletes it, and a reparse
+#   point at the root itself is refused (a recursive delete through a junction
+#   would destroy the link target), as is a path that is a drive root.
+#
 #   It never reads from stdin, never pauses and never prompts.
 #
 [CmdletBinding()]
@@ -67,6 +86,7 @@ param(
     [int]$ApiPort = 0,
     [string[]]$ShortcutDir = @(),
     [switch]$RemoveData,
+    [switch]$PurgeUserData,
     [switch]$KeepLegacyShortcut,
     [switch]$KeepOfficialShortcuts,
     [switch]$DryRun,
@@ -89,6 +109,10 @@ $cliPath = Join-Path $InstallDir 'dist\cli.js'
 $autostartEntry = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Startup\zcode-beautify.vbs'
 $desktopDir = Join-Path $env:USERPROFILE 'Desktop'
 $startMenuDir = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
+# The five directories of the v0.2 user data root (MEDIA_KINDS in
+# src/prefs/types.ts), reported individually so a user with a large music
+# library can see that each one survived.
+$userDataSubdirs = @('music', 'sounds', 'voice', 'pet', 'status')
 
 $rows = New-Object System.Collections.ArrayList
 $removedList = New-Object System.Collections.ArrayList
@@ -166,6 +190,26 @@ function Get-ZctDefaultDataDir {
     return (Join-Path $root 'zcode-tarkov')
 }
 
+# Where the v0.2 user data root is: the directory that holds the user's music,
+# sounds, voice, pet art, status texts and prefs.json. Mirrors dataRoot() in
+# src/core/dataRoot.ts, including the ZCODE_TARKOV_DATA_DIR override, and falls
+# back to %LOCALAPPDATA% (then %USERPROFILE%\AppData\Local) exactly like the
+# runtime does. It is kept unless -PurgeUserData is given.
+function Get-ZctUserDataRoot {
+    if (-not [string]::IsNullOrWhiteSpace($env:ZCODE_TARKOV_DATA_DIR)) {
+        $root = $env:ZCODE_TARKOV_DATA_DIR
+        try { $root = [System.IO.Path]::GetFullPath($root) } catch { }
+        if ($root.EndsWith('\') -and $root.Length -gt 3) { $root = $root.TrimEnd('\') }
+        return $root
+    }
+    $base = $env:LOCALAPPDATA
+    if ([string]::IsNullOrWhiteSpace($base)) {
+        if ([string]::IsNullOrWhiteSpace($env:USERPROFILE)) { return '' }
+        $base = Join-Path $env:USERPROFILE 'AppData\Local'
+    }
+    return (Join-Path $base 'zcode-tarkov\data')
+}
+
 function Write-Report {
     foreach ($row in $rows) {
         Write-Host ('{0} {1,-18} - {2}' -f [string]$row.Tag, [string]$row.What, [string]$row.Detail)
@@ -193,16 +237,18 @@ function Complete-Uninstall {
     if (-not $ok) { $code = 1 }
     if ($Json) {
         [ordered]@{
-            ok         = $ok
-            dryRun     = [bool]$DryRun
-            removed    = @($removedList.ToArray())
-            kept       = @($keptList.ToArray())
-            refused    = @($refusedList.ToArray())
-            notTouched = @($notTouched.ToArray())
-            dataDir    = $script:resolvedDataDir
-            installDir = $InstallDir
-            warnings   = @($warningList.ToArray())
-            failures   = @($failureList.ToArray())
+            ok            = $ok
+            dryRun        = [bool]$DryRun
+            removed       = @($removedList.ToArray())
+            kept          = @($keptList.ToArray())
+            refused       = @($refusedList.ToArray())
+            notTouched    = @($notTouched.ToArray())
+            dataDir       = $script:resolvedDataDir
+            userDataDir   = $script:resolvedUserDataDir
+            purgeUserData = [bool]$PurgeUserData
+            installDir    = $InstallDir
+            warnings      = @($warningList.ToArray())
+            failures      = @($failureList.ToArray())
         } | ConvertTo-Json -Depth 6
     } else {
         Write-Host ''
@@ -223,11 +269,24 @@ function Complete-Uninstall {
         }
         if ($script:resolvedDataDir) {
             Write-Host ''
-            Write-Host ('Data directory (wallpaper and settings): ' + $script:resolvedDataDir)
+            Write-Host ('Old CLI data directory (v0.1 config, recovery and logs): ' + $script:resolvedDataDir)
             if ($RemoveData) {
                 Write-Host '  -RemoveData was given; see the rows above for what was deleted or left.'
             } else {
                 Write-Host ('  It was kept. To delete it too: Remove-Item -LiteralPath "' + $script:resolvedDataDir + '" -Recurse -Force')
+            }
+        }
+        if ($script:resolvedUserDataDir) {
+            Write-Host ''
+            Write-Host ('User data root (music, sounds, voice, pet, status, prefs.json): ' + $script:resolvedUserDataDir)
+            if ($PurgeUserData) {
+                if ($DryRun) {
+                    Write-Host '  -PurgeUserData was given; a real run would delete it (the dry-run rows above list what would go).'
+                } else {
+                    Write-Host '  -PurgeUserData was given; see the rows above for what was deleted and what was left behind.'
+                }
+            } else {
+                Write-Host '  It was kept untouched. To delete it too, re-run with -PurgeUserData.'
             }
         }
     }
@@ -297,6 +356,9 @@ if (-not [string]::IsNullOrWhiteSpace($resolvedDataDir)) {
     try { $resolvedDataDir = [System.IO.Path]::GetFullPath($resolvedDataDir) } catch { }
     if ($resolvedDataDir.EndsWith('\') -and $resolvedDataDir.Length -gt 3) { $resolvedDataDir = $resolvedDataDir.TrimEnd('\') }
 }
+# Same rule for the v0.2 root; whether it is deleted is decided by
+# -PurgeUserData in section 9, never by the settings or by -RemoveData.
+$resolvedUserDataDir = Get-ZctUserDataRoot
 Add-Info 'ports' ('cdp ' + $resolvedCdpPort + ', api ' + $resolvedApiPort + ' (from the command line, settings.json, or the defaults)')
 
 # ------------------------------------------------- 2. our resident service ----
@@ -310,7 +372,7 @@ if (-not $shortcutHelperAvailable -or -not $discoveryAvailable) {
 } else {
     $health = Get-ServiceHealth -ApiPort $resolvedApiPort
     if ($null -eq $health) {
-        Add-Absent 'service' ('nothing that identifies itself as zcode-beautify answers on api port ' + $resolvedApiPort)
+        Add-Absent 'service' ('nothing that identifies itself as zcode-tarkov answers on api port ' + $resolvedApiPort)
     } else {
         $candidatePid = 0
         try { $candidatePid = [int]$health.pid } catch { $candidatePid = 0 }
@@ -392,7 +454,7 @@ if (Test-Path -LiteralPath $autostartEntry -PathType Leaf) {
             }
         }
     } else {
-        Add-Kept 'autostart' ($autostartEntry + ' exists but does not look like ours (no "ZCode Beautify" header, no zcode-tarkov/zcode-beautify path); not touched')
+        Add-Kept 'autostart' ($autostartEntry + ' exists but does not look like ours (it carries no zcode-tarkov identifier); not touched')
     }
 } else {
     Add-Absent 'autostart' ($autostartEntry + ' is not present')
@@ -630,7 +692,170 @@ if ([string]::IsNullOrWhiteSpace($resolvedDataDir)) {
     }
 }
 
-# ------------------------------------------------------- 9. not-touched list --
+# -------------------------------------------------------- 9. user data root ---
+# The v0.2 state: music, sounds, voice, pet art, status texts and prefs.json
+# below %LOCALAPPDATA%\zcode-tarkov\data, or the ZCODE_TARKOV_DATA_DIR override.
+# It holds files the user put there, so it is kept by default and reported item
+# by item - a user with 4 GB of music must be able to read this output and know
+# it survived. Only -PurgeUserData deletes it, and even then the delete never
+# follows a directory reparse point; a reparse point at the root itself is
+# refused (a recursive delete through a junction would destroy the target).
+if ([string]::IsNullOrWhiteSpace($resolvedUserDataDir)) {
+    Add-Absent 'user data' 'the user data root could not be determined (%LOCALAPPDATA% and %USERPROFILE% are both unset)'
+} elseif (-not (Test-Path -LiteralPath $resolvedUserDataDir -PathType Container)) {
+    Add-Absent 'user data' ($resolvedUserDataDir + ' is not present')
+} else {
+    # Counted before any decision, with Get-ZctTreeFiles so a reparse point is
+    # reported rather than walked into. The numbers are the evidence that the
+    # library survived; no file's content is ever read.
+    $userFileCount = 0
+    $userBytes = 0
+    $userSkippedLinks = @()
+    if ($shortcutHelperAvailable) {
+        $userTree = Get-ZctTreeFiles -Root $resolvedUserDataDir
+        $userFiles = @($userTree.Files)
+        $userFileCount = $userFiles.Count
+        foreach ($file in $userFiles) { try { $userBytes = $userBytes + [int64]$file.Length } catch { } }
+        $userSkippedLinks = @($userTree.Skipped)
+    }
+    $userSizeText = '{0:N1} MB' -f ($userBytes / 1MB)
+
+    if (-not $PurgeUserData) {
+        if ($shortcutHelperAvailable) {
+            Add-Kept 'user data' ($resolvedUserDataDir + ' is kept (' + $userFileCount + ' file(s), ' + $userSizeText + '); delete it only if you mean to, with -PurgeUserData')
+            # Per-directory counts, so the owner of every media kind can see its
+            # files were not touched. Missing directories are simply not listed.
+            foreach ($sub in $userDataSubdirs) {
+                $subPath = Join-Path $resolvedUserDataDir $sub
+                if (-not (Test-Path -LiteralPath $subPath -PathType Container)) { continue }
+                $subTree = Get-ZctTreeFiles -Root $subPath
+                $subFiles = @($subTree.Files)
+                $subBytes = 0
+                foreach ($file in $subFiles) { try { $subBytes = $subBytes + [int64]$file.Length } catch { } }
+                Add-Kept ('user data\' + $sub) ($subFiles.Count.ToString() + ' file(s), ' + ('{0:N1} MB' -f ($subBytes / 1MB)) + ', kept at ' + $subPath)
+            }
+            $prefsPath = Join-Path $resolvedUserDataDir 'prefs.json'
+            if (Test-Path -LiteralPath $prefsPath -PathType Leaf) { Add-Kept 'user data\prefs.json' ('your settings are kept at ' + $prefsPath) }
+            if ($userSkippedLinks.Count -gt 0) {
+                Add-Kept 'user data links' ($userSkippedLinks.Count.ToString() + ' reparse point(s) were not followed and are therefore untouched: ' + ($userSkippedLinks -join ', '))
+            }
+        } else {
+            Add-Kept 'user data' ($resolvedUserDataDir + ' is kept; its file counts could not be read (' + $helperPath + ' did not load) and nothing there was deleted')
+        }
+        [void]$notTouched.Add('the user data root ' + $resolvedUserDataDir + ' (music, sounds, voice, pet, status and prefs.json; kept unless -PurgeUserData is given)')
+    } else {
+        # -PurgeUserData deletes, so the target is proven safe first: a drive
+        # root is never allowed (-Force included), one of the personal
+        # directories itself is refused unless -Force overrides the guard.
+        $unsafeReason = ''
+        $unsafeOverridable = $true
+        if ($resolvedUserDataDir -eq [System.IO.Path]::GetPathRoot($resolvedUserDataDir)) {
+            $unsafeReason = 'it is the root of a drive'
+            $unsafeOverridable = $false
+        } else {
+            foreach ($protected in @($env:USERPROFILE, $env:LOCALAPPDATA, $env:APPDATA, $env:TEMP, $InstallDir)) {
+                if ([string]::IsNullOrWhiteSpace($protected)) { continue }
+                $value = $protected
+                try { $value = [System.IO.Path]::GetFullPath($value) } catch { }
+                if ($value.EndsWith('\') -and $value.Length -gt 3) { $value = $value.TrimEnd('\') }
+                if ($resolvedUserDataDir -ieq $value) { $unsafeReason = 'it is ' + $value + ' itself'; break }
+            }
+        }
+        if (-not $shortcutHelperAvailable) {
+            Add-Refused 'user data' ('the shared shortcut helper could not be loaded, so the reparse-point-safe delete is unavailable; nothing was deleted from ' + $resolvedUserDataDir)
+        } elseif ((Test-ZctIsReparsePoint -Path $resolvedUserDataDir) -and -not $Force) {
+            Add-Refused 'user data' ($resolvedUserDataDir + ' is a directory reparse point (junction/symlink); deleting through it could delete the link target. Refused (re-run with -Force only if you are sure)')
+        } elseif (-not [string]::IsNullOrWhiteSpace($unsafeReason) -and (-not $unsafeOverridable -or -not $Force)) {
+            $unsafeHint = '; refused'
+            if ($unsafeOverridable) { $unsafeHint = '; refused (re-run with -Force only if you are sure)' }
+            Add-Refused 'user data' ('-PurgeUserData was given, but ' + $resolvedUserDataDir + ' is not a dedicated data directory (' + $unsafeReason + ')' + $unsafeHint)
+        } else {
+            # -PurgeUserData removes this project's own files, never the root's
+            # other contents. The root is relocatable, and the documented reason
+            # to relocate it is to keep media on a drive that already holds a
+            # library, so a recursive delete of the root would take files this
+            # project never created. The five media directories and prefs.json
+            # are ours by construction; the root itself is removed only when
+            # nothing else is left in it.
+            $purgeDirs = @('music', 'sounds', 'voice', 'pet', 'status')
+            $purgeFile = 'prefs.json'
+            $removedItems = @()
+            $skippedItems = @()
+            $failedItems = @()
+            foreach ($name in $purgeDirs) {
+                $child = Join-Path $resolvedUserDataDir $name
+                if (-not (Test-Path -LiteralPath $child)) { continue }
+                if (Test-ZctIsReparsePoint -Path $child) {
+                    $skippedItems += ($name + ' (a reparse point; deleting through it could delete the link target)')
+                    continue
+                }
+                if ($DryRun) { $removedItems += $name; continue }
+                try {
+                    [void]@(Remove-ZctTreeSafe -Root $child)
+                    if (Test-Path -LiteralPath $child) { $skippedItems += ($name + ' (left in place by the reparse-point-safe delete)') }
+                    else { $removedItems += $name }
+                } catch {
+                    $failedItems += ($name + ': ' + $_.Exception.Message)
+                }
+            }
+            $prefsPath = Join-Path $resolvedUserDataDir $purgeFile
+            if (Test-Path -LiteralPath $prefsPath -PathType Leaf) {
+                if ($DryRun) {
+                    $removedItems += $purgeFile
+                } else {
+                    try {
+                        Remove-Item -LiteralPath $prefsPath -Force -ErrorAction Stop
+                        if (Test-Path -LiteralPath $prefsPath) { $skippedItems += ($purgeFile + ' (still present)') }
+                        else { $removedItems += $purgeFile }
+                    } catch {
+                        $failedItems += ($purgeFile + ': ' + $_.Exception.Message)
+                    }
+                }
+            }
+
+            # Anything else in the root belongs to the user. Report it by name so
+            # the output says what survived, rather than only what was deleted.
+            $foreign = @()
+            if (Test-Path -LiteralPath $resolvedUserDataDir) {
+                try {
+                    $foreign = @(Get-ChildItem -LiteralPath $resolvedUserDataDir -Force -ErrorAction Stop |
+                        Where-Object { $purgeDirs -notcontains $_.Name -and $_.Name -ne $purgeFile } |
+                        ForEach-Object { $_.Name })
+                } catch { $foreign = @() }
+            }
+
+            if ($DryRun) {
+                Add-Removed 'user data' ($userDetail + '; would remove ' + (($removedItems) -join ', ') + ' (this project''s own files only, never the root itself)')
+                if ($foreign.Count -gt 0) {
+                    Add-Kept 'user data' ($resolvedUserDataDir + ' also holds ' + $foreign.Count + ' entr(ies) this project did not create, which -PurgeUserData never removes: ' + ($foreign -join ', '))
+                }
+            } elseif ($failedItems.Count -gt 0) {
+                Add-Failed 'user data' ('-PurgeUserData could not remove: ' + ($failedItems -join '; '))
+            } else {
+                Add-Row -Tag '[removed]' -Class 'removed' -What 'user data' -Detail ($userDetail + '; removed ' + ($removedItems -join ', ') + ' because -PurgeUserData was given')
+            }
+            if (-not $DryRun) {
+                if ($skippedItems.Count -gt 0) {
+                    Add-Kept 'user data' ($resolvedUserDataDir + ' still holds: ' + ($skippedItems -join '; '))
+                }
+                if ($foreign.Count -gt 0) {
+                    Add-Kept 'user data' ($resolvedUserDataDir + ' was kept because it still holds ' + $foreign.Count + ' entr(ies) this project did not create: ' + ($foreign -join ', '))
+                } elseif (Test-Path -LiteralPath $resolvedUserDataDir) {
+                    # Ours are gone and nothing else is in it, so the empty root
+                    # goes too rather than leaving a bare directory behind.
+                    try {
+                        Remove-Item -LiteralPath $resolvedUserDataDir -Force -ErrorAction Stop
+                        Add-Row -Tag '[removed]' -Class 'removed' -What 'user data root' -Detail ($resolvedUserDataDir + ' removed (it was empty after the purge)')
+                    } catch {
+                        Add-Kept 'user data root' ($resolvedUserDataDir + ' is empty but could not be removed: ' + $_.Exception.Message)
+                    }
+                }
+            }
+        }
+    }
+}
+
+# ------------------------------------------------------ 10. not-touched list --
 $zcodeInstall = 'ZCode''s installation directory'
 if ($null -ne $settings -and -not [string]::IsNullOrWhiteSpace([string]$settings.zcodeInstallDir)) {
     $zcodeInstall = 'ZCode''s installation directory (' + [string]$settings.zcodeInstallDir + ')'

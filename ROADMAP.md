@@ -1,115 +1,125 @@
 # Roadmap
 
-## v0.1 (current) — a usable Tarkov UI preset
+## v0.2 (current) — a Tarkov interface layer
 
-Shipped:
+Shipped. Changelog entry: [`CHANGELOG.md`](CHANGELOG.md#v020).
 
-- `colorMode: "monet" | "tarkov" | "native"` with backward-compatible config migration.
-- Fixed Tarkov palette mapped onto ZCode's semantic tokens (`src/themes/tarkov.ts`).
-- Limited Tarkov component skin built on stable `data-slot` / Radix state selectors.
-- Beta warning banner in Tarkov mode: orange band, hexagonal badge, fail-soft
-  `MutationObserver` re-attachment, clean removal on mode switch.
-- Settings-panel theme selector plus a Tarkov panel skin.
-- Automated tests for the new pure logic.
+Built on v0.1:
 
-Not yet verified live — see the "Limitations" section of the README and
-`docs/dev/zcode-dom-notes.md`.
+- Event sound effects (`start`, `approval`, `done`, `error`, `tool`), synthesized
+  at play time, overridable per event from `data\sounds\`.
+- An event state machine that turns a noisy renderer into a bounded number of
+  sounds, with per-turn latches and entry/exit debouncing.
+- Background music from `data\music\`, streamed with byte-range seeking, with a
+  dock, shuffle, repeat, and per-track switches.
+- A single-leader rule so only one renderer plays, with command forwarding and
+  failover.
+- A draggable pet with an original SVG default, a persisted position, and a
+  right-click menu.
+- A random pet voice from `data\voice\`, with a bounded decoded-buffer cache.
+- Randomized running-status text from `data\status\`, falling back to bundled
+  original phrases.
+- A settings centre (Appearance / Audio / Pet / Status / System).
+- A versioned preferences schema at `%LOCALAPPDATA%\zcode-tarkov\data\prefs.json`
+  with per-field clamping, atomic writes, and v0.1 migration.
+- An uninstaller that preserves user media unless `-PurgeUserData` is given.
+- Three band modes (`off` / `compact` / `full`) and a brighter centralized accent.
 
-## Candidates for v0.2
+Two things are deliberately **not** at full strength in v0.2, and both are
+documented rather than hidden:
+
+- The **status-text takeover ships off**. ZCode 3.12.3 exposes no stable handle on
+  the element that carries the running status text, so it is opt-in. The
+  investigation and the one measurement that would close the gap are in
+  `docs/dev/zcode-runtime-signals.md` §3.6 and §6.
+- The **error sound has no verified trigger**. `error` / interrupted was never
+  reached during the signal investigation, so its selectors are unconfirmed; the
+  sound simply never plays on a build where they do not match.
+
+## Candidates for v0.3
 
 Roughly in order of value per unit of risk.
 
-### 1. Live verification and selector hardening (do this first)
+### 1. Close the two v0.2 gaps (do this first)
 
-The first pass of this is **done** — see the "Live verification results" section
-of `docs/dev/zcode-dom-notes.md`. A live CDP session was obtained via ZCode's
-`ZCODE_DESKTOP_USER_DATA_DIR` runtime override, and the token scopes, banner
-anchor, mode switching, panel and restart recovery were all confirmed live.
+- **Find the status-line container.** One mid-run structural dump of the strip
+  above the composer is all that is missing; §6 of
+  `docs/dev/zcode-runtime-signals.md` records the command that would produce it.
+  Once the container is known, replace the structural locator in
+  `src/client/status/anchor.ts` with the measured handle and switch
+  `status.enabled` to `true` by default.
+- **Observe an error turn** — a failed request, an interrupted generation, a
+  refused tool call — and confirm or replace `ERROR_SELECTORS` in
+  `src/client/signals/detect.ts`.
 
-What remains:
+### 2. A regression guard on the DOM contract
 
-- Re-check token scopes and `data-slot` after any ZCode upgrade; `.theme-zai-*`,
-  the `@layer theme` split and the portal slot names are version-specific facts,
-  not guarantees.
-- Exercise the styled portal surfaces directly (`dialog-content`,
-  `dropdown-menu-content`, `select-content`, `select-item`, `input`, `command`)
-  by opening them, since they do not exist in a resting tree.
-- Add a regression guard so an upgrade that renames a token or drops `data-slot`
-  fails loudly rather than silently half-theming.
-- Decide whether to fix the pre-existing "bare renderer reload drops the theme"
-  behavior, which is documented in `docs/dev/zcode-dom-notes.md` as upstream.
+The theme, the banner, the run-state signals and the status line all match
+ZCode's DOM. Today a ZCode upgrade that renames a token or drops a `data-slot`
+degrades silently. `tools/probe-signals.mjs` and `tools/measure-layout.mjs`
+already know how to check; what is missing is turning them into a single
+`npm run check:dom` that fails loudly and names what changed.
 
-### 2. More first-party Tarkov palettes
+### 3. More first-party palettes
 
-The mode is currently one fixed palette. Natural extensions, all cheap once the
-theme module is extracted:
+The palette is one fixed set. Natural extensions, all cheap now that the accent
+lives in `src/themes/palette.ts`:
 
-- Variants per map or trader (e.g. a cooler "Interchange" palette, a
-  desaturated "Woods" palette) selected through `colorMode` + a `palette` field.
+- Variants per map or trader (a cooler "Interchange", a desaturated "Woods"),
+  selected through `colorMode` plus a `palette` field.
 - A high-contrast / accessibility variant with widened contrast ratios.
-- Optional user-supplied palette via config, validated against the same token
-  contract.
+- A user-supplied palette in config, validated against the same token contract.
 
-### 3. Banner content and behavior
+### 4. Settings panel polish
 
-- Panel controls for the banner text/opacity (the config path already exists;
-  only the UI is missing).
-- Optional dismiss button with a persisted "don't show again".
-- A countdown / build-label line, since the band is already a status region.
+- Segmented control instead of a `<select>` for the three colour modes.
+- Per-mode preview thumbnails.
+- A drag handle that is not also the title bar, so the window can be moved
+  without a text-selection hazard.
 
-### 4. Panel polish
+### 5. Theme and settings export / import
 
-- Segmented control instead of a `<select>` for the three modes.
-- Per-mode preview thumbnails in the picker.
-- Keyboard navigation and focus-visible styling for the panel.
+Export the active palette and preferences as one JSON file, import someone
+else's. The cheapest path to community palettes without building a marketplace.
 
-### 5. Theme export / import
+## Explicitly out of scope
 
-- Export the active palette as JSON, import someone else's.
-- This is the cheapest path to community palettes without building a
-  marketplace.
+Deliberately not implemented, so that a reader does not mistake an omission for
+an oversight.
 
-## Explicitly out of scope for v0.1
+### Bundled game media
 
-These were deliberately **not** implemented, mostly to keep the release a clean
-UI-preset change rather than a media/asset project. They exist as ideas only.
+Still forbidden, for the same reason as in v0.1. No BGM, Scav voice lines,
+official sound effects, screenshots, logos, Altyn artwork or extracted game
+assets ship with this project, and none ever will. v0.2 exists precisely to show
+that the *capability* does not require the assets: the sound effects are
+synthesized, the pet is an original drawing, and the music and voice libraries
+ship empty for the user to fill.
 
-### Audio and voice
+### Animated backgrounds
 
-- **BGM / a music library.** Would require bundling or sourcing audio with
-  clear licensing, plus a playback lifecycle tied to ZCode's own state. It also
-  needs an answer to "what happens when the user has Spotify open".
-- **Scav voice lines / event sounds.** These are *game assets*. Redistributing
-  them is exactly what this project's attribution rules forbid. Any future
-  version would have to ship silence-by-default and let users point at their own
-  files.
-- **Approval / error / completion sound effects** (as `dsh-theme-tarkov` has).
-  Same licensing problem as above.
+Video or wallpaper-engine integration conflicts with the "one image in the
+renderer" design and its memory budget.
 
-### Assets and animation
+### A standalone theme marketplace
 
-- **Altyn desktop pet.** The upstream reference bundles an Altyn image of
-  unclear provenance; it was excluded for that reason. A pet also needs a
-  window-management and animation story that is a project of its own.
-- **Animated backgrounds.** Video/wallpaper-engine integration conflicts with
-  the current "one JPEG data URI in the renderer" design and its memory budget.
-- **Any game screenshot crops, official logos or textures.**
+Needs hosting, signing, moderation and a versioning contract. Export/import
+(above) gets most of the benefit.
 
-### Text content
+### Replacing the CDP injection layer
 
-- **Randomized status-line quotes.** Cheap to build, but it is content
-  authoring plus localisation, not theming — and the quotes are game-flavoured
-  text of the same questionable provenance as the audio.
+The existing zcode-beautify infrastructure works. Replacing it would be churn,
+and v0.2 added a client on top of it rather than beside it.
 
-### Architecture
+### A React rewrite of the settings panel
 
-- **A standalone theme marketplace.** Requires hosting, signing, moderation and
-  a versioning contract. Export/import (above) gets most of the benefit.
-- **A new plugin framework or a new CDP injection framework.** The existing
-  zcode-beautify infrastructure works; replacing it would be churn.
-- **A React rewrite of the settings panel.** The panel is deliberately a plain
-  DOM script so it stays a single injected string with no build/runtime
-  dependency inside the renderer.
-- **A large configuration-system refactor.** The current flat config plus
-  `sanitize()` validation is adequate; the one real gap (mode modelling) is
-  closed.
+The panel is deliberately plain DOM so it stays one self-contained injected
+program with no runtime dependency inside the renderer. v0.2 kept that property
+while moving the client from template strings to real TypeScript — which is the
+useful half of the idea.
+
+### A large configuration-system refactor
+
+The v0.2 schema (`src/prefs/`) closed the real gap: it is versioned, validated
+per field, atomically written and migratable. Further abstraction would not earn
+its complexity.

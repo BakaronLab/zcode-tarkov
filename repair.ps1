@@ -6,10 +6,11 @@
 #   Fixes an existing installation after the thing it depends on moved: it
 #   re-detects ZCode.exe (a ZCode update can change the install path or the
 #   version directory), re-resolves node.exe, verifies - or with -SourceDir
-#   restores - the installed payload, recreates the launcher shortcuts, checks
-#   the resident theme service, and reports the three interfaces a ZCode
-#   software update can break: the launcher, the DOM selectors and the CSS
-#   tokens.
+#   restores - the installed payload, recreates the v0.2 user data root's five
+#   media folders when they are missing (without ever touching the files in
+#   them), recreates the launcher shortcuts, checks the resident theme service,
+#   and reports the three interfaces a ZCode software update can break: the
+#   launcher, the DOM selectors and the CSS tokens.
 #
 # Usage
 #   powershell -NoProfile -ExecutionPolicy Bypass -File repair.ps1
@@ -75,6 +76,32 @@ if (-not [string]::IsNullOrWhiteSpace($SourceDir)) {
     if ($SourceDir.EndsWith('\') -and $SourceDir.Length -gt 3) { $SourceDir = $SourceDir.TrimEnd('\') }
 }
 
+# The v0.2 user data root: music, sounds, voice, pet art, status texts and
+# prefs.json, in a directory this product owns rather than in ZCode's plugin
+# data directory (which a ZCode update may replace). Same rule as dataRoot() in
+# src/core/dataRoot.ts, including the ZCODE_TARKOV_DATA_DIR override the
+# lifecycle harness and the CDP tools point at a scratch tree; the default below
+# is what every real install gets.
+function Get-ZctUserDataRoot {
+    if (-not [string]::IsNullOrWhiteSpace($env:ZCODE_TARKOV_DATA_DIR)) {
+        $root = $env:ZCODE_TARKOV_DATA_DIR
+        try { $root = [System.IO.Path]::GetFullPath($root) } catch { }
+        if ($root.EndsWith('\') -and $root.Length -gt 3) { $root = $root.TrimEnd('\') }
+        return $root
+    }
+    $base = $env:LOCALAPPDATA
+    if ([string]::IsNullOrWhiteSpace($base)) {
+        if ([string]::IsNullOrWhiteSpace($env:USERPROFILE)) { return '' }
+        $base = Join-Path $env:USERPROFILE 'AppData\Local'
+    }
+    return (Join-Path $base 'zcode-tarkov\data')
+}
+
+$userDataRoot = Get-ZctUserDataRoot
+# The five directories of the closed media set (MEDIA_KINDS in
+# src/prefs/types.ts), recreated empty when they are missing.
+$userDataSubdirs = @('music', 'sounds', 'voice', 'pet', 'status')
+
 $settingsPath = Join-Path $InstallDir 'settings.json'
 $cliPath = Join-Path $InstallDir 'dist\cli.js'
 $autostartEntry = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Startup\zcode-beautify.vbs'
@@ -131,6 +158,7 @@ function Get-ResultObject {
         ok              = (($failureList.Count -eq 0) -and (-not $script:degraded))
         version         = $version
         installDir      = $InstallDir
+        userDataDir     = $userDataRoot
         zcodeExe        = $zcodeExeText
         zcodeResolvedBy = $zcodeResolvedByText
         zcodeCandidates = @($zcodeCandidates)
@@ -411,6 +439,10 @@ if (-not [string]::IsNullOrWhiteSpace($nodePath) -and (Test-Path -LiteralPath $n
 $requiredPayload = @(
     'dist\cli.js',
     'dist\mcp\server.js',
+    # Repair restores the injected client too: a repair that puts back the CLI
+    # but not the client would leave the v0.2 features missing while reporting
+    # the install as healthy.
+    'dist\client.js',
     'launcher\zcode-tarkov-discovery.ps1',
     'launcher\zcode-tarkov-launch.ps1',
     'launcher\zcode-tarkov-launch.vbs',
@@ -545,7 +577,58 @@ if ([string]::IsNullOrWhiteSpace($SourceDir)) {
     }
 }
 
-# ---------------------------------------------------------- 5. shortcuts ------
+# -------------------------------------------------------- 5. user data root ---
+# The v0.2 state - music, sounds, voice, pet art, status texts and prefs.json -
+# lives below %LOCALAPPDATA%\zcode-tarkov\data, or the ZCODE_TARKOV_DATA_DIR
+# override. A ZCode update cannot replace that root, but a user or a cleaner can
+# delete it. Repair recreates only what is missing and never writes into,
+# overwrites or deletes a file that is already there: a media library can be
+# several GB and is not this script's to change.
+if ([string]::IsNullOrWhiteSpace($userDataRoot)) {
+    Add-Row -Status 'fail' -What 'user data' -Detail 'the user data root cannot be determined (%LOCALAPPDATA% and %USERPROFILE% are both unset)'
+} else {
+    $missingUserDirs = New-Object System.Collections.ArrayList
+    foreach ($sub in $userDataSubdirs) {
+        if (-not (Test-Path -LiteralPath (Join-Path $userDataRoot $sub) -PathType Container)) { [void]$missingUserDirs.Add($sub) }
+    }
+    if ($missingUserDirs.Count -eq 0) {
+        Add-Row -Status 'ok' -What 'user data' -Detail ($userDataRoot + ' (all ' + $userDataSubdirs.Count + ' media directories present; nothing in it was touched)')
+    } elseif ($DryRun) {
+        Add-Row -Status 'ok' -What 'user data' -Detail ('dry run: would recreate ' + $missingUserDirs.Count + ' missing media director(y/ies) below ' + $userDataRoot + ': ' + (@($missingUserDirs.ToArray()) -join ', '))
+    } else {
+        $userDirsCreated = New-Object System.Collections.ArrayList
+        $userDataFailure = ''
+        foreach ($sub in $missingUserDirs) {
+            $path = Join-Path $userDataRoot $sub
+            # A file where a media folder belongs is user data; it is reported,
+            # never removed or replaced to make room.
+            if (Test-Path -LiteralPath $path) {
+                $userDataFailure = $path + ' exists but is not a directory; it was not replaced'
+                break
+            }
+            try {
+                New-Item -ItemType Directory -Path $path -Force -ErrorAction Stop | Out-Null
+            } catch {
+                $userDataFailure = $path + ': ' + $_.Exception.Message
+                break
+            }
+            # Windows PowerShell 5.1: New-Item -Force silently does nothing when
+            # the name is already taken, so the directory is verified afterwards.
+            if (-not (Test-Path -LiteralPath $path -PathType Container)) {
+                $userDataFailure = $path + ' could not be created; nothing was replaced'
+                break
+            }
+            [void]$userDirsCreated.Add($sub)
+        }
+        if (-not [string]::IsNullOrWhiteSpace($userDataFailure)) {
+            Add-Row -Status 'fail' -What 'user data' -Detail ('cannot recreate ' + $userDataFailure)
+        } else {
+            Add-Row -Status 'ok' -What 'user data' -Detail ('recreated ' + $userDirsCreated.Count + ' missing media director(y/ies) below ' + $userDataRoot + ': ' + (@($userDirsCreated.ToArray()) -join ', '))
+        }
+    }
+}
+
+# ---------------------------------------------------------- 6. shortcuts ------
 if ($NoShortcuts) {
     Add-Row -Status 'ok' -What 'shortcut' -Detail 'skipped (-NoShortcuts)'
 } elseif (-not $shortcutHelperAvailable) {
@@ -634,7 +717,7 @@ if ($NoShortcuts) {
     }
 }
 
-# ------------------------------------------------------------- 6. service -----
+# ------------------------------------------------------------- 7. service -----
 if ($NoService) {
     Add-Row -Status 'ok' -What 'service' -Detail 'skipped (-NoService)'
     $service = [ordered]@{ status = 'skipped'; pid = $null; detail = 'skipped (-NoService)' }
@@ -689,8 +772,8 @@ if ($NoService) {
         }
     } elseif ($null -eq $health) {
         if ($portOpen) {
-            Add-Row -Status 'warn' -What 'service' -Detail ('api port ' + $resolvedApiPort + ' is open but does not answer /api/health as zcode-beautify; not starting a second service on that port')
-            $service = [ordered]@{ status = 'foreign-port'; pid = $null; detail = 'the port answers, but not as zcode-beautify' }
+            Add-Row -Status 'warn' -What 'service' -Detail ('api port ' + $resolvedApiPort + ' is open but does not answer /api/health as zcode-tarkov; not starting a second service on that port')
+            $service = [ordered]@{ status = 'foreign-port'; pid = $null; detail = 'the port answers, but not as zcode-tarkov' }
             Add-Degraded
         } elseif ($DryRun) {
             Add-Row -Status 'ok' -What 'service' -Detail ('not running; dry run: would start serve on api port ' + $resolvedApiPort)
@@ -711,7 +794,7 @@ if ($NoService) {
     }
 }
 
-# ---------------------------------------------------------- 7. interfaces -----
+# ---------------------------------------------------------- 8. interfaces -----
 # The three interfaces a ZCode software update can break. Only the first one can
 # be verified (and repaired) offline.
 $cdpOpen = $false
@@ -760,7 +843,7 @@ if (-not [string]::IsNullOrWhiteSpace($buildInfo) -and -not ($buildInfo -like 't
 Add-Row -Status 'info' -What 'css-tokens' -Detail $cssDetail
 [void]$interfaces.Add(@{ name = 'css-tokens'; status = 'info'; detail = $cssDetail })
 
-# ------------------------------------------------------------ 8. settings -----
+# ------------------------------------------------------------ 9. settings -----
 # Written once, after the shortcuts, so the recorded list is accurate. Only the
 # values repair.ps1 re-resolved are replaced; everything else is kept.
 if ($settingsDirty) {
@@ -796,7 +879,7 @@ if ($settingsDirty) {
     Add-Row -Status 'info' -What 'settings.json' -Detail 'nothing to rewrite; the recorded values are still valid'
 }
 
-# ---------------------------------------------------- 9. autostart diagnosis --
+# --------------------------------------------------- 10. autostart diagnosis --
 # Reported, not written: install.ps1 owns the autostart entry. A missing entry
 # only degrades the install when the service is being managed.
 if ($NoService) {
@@ -822,5 +905,5 @@ if ($NoService) {
     Add-Degraded
 }
 
-# ------------------------------------------------------------ 10. report ------
+# ----------------------------------------------------------- 11. report -------
 Complete-Repair

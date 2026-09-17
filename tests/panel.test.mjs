@@ -50,7 +50,7 @@ test("panel skin is driven by one attribute on the root element", () => {
 test("the Tarkov skin uses the deep-brown/orange palette and smaller radii", () => {
   assert.match(script, /\[data-zb-theme="tarkov"\] \{/);
   assert.match(script, /--zb-bg: rgba\(26,18,10,\.94\)/);
-  assert.match(script, /--zb-accent: #e07930/);
+  assert.match(script, /--zb-accent: #ee8a3a/);
   assert.match(script, /--zb-text: #e8d9c8/);
   assert.match(script, /--zb-radius: 4px/);
   assert.match(script, /--zb-radius-pill: 3px/);

@@ -48,11 +48,273 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
+// dist/themes/palette.js
+function parseHex(value) {
+  if (typeof value !== "string")
+    return void 0;
+  const raw = value.trim().replace(/^#/, "");
+  if (/^[0-9a-fA-F]{3}$/.test(raw)) {
+    return {
+      r: Number.parseInt(raw[0] + raw[0], 16),
+      g: Number.parseInt(raw[1] + raw[1], 16),
+      b: Number.parseInt(raw[2] + raw[2], 16)
+    };
+  }
+  if (/^[0-9a-fA-F]{6}$/.test(raw)) {
+    return {
+      r: Number.parseInt(raw.slice(0, 2), 16),
+      g: Number.parseInt(raw.slice(2, 4), 16),
+      b: Number.parseInt(raw.slice(4, 6), 16)
+    };
+  }
+  return void 0;
+}
+function toHex({ r: r2, g, b }) {
+  const part = (v) => Math.min(255, Math.max(0, Math.round(v))).toString(16).padStart(2, "0");
+  return `#${part(r2)}${part(g)}${part(b)}`;
+}
+function toTriple({ r: r2, g, b }) {
+  const part = (v) => Math.min(255, Math.max(0, Math.round(v)));
+  return `${part(r2)}, ${part(g)}, ${part(b)}`;
+}
+function luminance({ r: r2, g, b }) {
+  const lin = (v) => {
+    const s2 = v / 255;
+    return s2 <= 0.03928 ? s2 / 12.92 : ((s2 + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(r2) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+function contrastRatio(a2, b) {
+  const la = luminance(a2);
+  const lb = luminance(b);
+  const lighter = Math.max(la, lb);
+  const darker = Math.min(la, lb);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+function roundRgb(color2) {
+  return { r: Math.round(color2.r), g: Math.round(color2.g), b: Math.round(color2.b) };
+}
+function compositeOver(foreground, background, alpha) {
+  const t2 = Math.min(1, Math.max(0, alpha));
+  return {
+    r: foreground.r * t2 + background.r * (1 - t2),
+    g: foreground.g * t2 + background.g * (1 - t2),
+    b: foreground.b * t2 + background.b * (1 - t2)
+  };
+}
+function readableInk(background, candidates) {
+  let best = candidates[0];
+  let bestRatio = -1;
+  for (const candidate of candidates) {
+    const ratio = contrastRatio(candidate, background);
+    if (ratio > bestRatio) {
+      bestRatio = ratio;
+      best = candidate;
+    }
+  }
+  return best;
+}
+function readableInkAll(backgrounds, candidates) {
+  const worstCase = (candidate) => Math.min(...backgrounds.map((background) => contrastRatio(candidate, background)));
+  let best = candidates[0];
+  let bestRatio = -1;
+  for (const candidate of candidates) {
+    const ratio = worstCase(candidate);
+    if (ratio > bestRatio) {
+      bestRatio = ratio;
+      best = candidate;
+    }
+  }
+  return best;
+}
+function clampLuminance(color2, base, min, max) {
+  const fits = (candidate) => {
+    const l2 = luminance(candidate);
+    return l2 >= min && l2 <= max;
+  };
+  if (fits(color2))
+    return color2;
+  let lo = 0;
+  let hi = 1;
+  let best = color2;
+  for (let i2 = 0; i2 < 24; i2 += 1) {
+    const mid = (lo + hi) / 2;
+    const candidate = compositeOver(base, color2, mid);
+    if (fits(candidate)) {
+      best = candidate;
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+  return roundRgb(best);
+}
+function ensureContrastAll(color2, backgrounds, target) {
+  const worstCase = (candidate) => Math.min(...backgrounds.map((background) => contrastRatio(candidate, background)));
+  const aim = target * 1.01;
+  if (worstCase(color2) >= aim)
+    return color2;
+  const extreme = worstCase(WHITE) >= worstCase(BLACK) ? WHITE : BLACK;
+  let current = color2;
+  for (let i2 = 0; i2 < 24 && worstCase(current) < aim; i2 += 1) {
+    current = compositeOver(extreme, current, 0.25);
+  }
+  return worstCase(current) >= aim ? current : extreme;
+}
+function ensureContrast(color2, background, target) {
+  const aim = target * 1.01;
+  if (contrastRatio(color2, background) >= aim)
+    return color2;
+  const extreme = contrastRatio(WHITE, background) >= contrastRatio(BLACK, background) ? WHITE : BLACK;
+  let current = color2;
+  for (let i2 = 0; i2 < 24 && contrastRatio(current, background) < aim; i2 += 1) {
+    current = compositeOver(extreme, current, 0.25);
+  }
+  return contrastRatio(current, background) >= aim ? current : extreme;
+}
+function shift(color2, amount) {
+  const target = amount >= 0 ? 255 : 0;
+  const t2 = Math.min(1, Math.abs(amount));
+  return {
+    r: color2.r + (target - color2.r) * t2,
+    g: color2.g + (target - color2.g) * t2,
+    b: color2.b + (target - color2.b) * t2
+  };
+}
+function isDefaultPalette(overrides) {
+  const background = parseHex(overrides.background);
+  const accent = parseHex(overrides.accent);
+  const defaultBackground = parseHex(TARKOV_BACKGROUND);
+  const defaultAccent = parseHex(TARKOV_ACCENT);
+  const sameBackground = !background || toHex(background) === toHex(defaultBackground);
+  const sameAccent = !accent || toHex(accent) === toHex(defaultAccent);
+  return sameBackground && sameAccent;
+}
+function resolvePalette(overrides = {}) {
+  if (isDefaultPalette(overrides))
+    return DEFAULT_PALETTE;
+  const background = parseHex(overrides.background) ?? parseHex(TARKOV_BACKGROUND);
+  const accent = parseHex(overrides.accent) ?? parseHex(TARKOV_ACCENT);
+  const light = luminance(background) > 0.4;
+  const inkIsDark = contrastRatio(BLACK, background) >= contrastRatio(WHITE, background);
+  const band = inkIsDark ? { min: 0.18, max: 1 } : { min: 0, max: 0.165 };
+  const toward = inkIsDark ? 1 : -1;
+  const fit = (shifted) => clampLuminance(roundRgb(shifted), background, band.min, band.max);
+  const surface = fit(shift(background, 0.05 * toward));
+  const panel = fit(shift(background, 0.1 * toward));
+  const raised = fit(shift(background, 0.22 * toward));
+  const popover = fit(shift(background, 0.28 * toward));
+  const textSurfaces = [surface, panel, raised];
+  const text2 = ensureContrastAll(readableInkAll(textSurfaces, [parseHex("#e8d9c8"), parseHex("#1b1410")]), textSurfaces, 4.5);
+  const muted = ensureContrastAll(readableInkAll(textSurfaces, [parseHex("#8b877c"), parseHex("#5c5348")]), textSurfaces, 3);
+  const highlight = ensureContrastAll(readableInkAll(textSurfaces, [shift(accent, 0.65), shift(accent, -0.3)]), textSurfaces, 4.5);
+  const warning = ensureContrastAll(readableInkAll(textSurfaces, [shift(accent, 0.45), shift(accent, -0.2)]), textSurfaces, 4.5);
+  const popoverText = ensureContrastAll(readableInkAll([popover], [parseHex("#e8d9c8"), parseHex("#1b1410")]), [popover], 4.5);
+  const onAccent = ensureContrast(readableInk(accent, [parseHex("#0d0a06"), parseHex("#ffffff")]), accent, 4.5);
+  const noticeSurface = roundRgb(compositeOver(accent, background, 0.62));
+  const bandInk = ensureContrast(readableInk(noticeSurface, [parseHex("#111111"), parseHex("#ffffff")]), noticeSurface, 4.5);
+  return {
+    accent: toHex(accent),
+    accentRgb: toTriple(accent),
+    deep: toHex(roundRgb(shift(background, -0.3 * (light ? -1 : 1)))),
+    deepRgb: toTriple(roundRgb(shift(background, -0.3 * (light ? -1 : 1)))),
+    background: toHex(background),
+    panelRgb: toTriple(surface),
+    panelAltRgb: toTriple(panel),
+    raisedRgb: toTriple(raised),
+    popoverRgb: toTriple(popover),
+    text: toHex(text2),
+    popoverText: toHex(popoverText),
+    highlight: toHex(highlight),
+    warning: toHex(warning),
+    muted: toHex(muted),
+    mutedRgb: toTriple(muted),
+    onAccent: toHex(onAccent),
+    bandInk: toHex(bandInk)
+  };
+}
+var TARKOV_ACCENT, TARKOV_ACCENT_RGB, TARKOV_INK, TARKOV_INK_RGB, TARKOV_BACKGROUND, DEFAULT_PALETTE, BLACK, WHITE;
+var init_palette = __esm({
+  "dist/themes/palette.js"() {
+    "use strict";
+    TARKOV_ACCENT = "#ee8a3a";
+    TARKOV_ACCENT_RGB = "238, 138, 58";
+    TARKOV_INK = "#1c1207";
+    TARKOV_INK_RGB = "28, 18, 7";
+    TARKOV_BACKGROUND = "#1c1207";
+    DEFAULT_PALETTE = {
+      accent: TARKOV_ACCENT,
+      accentRgb: TARKOV_ACCENT_RGB,
+      deep: "#140d04",
+      deepRgb: "20, 13, 4",
+      background: TARKOV_BACKGROUND,
+      panelRgb: "26, 18, 10",
+      panelAltRgb: "30, 20, 10",
+      raisedRgb: "42, 29, 16",
+      popoverRgb: "46, 32, 18",
+      text: "#e8d9c8",
+      highlight: "#ffd7ae",
+      warning: "#ffb27a",
+      muted: "#8b877c",
+      mutedRgb: "139, 135, 124",
+      // Both match what the shipped theme already painted: dark ink on the accent,
+      // and the reference project's #111111 on the band. They are held as constants
+      // rather than recomputed so the default render stays byte-identical — the
+      // contrast logic below only runs once a colour has actually been chosen.
+      onAccent: "#1c1207",
+      bandInk: "#111111",
+      // Matches what the popover foreground already resolved to, so the shipped
+      // render is unchanged.
+      popoverText: "#e8d9c8"
+    };
+    BLACK = { r: 0, g: 0, b: 0 };
+    WHITE = { r: 255, g: 255, b: 255 };
+  }
+});
+
+// dist/prefs/types.js
+var MEDIA_KINDS, SFX_EVENTS, BANNER_MODES, COLOR_MODES, WALLPAPER_FITS, STATUS_LANGUAGES, STATUS_TRIGGERS, PREFS_VERSION;
+var init_types = __esm({
+  "dist/prefs/types.js"() {
+    "use strict";
+    MEDIA_KINDS = ["music", "sounds", "voice", "pet", "status"];
+    SFX_EVENTS = ["start", "approval", "done", "error", "tool"];
+    BANNER_MODES = ["off", "compact", "full"];
+    COLOR_MODES = ["monet", "tarkov", "native"];
+    WALLPAPER_FITS = ["cover", "contain", "smart"];
+    STATUS_LANGUAGES = ["zh", "en"];
+    STATUS_TRIGGERS = ["reasoning", "tool", "progress"];
+    PREFS_VERSION = 2;
+  }
+});
+
 // dist/core/banner.js
+function bannerHeight(opts) {
+  if (opts.mode === "off")
+    return 0;
+  if (opts.mode === "compact")
+    return COMPACT_BANNER_HEIGHT;
+  return opts.height;
+}
+function resolveBannerMode(opts) {
+  if (opts.enabled === false)
+    return "off";
+  if (opts.mode && BANNER_MODES.includes(opts.mode))
+    return opts.mode;
+  return "full";
+}
 function buildBannerCss(opts) {
+  const mode = resolveBannerMode(opts);
+  const accentHex = opts.accent ?? TARKOV_ACCENT;
+  const bandInk = opts.accentInk ?? TARKOV_INK;
+  const accentTriple = opts.accentRgb ?? TARKOV_ACCENT_RGB;
+  const height = bannerHeight(opts);
   return `
 /* Single source of truth for the reserved band: BannerOptions.height. */
-html[data-zct-banner="1"] { --zcode-tarkov-banner-height: ${opts.height}px; }
+html[data-zct-banner="1"] { --zcode-tarkov-banner-height: ${height}px; }
+/* Off means zero, not absent: an unset property would make every calc() below
+   invalid rather than zero, which is how a band leaves a stale gap behind. */
+html:not([data-zct-banner="1"]) { --zcode-tarkov-banner-height: 0px; }
 /* flow-root keeps #root's margin-top from collapsing through the body; without
    it the whole body box moves down by the band and the document keeps the band
    height of scrollable overflow (measured on 3.11.2). */
@@ -74,14 +336,14 @@ html[data-zct-banner="1"] .h-dvh {
   top: 0;
   left: 0;
   right: 0;
-  height: ${opts.height}px;
+  height: ${height}px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: ${mode === "compact" ? "10px" : "14px"};
   padding: 0 16px;
-  background: rgba(${ACCENT_RGB}, ${opts.opacity});
-  border-bottom: 1px solid rgba(28, 18, 7, 0.45);
+  background: rgba(${accentTriple}, ${opts.opacity});
+  border-bottom: 1px solid rgba(${TARKOV_INK_RGB}, 0.45);
   z-index: 2147483000;
   overflow: hidden;
   user-select: none;
@@ -90,15 +352,15 @@ html[data-zct-banner="1"] .h-dvh {
   -webkit-app-region: drag;
 }
 #${BANNER_ID} .zct-banner-icon {
-  width: 34px;
-  height: 28px;
+  width: ${mode === "compact" ? "22px" : "34px"};
+  height: ${mode === "compact" ? "18px" : "28px"};
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${INK};
-  color: ${ACCENT};
-  font: 800 18px/1 system-ui, sans-serif;
+  background: ${bandInk};
+  color: ${accentHex};
+  font: 800 ${mode === "compact" ? "12px" : "18px"}/1 system-ui, sans-serif;
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
 }
 #${BANNER_ID} .zct-banner-text {
@@ -108,17 +370,17 @@ html[data-zct-banner="1"] .h-dvh {
   min-width: 0;
 }
 #${BANNER_ID} .zct-banner-line1 {
-  color: ${INK};
+  color: ${bandInk};
   font-weight: 700;
-  font-size: 13px;
+  font-size: ${mode === "compact" ? "11px" : "13px"};
   line-height: 1.35;
-  letter-spacing: 1.2px;
+  letter-spacing: ${mode === "compact" ? "0.9px" : "1.2px"};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 #${BANNER_ID} .zct-banner-line2 {
-  color: ${INK};
+  color: ${bandInk};
   font-size: 12px;
   line-height: 1.35;
   letter-spacing: 0.5px;
@@ -129,13 +391,15 @@ html[data-zct-banner="1"] .h-dvh {
 `.trim();
 }
 function buildBannerScript(opts) {
+  const mode = resolveBannerMode(opts);
   return `(function(){
   var ID = ${JSON.stringify(BANNER_ID)};
   var STYLE_ID = ${JSON.stringify(BANNER_STYLE_ID)};
   var STATE_KEY = ${JSON.stringify(BANNER_STATE_KEY)};
   var CSS = ${JSON.stringify(buildBannerCss(opts))};
   var T1 = ${JSON.stringify(opts.text1)};
-  var T2 = ${JSON.stringify(opts.text2)};
+  var T2 = ${JSON.stringify(mode === "compact" ? "" : opts.text2)};
+  var MODE = ${JSON.stringify(mode)};
 
   var previous = window[STATE_KEY];
   if (previous && typeof previous.destroy === 'function') {
@@ -165,14 +429,19 @@ function buildBannerScript(opts) {
     icon.textContent = '!';
     var l1 = document.createElement('span');
     l1.className = 'zct-banner-line1';
-    var l2 = document.createElement('span');
-    l2.className = 'zct-banner-line2';
     l1.textContent = T1;
-    l2.textContent = T2;
     var text = document.createElement('span');
     text.className = 'zct-banner-text';
     text.appendChild(l1);
-    text.appendChild(l2);
+    // The compact strip is one line by definition: the second span is not
+    // created at all, rather than created and hidden, so nothing measurable is
+    // left in the band.
+    if (T2) {
+      var l2 = document.createElement('span');
+      l2.className = 'zct-banner-line2';
+      l2.textContent = T2;
+      text.appendChild(l2);
+    }
     var node = document.createElement('div');
     node.id = ID;
     node.setAttribute('role', 'status');
@@ -198,6 +467,13 @@ function buildBannerScript(opts) {
         body.insertBefore(node, body.firstChild);
       }
       document.documentElement.setAttribute('data-zct-banner', '1');
+      // Clear any inline compensation an earlier build wrote. Inline outranks
+      // the author rule below, so a stale "0px" left on <html> would keep the
+      // reservation at zero while the band is showing \u2014 the band would then
+      // paint over the app's top strip instead of above it.
+      if (document.documentElement.style.getPropertyValue('--zcode-tarkov-banner-height') !== '') {
+        document.documentElement.style.removeProperty('--zcode-tarkov-banner-height');
+      }
 
       // Conditional writes only: assigning textContent unconditionally
       // replaces the text node, which mutates the tree, which re-triggers the
@@ -205,7 +481,7 @@ function buildBannerScript(opts) {
       var l1 = node.querySelector('.zct-banner-line1');
       if (l1 && l1.textContent !== T1) l1.textContent = T1;
       var l2 = node.querySelector('.zct-banner-line2');
-      if (l2 && l2.textContent !== T2) l2.textContent = T2;
+      if (l2 && T2 && l2.textContent !== T2) l2.textContent = T2;
     } catch (e) { /* fail soft */ }
   }
 
@@ -255,13 +531,14 @@ function buildBannerScript(opts) {
     }, 1000);
   }
 
-  window[STATE_KEY] = { refresh: tick, destroy: destroy };
+  window[STATE_KEY] = { refresh: tick, destroy: destroy, mode: MODE };
   tick();
 })();`;
 }
 function buildBannerTeardownScript() {
   return `(function(){
   var STATE_KEY = ${JSON.stringify(BANNER_STATE_KEY)};
+  var STYLE_ID = ${JSON.stringify(BANNER_STYLE_ID)};
   var st = window[STATE_KEY];
   if (st && typeof st.destroy === 'function') {
     try { st.destroy(); } catch (e) {}
@@ -269,33 +546,49 @@ function buildBannerTeardownScript() {
   try {
     var n = document.getElementById(${JSON.stringify(BANNER_ID)});
     if (n && n.parentNode) n.parentNode.removeChild(n);
-    var s = document.getElementById(${JSON.stringify(BANNER_STYLE_ID)});
-    if (s && s.parentNode) s.parentNode.removeChild(s);
     document.documentElement.removeAttribute('data-zct-banner');
+    // Any inline value a previous build wrote is cleared: inline outranks the
+    // author rule below, so a stale one would keep the reservation wrong.
+    document.documentElement.style.removeProperty('--zcode-tarkov-banner-height');
+    // The stylesheet is *not* removed. Removing it was what left the variable
+    // undefined rather than zero, and "undefined" is not the same as "no space":
+    // any remaining reader of the property \u2014 the pet, which keeps itself clear
+    // of the band \u2014 gets an empty string and has to guess. A single rule keeps
+    // the answer explicit while every reservation rule, being scoped to the
+    // attribute just removed, stays inert.
+    var s = document.getElementById(STYLE_ID);
+    if (!s) {
+      s = document.createElement('style');
+      s.id = STYLE_ID;
+      (document.head || document.documentElement).appendChild(s);
+    }
+    var zero = 'html:not([data-zct-banner="1"]) { --zcode-tarkov-banner-height: 0px; }';
+    if (s.textContent !== zero) s.textContent = zero;
   } catch (e) {}
 })();`;
 }
-var BANNER_ID, BANNER_STYLE_ID, BANNER_STATE_KEY, DEFAULT_BANNER_TEXT, DEFAULT_BANNER, ACCENT_RGB, ACCENT, INK;
+var BANNER_ID, BANNER_STYLE_ID, BANNER_STATE_KEY, COMPACT_BANNER_HEIGHT, DEFAULT_BANNER_TEXT, DEFAULT_BANNER;
 var init_banner = __esm({
   "dist/core/banner.js"() {
     "use strict";
+    init_palette();
+    init_types();
     BANNER_ID = "zcode-tarkov-banner";
     BANNER_STYLE_ID = "zcode-tarkov-banner-style";
     BANNER_STATE_KEY = "__zcodeTarkovBanner";
+    COMPACT_BANNER_HEIGHT = 28;
     DEFAULT_BANNER_TEXT = {
       line1: "ATTENTION! ZCODE TACTICAL INTERFACE ACTIVE",
       line2: "Experimental interface. Verify your task, tool calls and working tree before deployment."
     };
     DEFAULT_BANNER = {
       enabled: true,
+      mode: "full",
       text1: DEFAULT_BANNER_TEXT.line1,
       text2: DEFAULT_BANNER_TEXT.line2,
       height: 56,
       opacity: 0.92
     };
-    ACCENT_RGB = "224, 121, 48";
-    ACCENT = "#e07930";
-    INK = "#1c1207";
   }
 });
 
@@ -528,7 +821,7 @@ var init_mask_color = __esm({
 
 // node_modules/bmp-ts/dist/esm/types.js
 var BmpCompression;
-var init_types = __esm({
+var init_types2 = __esm({
   "node_modules/bmp-ts/dist/esm/types.js"() {
     (function(BmpCompression2) {
       BmpCompression2[BmpCompression2["NONE"] = 0] = "NONE";
@@ -546,7 +839,7 @@ var init_decoder = __esm({
   "node_modules/bmp-ts/dist/esm/decoder.js"() {
     init_header_types();
     init_mask_color();
-    init_types();
+    init_types2();
     BmpDecoder = class {
       // Header
       flag;
@@ -916,8 +1209,8 @@ var init_decoder = __esm({
 function createInteger(numbers) {
   return numbers.reduce((final, n2) => final << 1 | n2, 0);
 }
-function createColor(color) {
-  return color.quad << 24 | color.red << 16 | color.green << 8 | color.blue;
+function createColor(color2) {
+  return color2.quad << 24 | color2.red << 16 | color2.green << 8 | color2.blue;
 }
 var BmpEncoder;
 var init_encoder = __esm({
@@ -1116,9 +1409,9 @@ var init_encoder = __esm({
           const b = this.buffer[i2++] / 8;
           const g = this.buffer[i2++] / 8;
           const r2 = this.buffer[i2++] / 8;
-          const color = r2 << 10 | g << 5 | b;
-          this.data[p2] = color & 255;
-          this.data[p2 + 1] = (color & 65280) >> 8;
+          const color2 = r2 << 10 | g << 5 | b;
+          this.data[p2] = color2 & 255;
+          this.data[p2 + 1] = (color2 & 65280) >> 8;
           return i2;
         });
       }
@@ -1183,7 +1476,7 @@ var init_esm = __esm({
   "node_modules/bmp-ts/dist/esm/index.js"() {
     init_decoder();
     init_encoder();
-    init_types();
+    init_types2();
   }
 });
 
@@ -1196,24 +1489,24 @@ function _typeof(obj) {
     return obj2 && "function" == typeof Symbol && obj2.constructor === Symbol && obj2 !== Symbol.prototype ? "symbol" : typeof obj2;
   }, _typeof(obj);
 }
-function tinycolor(color, opts) {
-  color = color ? color : "";
+function tinycolor(color2, opts) {
+  color2 = color2 ? color2 : "";
   opts = opts || {};
-  if (color instanceof tinycolor) {
-    return color;
+  if (color2 instanceof tinycolor) {
+    return color2;
   }
   if (!(this instanceof tinycolor)) {
-    return new tinycolor(color, opts);
+    return new tinycolor(color2, opts);
   }
-  var rgb = inputToRGB(color);
-  this._originalInput = color, this._r = rgb.r, this._g = rgb.g, this._b = rgb.b, this._a = rgb.a, this._roundA = Math.round(100 * this._a) / 100, this._format = opts.format || rgb.format;
+  var rgb = inputToRGB(color2);
+  this._originalInput = color2, this._r = rgb.r, this._g = rgb.g, this._b = rgb.b, this._a = rgb.a, this._roundA = Math.round(100 * this._a) / 100, this._format = opts.format || rgb.format;
   this._gradientType = opts.gradientType;
   if (this._r < 1) this._r = Math.round(this._r);
   if (this._g < 1) this._g = Math.round(this._g);
   if (this._b < 1) this._b = Math.round(this._b);
   this._ok = rgb.ok;
 }
-function inputToRGB(color) {
+function inputToRGB(color2) {
   var rgb = {
     r: 0,
     g: 0,
@@ -1225,35 +1518,35 @@ function inputToRGB(color) {
   var l2 = null;
   var ok = false;
   var format = false;
-  if (typeof color == "string") {
-    color = stringInputToObject(color);
+  if (typeof color2 == "string") {
+    color2 = stringInputToObject(color2);
   }
-  if (_typeof(color) == "object") {
-    if (isValidCSSUnit(color.r) && isValidCSSUnit(color.g) && isValidCSSUnit(color.b)) {
-      rgb = rgbToRgb(color.r, color.g, color.b);
+  if (_typeof(color2) == "object") {
+    if (isValidCSSUnit(color2.r) && isValidCSSUnit(color2.g) && isValidCSSUnit(color2.b)) {
+      rgb = rgbToRgb(color2.r, color2.g, color2.b);
       ok = true;
-      format = String(color.r).substr(-1) === "%" ? "prgb" : "rgb";
-    } else if (isValidCSSUnit(color.h) && isValidCSSUnit(color.s) && isValidCSSUnit(color.v)) {
-      s2 = convertToPercentage(color.s);
-      v = convertToPercentage(color.v);
-      rgb = hsvToRgb(color.h, s2, v);
+      format = String(color2.r).substr(-1) === "%" ? "prgb" : "rgb";
+    } else if (isValidCSSUnit(color2.h) && isValidCSSUnit(color2.s) && isValidCSSUnit(color2.v)) {
+      s2 = convertToPercentage(color2.s);
+      v = convertToPercentage(color2.v);
+      rgb = hsvToRgb(color2.h, s2, v);
       ok = true;
       format = "hsv";
-    } else if (isValidCSSUnit(color.h) && isValidCSSUnit(color.s) && isValidCSSUnit(color.l)) {
-      s2 = convertToPercentage(color.s);
-      l2 = convertToPercentage(color.l);
-      rgb = hslToRgb(color.h, s2, l2);
+    } else if (isValidCSSUnit(color2.h) && isValidCSSUnit(color2.s) && isValidCSSUnit(color2.l)) {
+      s2 = convertToPercentage(color2.s);
+      l2 = convertToPercentage(color2.l);
+      rgb = hslToRgb(color2.h, s2, l2);
       ok = true;
       format = "hsl";
     }
-    if (color.hasOwnProperty("a")) {
-      a2 = color.a;
+    if (color2.hasOwnProperty("a")) {
+      a2 = color2.a;
     }
   }
   a2 = boundAlpha(a2);
   return {
     ok,
-    format: color.format || format,
+    format: color2.format || format,
     r: Math.min(255, Math.max(rgb.r, 0)),
     g: Math.min(255, Math.max(rgb.g, 0)),
     b: Math.min(255, Math.max(rgb.b, 0)),
@@ -1384,62 +1677,62 @@ function rgbaToArgbHex(r2, g, b, a2) {
   var hex = [pad2(convertDecimalToHex(a2)), pad2(Math.round(r2).toString(16)), pad2(Math.round(g).toString(16)), pad2(Math.round(b).toString(16))];
   return hex.join("");
 }
-function _desaturate(color, amount) {
+function _desaturate(color2, amount) {
   amount = amount === 0 ? 0 : amount || 10;
-  var hsl = tinycolor(color).toHsl();
+  var hsl = tinycolor(color2).toHsl();
   hsl.s -= amount / 100;
   hsl.s = clamp01(hsl.s);
   return tinycolor(hsl);
 }
-function _saturate(color, amount) {
+function _saturate(color2, amount) {
   amount = amount === 0 ? 0 : amount || 10;
-  var hsl = tinycolor(color).toHsl();
+  var hsl = tinycolor(color2).toHsl();
   hsl.s += amount / 100;
   hsl.s = clamp01(hsl.s);
   return tinycolor(hsl);
 }
-function _greyscale(color) {
-  return tinycolor(color).desaturate(100);
+function _greyscale(color2) {
+  return tinycolor(color2).desaturate(100);
 }
-function _lighten(color, amount) {
+function _lighten(color2, amount) {
   amount = amount === 0 ? 0 : amount || 10;
-  var hsl = tinycolor(color).toHsl();
+  var hsl = tinycolor(color2).toHsl();
   hsl.l += amount / 100;
   hsl.l = clamp01(hsl.l);
   return tinycolor(hsl);
 }
-function _brighten(color, amount) {
+function _brighten(color2, amount) {
   amount = amount === 0 ? 0 : amount || 10;
-  var rgb = tinycolor(color).toRgb();
+  var rgb = tinycolor(color2).toRgb();
   rgb.r = Math.max(0, Math.min(255, rgb.r - Math.round(255 * -(amount / 100))));
   rgb.g = Math.max(0, Math.min(255, rgb.g - Math.round(255 * -(amount / 100))));
   rgb.b = Math.max(0, Math.min(255, rgb.b - Math.round(255 * -(amount / 100))));
   return tinycolor(rgb);
 }
-function _darken(color, amount) {
+function _darken(color2, amount) {
   amount = amount === 0 ? 0 : amount || 10;
-  var hsl = tinycolor(color).toHsl();
+  var hsl = tinycolor(color2).toHsl();
   hsl.l -= amount / 100;
   hsl.l = clamp01(hsl.l);
   return tinycolor(hsl);
 }
-function _spin(color, amount) {
-  var hsl = tinycolor(color).toHsl();
+function _spin(color2, amount) {
+  var hsl = tinycolor(color2).toHsl();
   var hue = (hsl.h + amount) % 360;
   hsl.h = hue < 0 ? 360 + hue : hue;
   return tinycolor(hsl);
 }
-function _complement(color) {
-  var hsl = tinycolor(color).toHsl();
+function _complement(color2) {
+  var hsl = tinycolor(color2).toHsl();
   hsl.h = (hsl.h + 180) % 360;
   return tinycolor(hsl);
 }
-function polyad(color, number) {
+function polyad(color2, number) {
   if (isNaN(number) || number <= 0) {
     throw new Error("Argument to polyad must be a positive number");
   }
-  var hsl = tinycolor(color).toHsl();
-  var result = [tinycolor(color)];
+  var hsl = tinycolor(color2).toHsl();
+  var result = [tinycolor(color2)];
   var step = 360 / number;
   for (var i2 = 1; i2 < number; i2++) {
     result.push(tinycolor({
@@ -1450,10 +1743,10 @@ function polyad(color, number) {
   }
   return result;
 }
-function _splitcomplement(color) {
-  var hsl = tinycolor(color).toHsl();
+function _splitcomplement(color2) {
+  var hsl = tinycolor(color2).toHsl();
   var h = hsl.h;
-  return [tinycolor(color), tinycolor({
+  return [tinycolor(color2), tinycolor({
     h: (h + 72) % 360,
     s: hsl.s,
     l: hsl.l
@@ -1463,21 +1756,21 @@ function _splitcomplement(color) {
     l: hsl.l
   })];
 }
-function _analogous(color, results, slices) {
+function _analogous(color2, results, slices) {
   results = results || 6;
   slices = slices || 30;
-  var hsl = tinycolor(color).toHsl();
+  var hsl = tinycolor(color2).toHsl();
   var part = 360 / slices;
-  var ret = [tinycolor(color)];
+  var ret = [tinycolor(color2)];
   for (hsl.h = (hsl.h - (part * results >> 1) + 720) % 360; --results; ) {
     hsl.h = (hsl.h + part) % 360;
     ret.push(tinycolor(hsl));
   }
   return ret;
 }
-function _monochromatic(color, results) {
+function _monochromatic(color2, results) {
   results = results || 6;
-  var hsv = tinycolor(color).toHsv();
+  var hsv = tinycolor(color2).toHsv();
   var h = hsv.h, s2 = hsv.s, v = hsv.v;
   var ret = [];
   var modification = 1 / results;
@@ -1546,16 +1839,16 @@ function convertDecimalToHex(d) {
 function convertHexToDecimal(h) {
   return parseIntFromHex(h) / 255;
 }
-function isValidCSSUnit(color) {
-  return !!matchers.CSS_UNIT.exec(color);
+function isValidCSSUnit(color2) {
+  return !!matchers.CSS_UNIT.exec(color2);
 }
-function stringInputToObject(color) {
-  color = color.replace(trimLeft, "").replace(trimRight, "").toLowerCase();
+function stringInputToObject(color2) {
+  color2 = color2.replace(trimLeft, "").replace(trimRight, "").toLowerCase();
   var named = false;
-  if (names[color]) {
-    color = names[color];
+  if (names[color2]) {
+    color2 = names[color2];
     named = true;
-  } else if (color == "transparent") {
+  } else if (color2 == "transparent") {
     return {
       r: 0,
       g: 0,
@@ -1565,14 +1858,14 @@ function stringInputToObject(color) {
     };
   }
   var match;
-  if (match = matchers.rgb.exec(color)) {
+  if (match = matchers.rgb.exec(color2)) {
     return {
       r: match[1],
       g: match[2],
       b: match[3]
     };
   }
-  if (match = matchers.rgba.exec(color)) {
+  if (match = matchers.rgba.exec(color2)) {
     return {
       r: match[1],
       g: match[2],
@@ -1580,14 +1873,14 @@ function stringInputToObject(color) {
       a: match[4]
     };
   }
-  if (match = matchers.hsl.exec(color)) {
+  if (match = matchers.hsl.exec(color2)) {
     return {
       h: match[1],
       s: match[2],
       l: match[3]
     };
   }
-  if (match = matchers.hsla.exec(color)) {
+  if (match = matchers.hsla.exec(color2)) {
     return {
       h: match[1],
       s: match[2],
@@ -1595,14 +1888,14 @@ function stringInputToObject(color) {
       a: match[4]
     };
   }
-  if (match = matchers.hsv.exec(color)) {
+  if (match = matchers.hsv.exec(color2)) {
     return {
       h: match[1],
       s: match[2],
       v: match[3]
     };
   }
-  if (match = matchers.hsva.exec(color)) {
+  if (match = matchers.hsva.exec(color2)) {
     return {
       h: match[1],
       s: match[2],
@@ -1610,7 +1903,7 @@ function stringInputToObject(color) {
       a: match[4]
     };
   }
-  if (match = matchers.hex8.exec(color)) {
+  if (match = matchers.hex8.exec(color2)) {
     return {
       r: parseIntFromHex(match[1]),
       g: parseIntFromHex(match[2]),
@@ -1619,7 +1912,7 @@ function stringInputToObject(color) {
       format: named ? "name" : "hex8"
     };
   }
-  if (match = matchers.hex6.exec(color)) {
+  if (match = matchers.hex6.exec(color2)) {
     return {
       r: parseIntFromHex(match[1]),
       g: parseIntFromHex(match[2]),
@@ -1627,7 +1920,7 @@ function stringInputToObject(color) {
       format: named ? "name" : "hex"
     };
   }
-  if (match = matchers.hex4.exec(color)) {
+  if (match = matchers.hex4.exec(color2)) {
     return {
       r: parseIntFromHex(match[1] + "" + match[1]),
       g: parseIntFromHex(match[2] + "" + match[2]),
@@ -1636,7 +1929,7 @@ function stringInputToObject(color) {
       format: named ? "name" : "hex8"
     };
   }
-  if (match = matchers.hex3.exec(color)) {
+  if (match = matchers.hex3.exec(color2)) {
     return {
       r: parseIntFromHex(match[1] + "" + match[1]),
       g: parseIntFromHex(match[2] + "" + match[2]),
@@ -1740,7 +2033,7 @@ var init_tinycolor = __esm({
         var h = Math.round(hsl.h * 360), s2 = Math.round(hsl.s * 100), l2 = Math.round(hsl.l * 100);
         return this._a == 1 ? "hsl(" + h + ", " + s2 + "%, " + l2 + "%)" : "hsla(" + h + ", " + s2 + "%, " + l2 + "%, " + this._roundA + ")";
       },
-      toHex: function toHex(allow3Char) {
+      toHex: function toHex2(allow3Char) {
         return rgbToHex(this._r, this._g, this._b, allow3Char);
       },
       toHexString: function toHexString(allow3Char) {
@@ -1838,11 +2131,11 @@ var init_tinycolor = __esm({
         return tinycolor(this.toString());
       },
       _applyModification: function _applyModification(fn, args) {
-        var color = fn.apply(null, [this].concat([].slice.call(args)));
-        this._r = color._r;
-        this._g = color._g;
-        this._b = color._b;
-        this.setAlpha(color._a);
+        var color2 = fn.apply(null, [this].concat([].slice.call(args)));
+        this._r = color2._r;
+        this._g = color2._g;
+        this._b = color2._b;
+        this.setAlpha(color2._a);
         return this;
       },
       lighten: function lighten() {
@@ -1892,21 +2185,21 @@ var init_tinycolor = __esm({
         return this._applyCombination(polyad, [4]);
       }
     };
-    tinycolor.fromRatio = function(color, opts) {
-      if (_typeof(color) == "object") {
+    tinycolor.fromRatio = function(color2, opts) {
+      if (_typeof(color2) == "object") {
         var newColor = {};
-        for (var i2 in color) {
-          if (color.hasOwnProperty(i2)) {
+        for (var i2 in color2) {
+          if (color2.hasOwnProperty(i2)) {
             if (i2 === "a") {
-              newColor[i2] = color[i2];
+              newColor[i2] = color2[i2];
             } else {
-              newColor[i2] = convertToPercentage(color[i2]);
+              newColor[i2] = convertToPercentage(color2[i2]);
             }
           }
         }
-        color = newColor;
+        color2 = newColor;
       }
-      return tinycolor(color, opts);
+      return tinycolor(color2, opts);
     };
     tinycolor.equals = function(color1, color2) {
       if (!color1 || !color2) return false;
@@ -3083,9 +3376,9 @@ var require_bitmapimage = __commonJS({
         for (let y2 = 0; y2 < sourceHeight; ++y2) {
           priorDestRowIndex = destIndex;
           for (let x2 = 0; x2 < sourceWidth; ++x2) {
-            const color = sourceBuf.readUInt32BE(sourceIndex, true);
+            const color2 = sourceBuf.readUInt32BE(sourceIndex, true);
             for (let cx = 0; cx < factor; ++cx) {
-              destBuf.writeUInt32BE(color, destIndex);
+              destBuf.writeUInt32BE(color2, destIndex);
               destIndex += 4;
             }
             sourceIndex += 4;
@@ -3922,19 +4215,19 @@ var require_image_q = __commonJS({
         this._pointContainer.setHeight(1);
         this._pointArray = this._pointContainer.getPointArray();
       }
-      add(color) {
-        this._pointArray.push(color);
+      add(color2) {
+        this._pointArray.push(color2);
         this._pointContainer.setWidth(this._pointArray.length);
       }
-      has(color) {
+      has(color2) {
         for (let i2 = this._pointArray.length - 1; i2 >= 0; i2--) {
-          if (color.uint32 === this._pointArray[i2].uint32)
+          if (color2.uint32 === this._pointArray[i2].uint32)
             return true;
         }
         return false;
       }
-      getNearestColor(colorDistanceCalculator, color) {
-        return this._pointArray[this._getNearestIndex(colorDistanceCalculator, color) | 0];
+      getNearestColor(colorDistanceCalculator, color2) {
+        return this._pointArray[this._getNearestIndex(colorDistanceCalculator, color2) | 0];
       }
       getPointContainer() {
         return this._pointContainer;
@@ -4618,12 +4911,12 @@ var require_image_q = __commonJS({
     __publicField2(ColorHistogram2, "_boxPixels", 2);
     __publicField2(ColorHistogram2, "_hueGroups", 10);
     var RemovedColor2 = class {
-      constructor(index, color, distance3) {
+      constructor(index, color2, distance3) {
         __publicField2(this, "index");
         __publicField2(this, "color");
         __publicField2(this, "distance");
         this.index = index;
-        this.color = color;
+        this.color = color2;
         this.distance = distance3;
       }
     };
@@ -4826,8 +5119,8 @@ var require_image_q = __commonJS({
             const g = this._greens[paletteIndex] / sum;
             const b = this._blues[paletteIndex] / sum;
             const a2 = this._alphas[paletteIndex] / sum;
-            const color = Point2.createByRGBA(r2 | 0, g | 0, b | 0, a2 | 0);
-            palette2.add(color);
+            const color2 = Point2.createByRGBA(r2 | 0, g | 0, b | 0, a2 | 0);
+            palette2.add(color2);
           }
         }
         palette2.sort();
@@ -4885,7 +5178,7 @@ var require_image_q = __commonJS({
         this._alphas = createArray1D2(this._colors + 1);
         this._sums = createArray1D2(this._colors + 1);
         for (let index = 0, l2 = this._pixels.length; index < l2; index++) {
-          const color = this._pixels[index];
+          const color2 = this._pixels[index];
           const match = -1;
           let bestMatch = match;
           let bestDistance = Number.MAX_VALUE;
@@ -4894,31 +5187,31 @@ var require_image_q = __commonJS({
             const foundGreen = lookupGreen[lookup];
             const foundBlue = lookupBlue[lookup];
             const foundAlpha = lookupAlpha[lookup];
-            const distance3 = this._distance.calculateRaw(foundRed, foundGreen, foundBlue, foundAlpha, color.r, color.g, color.b, color.a);
+            const distance3 = this._distance.calculateRaw(foundRed, foundGreen, foundBlue, foundAlpha, color2.r, color2.g, color2.b, color2.a);
             if (distance3 < bestDistance) {
               bestDistance = distance3;
               bestMatch = lookup;
             }
           }
-          this._reds[bestMatch] += color.r;
-          this._greens[bestMatch] += color.g;
-          this._blues[bestMatch] += color.b;
-          this._alphas[bestMatch] += color.a;
+          this._reds[bestMatch] += color2.r;
+          this._greens[bestMatch] += color2.g;
+          this._blues[bestMatch] += color2.b;
+          this._alphas[bestMatch] += color2.a;
           this._sums[bestMatch]++;
         }
       }
-      _addColor(color) {
+      _addColor(color2) {
         const bitsToRemove = 8 - this._significantBitsPerChannel;
-        const indexRed = (color.r >> bitsToRemove) + 1;
-        const indexGreen = (color.g >> bitsToRemove) + 1;
-        const indexBlue = (color.b >> bitsToRemove) + 1;
-        const indexAlpha = (color.a >> bitsToRemove) + 1;
+        const indexRed = (color2.r >> bitsToRemove) + 1;
+        const indexGreen = (color2.g >> bitsToRemove) + 1;
+        const indexBlue = (color2.b >> bitsToRemove) + 1;
+        const indexAlpha = (color2.a >> bitsToRemove) + 1;
         this._weights[indexAlpha][indexRed][indexGreen][indexBlue]++;
-        this._momentsRed[indexAlpha][indexRed][indexGreen][indexBlue] += color.r;
-        this._momentsGreen[indexAlpha][indexRed][indexGreen][indexBlue] += color.g;
-        this._momentsBlue[indexAlpha][indexRed][indexGreen][indexBlue] += color.b;
-        this._momentsAlpha[indexAlpha][indexRed][indexGreen][indexBlue] += color.a;
-        this._moments[indexAlpha][indexRed][indexGreen][indexBlue] += this._table[color.r] + this._table[color.g] + this._table[color.b] + this._table[color.a];
+        this._momentsRed[indexAlpha][indexRed][indexGreen][indexBlue] += color2.r;
+        this._momentsGreen[indexAlpha][indexRed][indexGreen][indexBlue] += color2.g;
+        this._momentsBlue[indexAlpha][indexRed][indexGreen][indexBlue] += color2.b;
+        this._momentsAlpha[indexAlpha][indexRed][indexGreen][indexBlue] += color2.a;
+        this._moments[indexAlpha][indexRed][indexGreen][indexBlue] += this._table[color2.r] + this._table[color2.g] + this._table[color2.b] + this._table[color2.a];
       }
       *_calculateMoments() {
         const area = [];
@@ -4997,20 +5290,20 @@ var require_image_q = __commonJS({
       static _volume(cube, moment) {
         return _WuQuant2._volumeFloat(cube, moment) | 0;
       }
-      static _top(cube, direction, position, moment) {
+      static _top(cube, direction, position2, moment) {
         let result;
         switch (direction) {
           case _WuQuant2._alpha:
-            result = moment[position][cube.redMaximum][cube.greenMaximum][cube.blueMaximum] - moment[position][cube.redMaximum][cube.greenMinimum][cube.blueMaximum] - moment[position][cube.redMinimum][cube.greenMaximum][cube.blueMaximum] + moment[position][cube.redMinimum][cube.greenMinimum][cube.blueMaximum] - (moment[position][cube.redMaximum][cube.greenMaximum][cube.blueMinimum] - moment[position][cube.redMaximum][cube.greenMinimum][cube.blueMinimum] - moment[position][cube.redMinimum][cube.greenMaximum][cube.blueMinimum] + moment[position][cube.redMinimum][cube.greenMinimum][cube.blueMinimum]);
+            result = moment[position2][cube.redMaximum][cube.greenMaximum][cube.blueMaximum] - moment[position2][cube.redMaximum][cube.greenMinimum][cube.blueMaximum] - moment[position2][cube.redMinimum][cube.greenMaximum][cube.blueMaximum] + moment[position2][cube.redMinimum][cube.greenMinimum][cube.blueMaximum] - (moment[position2][cube.redMaximum][cube.greenMaximum][cube.blueMinimum] - moment[position2][cube.redMaximum][cube.greenMinimum][cube.blueMinimum] - moment[position2][cube.redMinimum][cube.greenMaximum][cube.blueMinimum] + moment[position2][cube.redMinimum][cube.greenMinimum][cube.blueMinimum]);
             break;
           case _WuQuant2._red:
-            result = moment[cube.alphaMaximum][position][cube.greenMaximum][cube.blueMaximum] - moment[cube.alphaMaximum][position][cube.greenMinimum][cube.blueMaximum] - moment[cube.alphaMinimum][position][cube.greenMaximum][cube.blueMaximum] + moment[cube.alphaMinimum][position][cube.greenMinimum][cube.blueMaximum] - (moment[cube.alphaMaximum][position][cube.greenMaximum][cube.blueMinimum] - moment[cube.alphaMaximum][position][cube.greenMinimum][cube.blueMinimum] - moment[cube.alphaMinimum][position][cube.greenMaximum][cube.blueMinimum] + moment[cube.alphaMinimum][position][cube.greenMinimum][cube.blueMinimum]);
+            result = moment[cube.alphaMaximum][position2][cube.greenMaximum][cube.blueMaximum] - moment[cube.alphaMaximum][position2][cube.greenMinimum][cube.blueMaximum] - moment[cube.alphaMinimum][position2][cube.greenMaximum][cube.blueMaximum] + moment[cube.alphaMinimum][position2][cube.greenMinimum][cube.blueMaximum] - (moment[cube.alphaMaximum][position2][cube.greenMaximum][cube.blueMinimum] - moment[cube.alphaMaximum][position2][cube.greenMinimum][cube.blueMinimum] - moment[cube.alphaMinimum][position2][cube.greenMaximum][cube.blueMinimum] + moment[cube.alphaMinimum][position2][cube.greenMinimum][cube.blueMinimum]);
             break;
           case _WuQuant2._green:
-            result = moment[cube.alphaMaximum][cube.redMaximum][position][cube.blueMaximum] - moment[cube.alphaMaximum][cube.redMinimum][position][cube.blueMaximum] - moment[cube.alphaMinimum][cube.redMaximum][position][cube.blueMaximum] + moment[cube.alphaMinimum][cube.redMinimum][position][cube.blueMaximum] - (moment[cube.alphaMaximum][cube.redMaximum][position][cube.blueMinimum] - moment[cube.alphaMaximum][cube.redMinimum][position][cube.blueMinimum] - moment[cube.alphaMinimum][cube.redMaximum][position][cube.blueMinimum] + moment[cube.alphaMinimum][cube.redMinimum][position][cube.blueMinimum]);
+            result = moment[cube.alphaMaximum][cube.redMaximum][position2][cube.blueMaximum] - moment[cube.alphaMaximum][cube.redMinimum][position2][cube.blueMaximum] - moment[cube.alphaMinimum][cube.redMaximum][position2][cube.blueMaximum] + moment[cube.alphaMinimum][cube.redMinimum][position2][cube.blueMaximum] - (moment[cube.alphaMaximum][cube.redMaximum][position2][cube.blueMinimum] - moment[cube.alphaMaximum][cube.redMinimum][position2][cube.blueMinimum] - moment[cube.alphaMinimum][cube.redMaximum][position2][cube.blueMinimum] + moment[cube.alphaMinimum][cube.redMinimum][position2][cube.blueMinimum]);
             break;
           case _WuQuant2._blue:
-            result = moment[cube.alphaMaximum][cube.redMaximum][cube.greenMaximum][position] - moment[cube.alphaMaximum][cube.redMaximum][cube.greenMinimum][position] - moment[cube.alphaMaximum][cube.redMinimum][cube.greenMaximum][position] + moment[cube.alphaMaximum][cube.redMinimum][cube.greenMinimum][position] - (moment[cube.alphaMinimum][cube.redMaximum][cube.greenMaximum][position] - moment[cube.alphaMinimum][cube.redMaximum][cube.greenMinimum][position] - moment[cube.alphaMinimum][cube.redMinimum][cube.greenMaximum][position] + moment[cube.alphaMinimum][cube.redMinimum][cube.greenMinimum][position]);
+            result = moment[cube.alphaMaximum][cube.redMaximum][cube.greenMaximum][position2] - moment[cube.alphaMaximum][cube.redMaximum][cube.greenMinimum][position2] - moment[cube.alphaMaximum][cube.redMinimum][cube.greenMaximum][position2] + moment[cube.alphaMaximum][cube.redMinimum][cube.greenMinimum][position2] - (moment[cube.alphaMinimum][cube.redMaximum][cube.greenMaximum][position2] - moment[cube.alphaMinimum][cube.redMaximum][cube.greenMinimum][position2] - moment[cube.alphaMinimum][cube.redMinimum][cube.greenMaximum][position2] + moment[cube.alphaMinimum][cube.redMinimum][cube.greenMinimum][position2]);
             break;
           default:
             throw new Error("impossible");
@@ -5049,12 +5342,12 @@ var require_image_q = __commonJS({
         const bottomWeight = _WuQuant2._bottom(cube, direction, this._weights) | 0;
         let result = 0;
         let cutPosition = -1;
-        for (let position = first; position < last; ++position) {
-          let halfRed = bottomRed + _WuQuant2._top(cube, direction, position, this._momentsRed);
-          let halfGreen = bottomGreen + _WuQuant2._top(cube, direction, position, this._momentsGreen);
-          let halfBlue = bottomBlue + _WuQuant2._top(cube, direction, position, this._momentsBlue);
-          let halfAlpha = bottomAlpha + _WuQuant2._top(cube, direction, position, this._momentsAlpha);
-          let halfWeight = bottomWeight + _WuQuant2._top(cube, direction, position, this._weights);
+        for (let position2 = first; position2 < last; ++position2) {
+          let halfRed = bottomRed + _WuQuant2._top(cube, direction, position2, this._momentsRed);
+          let halfGreen = bottomGreen + _WuQuant2._top(cube, direction, position2, this._momentsGreen);
+          let halfBlue = bottomBlue + _WuQuant2._top(cube, direction, position2, this._momentsBlue);
+          let halfAlpha = bottomAlpha + _WuQuant2._top(cube, direction, position2, this._momentsAlpha);
+          let halfWeight = bottomWeight + _WuQuant2._top(cube, direction, position2, this._weights);
           if (halfWeight !== 0) {
             let halfDistance = halfRed * halfRed + halfGreen * halfGreen + halfBlue * halfBlue + halfAlpha * halfAlpha;
             let temp = halfDistance / halfWeight;
@@ -5068,7 +5361,7 @@ var require_image_q = __commonJS({
               temp += halfDistance / halfWeight;
               if (temp > result) {
                 result = temp;
-                cutPosition = position;
+                cutPosition = position2;
               }
             }
           }
@@ -6262,8 +6555,8 @@ var require_gifframe = __commonJS({
           if (buf[i2 + 3] === 0) {
             usesTransparency = true;
           } else {
-            const color = buf.readUInt32BE(i2, true) >> 8 & 16777215;
-            colorSet.add(color);
+            const color2 = buf.readUInt32BE(i2, true) >> 8 & 16777215;
+            colorSet.add(color2);
           }
           i2 += 4;
         }
@@ -6292,7 +6585,7 @@ var require_gifframe = __commonJS({
 var require_gifutil = __commonJS({
   "node_modules/gifwrap/src/gifutil.js"(exports) {
     "use strict";
-    var fs9 = __require("fs");
+    var fs17 = __require("fs");
     var ImageQ = require_image_q();
     var BitmapImage2 = require_bitmapimage();
     var { GifFrame: GifFrame2 } = require_gifframe();
@@ -6325,8 +6618,8 @@ var require_gifutil = __commonJS({
       }
       const globalColorSet = /* @__PURE__ */ new Set();
       palettes.forEach((palette2) => {
-        palette2.colors.forEach((color) => {
-          globalColorSet.add(color);
+        palette2.colors.forEach((color2) => {
+          globalColorSet.add(color2);
         });
       });
       let indexCount = globalColorSet.size;
@@ -6407,14 +6700,14 @@ var require_gifutil = __commonJS({
       jimpImage.bitmap.data = bitmapImageToShare.bitmap.data;
       return jimpImage;
     };
-    exports.write = function(path7, frames, spec, encoder) {
+    exports.write = function(path13, frames, spec, encoder) {
       encoder = encoder || defaultCodec;
-      const matches = path7.match(/\.[a-zA-Z]+$/);
+      const matches = path13.match(/\.[a-zA-Z]+$/);
       if (matches !== null && INVALID_SUFFIXES.includes(matches[0].toLowerCase())) {
-        throw new Error(`GIF '${path7}' has an unexpected suffix`);
+        throw new Error(`GIF '${path13}' has an unexpected suffix`);
       }
       return encoder.encodeGif(frames, spec).then((gif2) => {
-        return _writeBinary(path7, gif2.buffer).then(() => {
+        return _writeBinary(path13, gif2.buffer).then(() => {
           return gif2;
         });
       });
@@ -6486,9 +6779,9 @@ var require_gifutil = __commonJS({
         }
       }
     }
-    function _readBinary(path7) {
+    function _readBinary(path13) {
       return new Promise((resolve, reject) => {
-        fs9.readFile(path7, (err, buffer) => {
+        fs17.readFile(path13, (err, buffer) => {
           if (err) {
             return reject(err);
           }
@@ -6496,9 +6789,9 @@ var require_gifutil = __commonJS({
         });
       });
     }
-    function _writeBinary(path7, buffer) {
+    function _writeBinary(path13, buffer) {
       return new Promise((resolve, reject) => {
-        fs9.writeFile(path7, buffer, (err) => {
+        fs17.writeFile(path13, buffer, (err) => {
           if (err) {
             return reject(err);
           }
@@ -6705,17 +6998,17 @@ var require_gifcodec = __commonJS({
       }
     };
     exports.GifCodec = GifCodec2;
-    function _colorLookupLinear(colors, color) {
-      const index = colors.indexOf(color);
+    function _colorLookupLinear(colors, color2) {
+      const index = colors.indexOf(color2);
       return index === -1 ? null : index;
     }
-    function _colorLookupBinary(colors, color) {
+    function _colorLookupBinary(colors, color2) {
       var lo = 0, hi = colors.length - 1, mid;
       while (lo <= hi) {
         mid = Math.floor((lo + hi) / 2);
-        if (colors[mid] > color)
+        if (colors[mid] > color2)
           hi = mid - 1;
-        else if (colors[mid] < color)
+        else if (colors[mid] < color2)
           lo = mid + 1;
         else
           return mid;
@@ -6801,8 +7094,8 @@ var require_gifcodec = __commonJS({
       let i2 = 0, j = 0;
       while (i2 < colorBuffer.length) {
         if (colorBuffer[i2 + 3] !== 0) {
-          const color = colorBuffer.readUInt32BE(i2, true) >> 8 & 16777215;
-          indexBuffer[j] = colorToIndexFunc(colors, color);
+          const color2 = colorBuffer.readUInt32BE(i2, true) >> 8 & 16777215;
+          indexBuffer[j] = colorToIndexFunc(colors, color2);
         } else {
           indexBuffer[j] = transparentIndex;
         }
@@ -8509,9 +8802,9 @@ var require_decoder = __commonJS({
         return a2 < 0 ? 0 : a2 > 255 ? 255 : a2;
       }
       constructor.prototype = {
-        load: function load(path7) {
+        load: function load(path13) {
           var xhr = new XMLHttpRequest();
-          xhr.open("GET", path7, true);
+          xhr.open("GET", path13, true);
           xhr.responseType = "arraybuffer";
           xhr.onload = (function() {
             var data = new Uint8Array(xhr.response || xhr.mozResponseArrayBuffer);
@@ -10052,12 +10345,12 @@ var require_format_normaliser = __commonJS({
       let pxPos = 0;
       for (let y2 = 0; y2 < height; y2++) {
         for (let x2 = 0; x2 < width; x2++) {
-          let color = palette2[indata[pxPos]];
-          if (!color) {
+          let color2 = palette2[indata[pxPos]];
+          if (!color2) {
             throw new Error("index " + indata[pxPos] + " not in palette");
           }
           for (let i2 = 0; i2 < 4; i2++) {
-            outdata[pxPos + i2] = color[i2];
+            outdata[pxPos + i2] = color2[i2];
           }
           pxPos += 4;
         }
@@ -19414,8 +19707,8 @@ var init_parseUtil = __esm({
     init_errors();
     init_en();
     makeIssue = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -19715,7 +20008,7 @@ function custom(check, _params = {}, fatal) {
   return ZodAny.create();
 }
 var ParseInputLazyPath, handleResult, ZodType, cuidRegex, cuid2Regex, ulidRegex, uuidRegex, nanoidRegex, jwtRegex, durationRegex, emailRegex, _emojiRegex, emojiRegex, ipv4Regex, ipv4CidrRegex, ipv6Regex, ipv6CidrRegex, base64Regex, base64urlRegex, dateRegexSource, dateRegex, ZodString, ZodNumber, ZodBigInt, ZodBoolean, ZodDate, ZodSymbol, ZodUndefined, ZodNull, ZodAny, ZodUnknown, ZodNever, ZodVoid, ZodArray, ZodObject, ZodUnion, getDiscriminator, ZodDiscriminatedUnion, ZodIntersection, ZodTuple, ZodRecord, ZodMap, ZodSet, ZodFunction, ZodLazy, ZodLiteral, ZodEnum, ZodNativeEnum, ZodPromise, ZodEffects, ZodOptional, ZodNullable, ZodDefault, ZodCatch, ZodNaN, BRAND, ZodBranded, ZodPipeline, ZodReadonly, late, ZodFirstPartyTypeKind, instanceOfType, stringType, numberType, nanType, bigIntType, booleanType, dateType, symbolType, undefinedType, nullType, anyType, unknownType, neverType, voidType, arrayType, objectType, strictObjectType, unionType, discriminatedUnionType, intersectionType, tupleType, recordType, mapType, setType, functionType, lazyType, literalType, enumType, nativeEnumType, promiseType, effectsType, optionalType, nullableType, preprocessType, pipelineType, ostring, onumber, oboolean, coerce, NEVER;
-var init_types2 = __esm({
+var init_types3 = __esm({
   "node_modules/@jimp/types/node_modules/zod/v3/types.js"() {
     init_ZodError();
     init_errors();
@@ -19723,11 +20016,11 @@ var init_types2 = __esm({
     init_parseUtil();
     init_util();
     ParseInputLazyPath = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -23095,7 +23388,7 @@ var init_external = __esm({
     init_parseUtil();
     init_typeAliases();
     init_util();
-    init_types2();
+    init_types3();
     init_ZodError();
   }
 });
@@ -23540,8 +23833,8 @@ var init_parseUtil2 = __esm({
     init_errors2();
     init_en2();
     makeIssue2 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -23841,7 +24134,7 @@ function custom2(check, _params = {}, fatal) {
   return ZodAny2.create();
 }
 var ParseInputLazyPath2, handleResult2, ZodType2, cuidRegex2, cuid2Regex2, ulidRegex2, uuidRegex2, nanoidRegex2, jwtRegex2, durationRegex2, emailRegex2, _emojiRegex2, emojiRegex2, ipv4Regex2, ipv4CidrRegex2, ipv6Regex2, ipv6CidrRegex2, base64Regex2, base64urlRegex2, dateRegexSource2, dateRegex2, ZodString2, ZodNumber2, ZodBigInt2, ZodBoolean2, ZodDate2, ZodSymbol2, ZodUndefined2, ZodNull2, ZodAny2, ZodUnknown2, ZodNever2, ZodVoid2, ZodArray2, ZodObject2, ZodUnion2, getDiscriminator2, ZodDiscriminatedUnion2, ZodIntersection2, ZodTuple2, ZodRecord2, ZodMap2, ZodSet2, ZodFunction2, ZodLazy2, ZodLiteral2, ZodEnum2, ZodNativeEnum2, ZodPromise2, ZodEffects2, ZodOptional2, ZodNullable2, ZodDefault2, ZodCatch2, ZodNaN2, BRAND2, ZodBranded2, ZodPipeline2, ZodReadonly2, late2, ZodFirstPartyTypeKind2, instanceOfType2, stringType2, numberType2, nanType2, bigIntType2, booleanType2, dateType2, symbolType2, undefinedType2, nullType2, anyType2, unknownType2, neverType2, voidType2, arrayType2, objectType2, strictObjectType2, unionType2, discriminatedUnionType2, intersectionType2, tupleType2, recordType2, mapType2, setType2, functionType2, lazyType2, literalType2, enumType2, nativeEnumType2, promiseType2, effectsType2, optionalType2, nullableType2, preprocessType2, pipelineType2, ostring2, onumber2, oboolean2, coerce2, NEVER2;
-var init_types3 = __esm({
+var init_types4 = __esm({
   "node_modules/@jimp/plugin-blit/node_modules/zod/v3/types.js"() {
     init_ZodError2();
     init_errors2();
@@ -23849,11 +24142,11 @@ var init_types3 = __esm({
     init_parseUtil2();
     init_util2();
     ParseInputLazyPath2 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -27221,7 +27514,7 @@ var init_external2 = __esm({
     init_parseUtil2();
     init_typeAliases2();
     init_util2();
-    init_types3();
+    init_types4();
     init_ZodError2();
   }
 });
@@ -28451,8 +28744,8 @@ var init_parseUtil3 = __esm({
     init_errors3();
     init_en3();
     makeIssue3 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -28752,7 +29045,7 @@ function custom3(check, _params = {}, fatal) {
   return ZodAny3.create();
 }
 var ParseInputLazyPath3, handleResult3, ZodType3, cuidRegex3, cuid2Regex3, ulidRegex3, uuidRegex3, nanoidRegex3, jwtRegex3, durationRegex3, emailRegex3, _emojiRegex3, emojiRegex3, ipv4Regex3, ipv4CidrRegex3, ipv6Regex3, ipv6CidrRegex3, base64Regex3, base64urlRegex3, dateRegexSource3, dateRegex3, ZodString3, ZodNumber3, ZodBigInt3, ZodBoolean3, ZodDate3, ZodSymbol3, ZodUndefined3, ZodNull3, ZodAny3, ZodUnknown3, ZodNever3, ZodVoid3, ZodArray3, ZodObject3, ZodUnion3, getDiscriminator3, ZodDiscriminatedUnion3, ZodIntersection3, ZodTuple3, ZodRecord3, ZodMap3, ZodSet3, ZodFunction3, ZodLazy3, ZodLiteral3, ZodEnum3, ZodNativeEnum3, ZodPromise3, ZodEffects3, ZodOptional3, ZodNullable3, ZodDefault3, ZodCatch3, ZodNaN3, BRAND3, ZodBranded3, ZodPipeline3, ZodReadonly3, late3, ZodFirstPartyTypeKind3, instanceOfType3, stringType3, numberType3, nanType3, bigIntType3, booleanType3, dateType3, symbolType3, undefinedType3, nullType3, anyType3, unknownType3, neverType3, voidType3, arrayType3, objectType3, strictObjectType3, unionType3, discriminatedUnionType3, intersectionType3, tupleType3, recordType3, mapType3, setType3, functionType3, lazyType3, literalType3, enumType3, nativeEnumType3, promiseType3, effectsType3, optionalType3, nullableType3, preprocessType3, pipelineType3, ostring3, onumber3, oboolean3, coerce3, NEVER3;
-var init_types4 = __esm({
+var init_types5 = __esm({
   "node_modules/@jimp/plugin-circle/node_modules/zod/v3/types.js"() {
     init_ZodError3();
     init_errors3();
@@ -28760,11 +29053,11 @@ var init_types4 = __esm({
     init_parseUtil3();
     init_util3();
     ParseInputLazyPath3 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -32132,7 +32425,7 @@ var init_external3 = __esm({
     init_parseUtil3();
     init_typeAliases3();
     init_util3();
-    init_types4();
+    init_types5();
     init_ZodError3();
   }
 });
@@ -32605,8 +32898,8 @@ var init_parseUtil4 = __esm({
     init_errors4();
     init_en4();
     makeIssue4 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -32906,7 +33199,7 @@ function custom4(check, _params = {}, fatal) {
   return ZodAny4.create();
 }
 var ParseInputLazyPath4, handleResult4, ZodType4, cuidRegex4, cuid2Regex4, ulidRegex4, uuidRegex4, nanoidRegex4, jwtRegex4, durationRegex4, emailRegex4, _emojiRegex4, emojiRegex4, ipv4Regex4, ipv4CidrRegex4, ipv6Regex4, ipv6CidrRegex4, base64Regex4, base64urlRegex4, dateRegexSource4, dateRegex4, ZodString4, ZodNumber4, ZodBigInt4, ZodBoolean4, ZodDate4, ZodSymbol4, ZodUndefined4, ZodNull4, ZodAny4, ZodUnknown4, ZodNever4, ZodVoid4, ZodArray4, ZodObject4, ZodUnion4, getDiscriminator4, ZodDiscriminatedUnion4, ZodIntersection4, ZodTuple4, ZodRecord4, ZodMap4, ZodSet4, ZodFunction4, ZodLazy4, ZodLiteral4, ZodEnum4, ZodNativeEnum4, ZodPromise4, ZodEffects4, ZodOptional4, ZodNullable4, ZodDefault4, ZodCatch4, ZodNaN4, BRAND4, ZodBranded4, ZodPipeline4, ZodReadonly4, late4, ZodFirstPartyTypeKind4, instanceOfType4, stringType4, numberType4, nanType4, bigIntType4, booleanType4, dateType4, symbolType4, undefinedType4, nullType4, anyType4, unknownType4, neverType4, voidType4, arrayType4, objectType4, strictObjectType4, unionType4, discriminatedUnionType4, intersectionType4, tupleType4, recordType4, mapType4, setType4, functionType4, lazyType4, literalType4, enumType4, nativeEnumType4, promiseType4, effectsType4, optionalType4, nullableType4, preprocessType4, pipelineType4, ostring4, onumber4, oboolean4, coerce4, NEVER4;
-var init_types5 = __esm({
+var init_types6 = __esm({
   "node_modules/@jimp/plugin-color/node_modules/zod/v3/types.js"() {
     init_ZodError4();
     init_errors4();
@@ -32914,11 +33207,11 @@ var init_types5 = __esm({
     init_parseUtil4();
     init_util4();
     ParseInputLazyPath4 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -36286,7 +36579,7 @@ var init_external4 = __esm({
     init_parseUtil4();
     init_typeAliases4();
     init_util4();
-    init_types5();
+    init_types6();
     init_ZodError4();
   }
 });
@@ -37041,11 +37334,11 @@ var require_Mime = __commonJS({
         }
       }
     };
-    Mime.prototype.getType = function(path7) {
-      path7 = String(path7);
-      let last = path7.replace(/^.*[/\\]/, "").toLowerCase();
+    Mime.prototype.getType = function(path13) {
+      path13 = String(path13);
+      let last = path13.replace(/^.*[/\\]/, "").toLowerCase();
       let ext = last.replace(/^.*\./, "").toLowerCase();
-      let hasPath = last.length < path7.length;
+      let hasPath = last.length < path13.length;
       let hasDot = ext.length < last.length - 1;
       return (hasDot || !hasPath) && this._types[ext] || null;
     };
@@ -39043,9 +39336,9 @@ var init_AbstractTokenizer = __esm({
        * @param position - If provided, the desired position in the tokenizer-stream
        * @returns Promise with token data
        */
-      async readToken(token, position = this.position) {
+      async readToken(token, position2 = this.position) {
         const uint8Array = new Uint8Array(token.len);
-        const len = await this.readBuffer(uint8Array, { position });
+        const len = await this.readBuffer(uint8Array, { position: position2 });
         if (len < token.len)
           throw new EndOfStreamError();
         return token.get(uint8Array, 0);
@@ -39056,9 +39349,9 @@ var init_AbstractTokenizer = __esm({
        * @param position - Offset where to begin reading within the file. If position is null, data will be read from the current file position.
        * @returns Promise with token data
        */
-      async peekToken(token, position = this.position) {
+      async peekToken(token, position2 = this.position) {
         const uint8Array = new Uint8Array(token.len);
-        const len = await this.peekBuffer(uint8Array, { position });
+        const len = await this.peekBuffer(uint8Array, { position: position2 });
         if (len < token.len)
           throw new EndOfStreamError();
         return token.get(uint8Array, 0);
@@ -39294,8 +39587,8 @@ var init_BufferTokenizer = __esm({
       supportsRandomAccess() {
         return true;
       }
-      setPosition(position) {
-        this.position = position;
+      setPosition(position2) {
+        this.position = position2;
       }
     };
   }
@@ -39354,8 +39647,8 @@ var init_BlobTokenizer = __esm({
       supportsRandomAccess() {
         return true;
       }
-      setPosition(position) {
-        this.position = position;
+      setPosition(position2) {
+        this.position = position2;
       }
     };
   }
@@ -39461,8 +39754,8 @@ var init_FileTokenizer = __esm({
         await this.fileHandle.close();
         return super.close();
       }
-      setPosition(position) {
-        this.position = position;
+      setPosition(position2) {
+        this.position = position2;
       }
       supportsRandomAccess() {
         return true;
@@ -43583,8 +43876,8 @@ function isTokenizerStreamBoundsError(error) {
   }
   return /strtok3[/\\]lib[/\\]stream[/\\]/.test(error.stack);
 }
-async function fileTypeFromFile(path7, options) {
-  return new FileTypeParser2(options).fromFile(path7, options);
+async function fileTypeFromFile(path13, options) {
+  return new FileTypeParser2(options).fromFile(path13, options);
 }
 async function fileTypeFromStream(stream, options) {
   return new FileTypeParser2(options).fromStream(stream);
@@ -43615,9 +43908,9 @@ var init_file_type = __esm({
           }
         }
       }
-      async fromFile(path7) {
+      async fromFile(path13) {
         this.options.signal?.throwIfAborted();
-        const fileHandle = await fs2.open(path7, fileSystemConstants.O_RDONLY | fileSystemConstants.O_NONBLOCK);
+        const fileHandle = await fs2.open(path13, fileSystemConstants.O_RDONLY | fileSystemConstants.O_NONBLOCK);
         const fileStat = await fileHandle.stat();
         if (!fileStat.isFile()) {
           await fileHandle.close();
@@ -43626,7 +43919,7 @@ var init_file_type = __esm({
         const tokenizer = new FileTokenizer(fileHandle, {
           ...this.getTokenizerOptions(),
           fileInfo: {
-            path: path7,
+            path: path13,
             size: fileStat.size
           }
         });
@@ -43961,9 +44254,9 @@ function createJimp({ plugins: pluginsArg, formats: formatsArg } = {}) {
      * await image.write("test/output.png");
      * ```
      */
-    async write(path7, options) {
-      const mimeType = import_lite.default.getType(path7);
-      await writeFile(path7, await this.getBuffer(mimeType, options));
+    async write(path13, options) {
+      const mimeType = import_lite.default.getType(path13);
+      await writeFile(path13, await this.getBuffer(mimeType, options));
     }
     /**
      * Clone the image into a new Jimp instance.
@@ -44612,8 +44905,8 @@ var init_parseUtil5 = __esm({
     init_errors5();
     init_en5();
     makeIssue5 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -44913,7 +45206,7 @@ function custom5(check, _params = {}, fatal) {
   return ZodAny5.create();
 }
 var ParseInputLazyPath5, handleResult5, ZodType5, cuidRegex5, cuid2Regex5, ulidRegex5, uuidRegex5, nanoidRegex5, jwtRegex5, durationRegex5, emailRegex5, _emojiRegex5, emojiRegex5, ipv4Regex5, ipv4CidrRegex5, ipv6Regex5, ipv6CidrRegex5, base64Regex5, base64urlRegex5, dateRegexSource5, dateRegex5, ZodString5, ZodNumber5, ZodBigInt5, ZodBoolean5, ZodDate5, ZodSymbol5, ZodUndefined5, ZodNull5, ZodAny5, ZodUnknown5, ZodNever5, ZodVoid5, ZodArray5, ZodObject5, ZodUnion5, getDiscriminator5, ZodDiscriminatedUnion5, ZodIntersection5, ZodTuple5, ZodRecord5, ZodMap5, ZodSet5, ZodFunction5, ZodLazy5, ZodLiteral5, ZodEnum5, ZodNativeEnum5, ZodPromise5, ZodEffects5, ZodOptional5, ZodNullable5, ZodDefault5, ZodCatch5, ZodNaN5, BRAND5, ZodBranded5, ZodPipeline5, ZodReadonly5, late5, ZodFirstPartyTypeKind5, instanceOfType5, stringType5, numberType5, nanType5, bigIntType5, booleanType5, dateType5, symbolType5, undefinedType5, nullType5, anyType5, unknownType5, neverType5, voidType5, arrayType5, objectType5, strictObjectType5, unionType5, discriminatedUnionType5, intersectionType5, tupleType5, recordType5, mapType5, setType5, functionType5, lazyType5, literalType5, enumType5, nativeEnumType5, promiseType5, effectsType5, optionalType5, nullableType5, preprocessType5, pipelineType5, ostring5, onumber5, oboolean5, coerce5, NEVER5;
-var init_types6 = __esm({
+var init_types7 = __esm({
   "node_modules/@jimp/plugin-resize/node_modules/zod/v3/types.js"() {
     init_ZodError5();
     init_errors5();
@@ -44921,11 +45214,11 @@ var init_types6 = __esm({
     init_parseUtil5();
     init_util6();
     ParseInputLazyPath5 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -48293,7 +48586,7 @@ var init_external5 = __esm({
     init_parseUtil5();
     init_typeAliases5();
     init_util6();
-    init_types6();
+    init_types7();
     init_ZodError5();
   }
 });
@@ -49370,8 +49663,8 @@ var init_parseUtil6 = __esm({
     init_errors6();
     init_en6();
     makeIssue6 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -49671,7 +49964,7 @@ function custom6(check, _params = {}, fatal) {
   return ZodAny6.create();
 }
 var ParseInputLazyPath6, handleResult6, ZodType6, cuidRegex6, cuid2Regex6, ulidRegex6, uuidRegex6, nanoidRegex6, jwtRegex6, durationRegex6, emailRegex6, _emojiRegex6, emojiRegex6, ipv4Regex6, ipv4CidrRegex6, ipv6Regex6, ipv6CidrRegex6, base64Regex6, base64urlRegex6, dateRegexSource6, dateRegex6, ZodString6, ZodNumber6, ZodBigInt6, ZodBoolean6, ZodDate6, ZodSymbol6, ZodUndefined6, ZodNull6, ZodAny6, ZodUnknown6, ZodNever6, ZodVoid6, ZodArray6, ZodObject6, ZodUnion6, getDiscriminator6, ZodDiscriminatedUnion6, ZodIntersection6, ZodTuple6, ZodRecord6, ZodMap6, ZodSet6, ZodFunction6, ZodLazy6, ZodLiteral6, ZodEnum6, ZodNativeEnum6, ZodPromise6, ZodEffects6, ZodOptional6, ZodNullable6, ZodDefault6, ZodCatch6, ZodNaN6, BRAND6, ZodBranded6, ZodPipeline6, ZodReadonly6, late6, ZodFirstPartyTypeKind6, instanceOfType6, stringType6, numberType6, nanType6, bigIntType6, booleanType6, dateType6, symbolType6, undefinedType6, nullType6, anyType6, unknownType6, neverType6, voidType6, arrayType6, objectType6, strictObjectType6, unionType6, discriminatedUnionType6, intersectionType6, tupleType6, recordType6, mapType6, setType6, functionType6, lazyType6, literalType6, enumType6, nativeEnumType6, promiseType6, effectsType6, optionalType6, nullableType6, preprocessType6, pipelineType6, ostring6, onumber6, oboolean6, coerce6, NEVER6;
-var init_types7 = __esm({
+var init_types8 = __esm({
   "node_modules/@jimp/plugin-contain/node_modules/zod/v3/types.js"() {
     init_ZodError6();
     init_errors6();
@@ -49679,11 +49972,11 @@ var init_types7 = __esm({
     init_parseUtil6();
     init_util7();
     ParseInputLazyPath6 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -53051,7 +53344,7 @@ var init_external6 = __esm({
     init_parseUtil6();
     init_typeAliases6();
     init_util7();
-    init_types7();
+    init_types8();
     init_ZodError6();
   }
 });
@@ -53537,8 +53830,8 @@ var init_parseUtil7 = __esm({
     init_errors7();
     init_en7();
     makeIssue7 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -53838,7 +54131,7 @@ function custom7(check, _params = {}, fatal) {
   return ZodAny7.create();
 }
 var ParseInputLazyPath7, handleResult7, ZodType7, cuidRegex7, cuid2Regex7, ulidRegex7, uuidRegex7, nanoidRegex7, jwtRegex7, durationRegex7, emailRegex7, _emojiRegex7, emojiRegex7, ipv4Regex7, ipv4CidrRegex7, ipv6Regex7, ipv6CidrRegex7, base64Regex7, base64urlRegex7, dateRegexSource7, dateRegex7, ZodString7, ZodNumber7, ZodBigInt7, ZodBoolean7, ZodDate7, ZodSymbol7, ZodUndefined7, ZodNull7, ZodAny7, ZodUnknown7, ZodNever7, ZodVoid7, ZodArray7, ZodObject7, ZodUnion7, getDiscriminator7, ZodDiscriminatedUnion7, ZodIntersection7, ZodTuple7, ZodRecord7, ZodMap7, ZodSet7, ZodFunction7, ZodLazy7, ZodLiteral7, ZodEnum7, ZodNativeEnum7, ZodPromise7, ZodEffects7, ZodOptional7, ZodNullable7, ZodDefault7, ZodCatch7, ZodNaN7, BRAND7, ZodBranded7, ZodPipeline7, ZodReadonly7, late7, ZodFirstPartyTypeKind7, instanceOfType7, stringType7, numberType7, nanType7, bigIntType7, booleanType7, dateType7, symbolType7, undefinedType7, nullType7, anyType7, unknownType7, neverType7, voidType7, arrayType7, objectType7, strictObjectType7, unionType7, discriminatedUnionType7, intersectionType7, tupleType7, recordType7, mapType7, setType7, functionType7, lazyType7, literalType7, enumType7, nativeEnumType7, promiseType7, effectsType7, optionalType7, nullableType7, preprocessType7, pipelineType7, ostring7, onumber7, oboolean7, coerce7, NEVER7;
-var init_types8 = __esm({
+var init_types9 = __esm({
   "node_modules/@jimp/plugin-crop/node_modules/zod/v3/types.js"() {
     init_ZodError7();
     init_errors7();
@@ -53846,11 +54139,11 @@ var init_types8 = __esm({
     init_parseUtil7();
     init_util8();
     ParseInputLazyPath7 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -57218,7 +57511,7 @@ var init_external7 = __esm({
     init_parseUtil7();
     init_typeAliases7();
     init_util8();
-    init_types8();
+    init_types9();
     init_ZodError7();
   }
 });
@@ -57831,8 +58124,8 @@ var init_parseUtil8 = __esm({
     init_errors8();
     init_en8();
     makeIssue8 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -58132,7 +58425,7 @@ function custom8(check, _params = {}, fatal) {
   return ZodAny8.create();
 }
 var ParseInputLazyPath8, handleResult8, ZodType8, cuidRegex8, cuid2Regex8, ulidRegex8, uuidRegex8, nanoidRegex8, jwtRegex8, durationRegex8, emailRegex8, _emojiRegex8, emojiRegex8, ipv4Regex8, ipv4CidrRegex8, ipv6Regex8, ipv6CidrRegex8, base64Regex8, base64urlRegex8, dateRegexSource8, dateRegex8, ZodString8, ZodNumber8, ZodBigInt8, ZodBoolean8, ZodDate8, ZodSymbol8, ZodUndefined8, ZodNull8, ZodAny8, ZodUnknown8, ZodNever8, ZodVoid8, ZodArray8, ZodObject8, ZodUnion8, getDiscriminator8, ZodDiscriminatedUnion8, ZodIntersection8, ZodTuple8, ZodRecord8, ZodMap8, ZodSet8, ZodFunction8, ZodLazy8, ZodLiteral8, ZodEnum8, ZodNativeEnum8, ZodPromise8, ZodEffects8, ZodOptional8, ZodNullable8, ZodDefault8, ZodCatch8, ZodNaN8, BRAND8, ZodBranded8, ZodPipeline8, ZodReadonly8, late8, ZodFirstPartyTypeKind8, instanceOfType8, stringType8, numberType8, nanType8, bigIntType8, booleanType8, dateType8, symbolType8, undefinedType8, nullType8, anyType8, unknownType8, neverType8, voidType8, arrayType8, objectType8, strictObjectType8, unionType8, discriminatedUnionType8, intersectionType8, tupleType8, recordType8, mapType8, setType8, functionType8, lazyType8, literalType8, enumType8, nativeEnumType8, promiseType8, effectsType8, optionalType8, nullableType8, preprocessType8, pipelineType8, ostring8, onumber8, oboolean8, coerce8, NEVER8;
-var init_types9 = __esm({
+var init_types10 = __esm({
   "node_modules/@jimp/plugin-cover/node_modules/zod/v3/types.js"() {
     init_ZodError8();
     init_errors8();
@@ -58140,11 +58433,11 @@ var init_types9 = __esm({
     init_parseUtil8();
     init_util9();
     ParseInputLazyPath8 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -61512,7 +61805,7 @@ var init_external8 = __esm({
     init_parseUtil8();
     init_typeAliases8();
     init_util9();
-    init_types9();
+    init_types10();
     init_ZodError8();
   }
 });
@@ -61993,8 +62286,8 @@ var init_parseUtil9 = __esm({
     init_errors9();
     init_en9();
     makeIssue9 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -62294,7 +62587,7 @@ function custom9(check, _params = {}, fatal) {
   return ZodAny9.create();
 }
 var ParseInputLazyPath9, handleResult9, ZodType9, cuidRegex9, cuid2Regex9, ulidRegex9, uuidRegex9, nanoidRegex9, jwtRegex9, durationRegex9, emailRegex9, _emojiRegex9, emojiRegex9, ipv4Regex9, ipv4CidrRegex9, ipv6Regex9, ipv6CidrRegex9, base64Regex9, base64urlRegex9, dateRegexSource9, dateRegex9, ZodString9, ZodNumber9, ZodBigInt9, ZodBoolean9, ZodDate9, ZodSymbol9, ZodUndefined9, ZodNull9, ZodAny9, ZodUnknown9, ZodNever9, ZodVoid9, ZodArray9, ZodObject9, ZodUnion9, getDiscriminator9, ZodDiscriminatedUnion9, ZodIntersection9, ZodTuple9, ZodRecord9, ZodMap9, ZodSet9, ZodFunction9, ZodLazy9, ZodLiteral9, ZodEnum9, ZodNativeEnum9, ZodPromise9, ZodEffects9, ZodOptional9, ZodNullable9, ZodDefault9, ZodCatch9, ZodNaN9, BRAND9, ZodBranded9, ZodPipeline9, ZodReadonly9, late9, ZodFirstPartyTypeKind9, instanceOfType9, stringType9, numberType9, nanType9, bigIntType9, booleanType9, dateType9, symbolType9, undefinedType9, nullType9, anyType9, unknownType9, neverType9, voidType9, arrayType9, objectType9, strictObjectType9, unionType9, discriminatedUnionType9, intersectionType9, tupleType9, recordType9, mapType9, setType9, functionType9, lazyType9, literalType9, enumType9, nativeEnumType9, promiseType9, effectsType9, optionalType9, nullableType9, preprocessType9, pipelineType9, ostring9, onumber9, oboolean9, coerce9, NEVER9;
-var init_types10 = __esm({
+var init_types11 = __esm({
   "node_modules/@jimp/plugin-displace/node_modules/zod/v3/types.js"() {
     init_ZodError9();
     init_errors9();
@@ -62302,11 +62595,11 @@ var init_types10 = __esm({
     init_parseUtil9();
     init_util10();
     ParseInputLazyPath9 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -65674,7 +65967,7 @@ var init_external9 = __esm({
     init_parseUtil9();
     init_typeAliases9();
     init_util10();
-    init_types10();
+    init_types11();
     init_ZodError9();
   }
 });
@@ -66192,8 +66485,8 @@ var init_parseUtil10 = __esm({
     init_errors10();
     init_en10();
     makeIssue10 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -66493,7 +66786,7 @@ function custom10(check, _params = {}, fatal) {
   return ZodAny10.create();
 }
 var ParseInputLazyPath10, handleResult10, ZodType10, cuidRegex10, cuid2Regex10, ulidRegex10, uuidRegex10, nanoidRegex10, jwtRegex10, durationRegex10, emailRegex10, _emojiRegex10, emojiRegex10, ipv4Regex10, ipv4CidrRegex10, ipv6Regex10, ipv6CidrRegex10, base64Regex10, base64urlRegex10, dateRegexSource10, dateRegex10, ZodString10, ZodNumber10, ZodBigInt10, ZodBoolean10, ZodDate10, ZodSymbol10, ZodUndefined10, ZodNull10, ZodAny10, ZodUnknown10, ZodNever10, ZodVoid10, ZodArray10, ZodObject10, ZodUnion10, getDiscriminator10, ZodDiscriminatedUnion10, ZodIntersection10, ZodTuple10, ZodRecord10, ZodMap10, ZodSet10, ZodFunction10, ZodLazy10, ZodLiteral10, ZodEnum10, ZodNativeEnum10, ZodPromise10, ZodEffects10, ZodOptional10, ZodNullable10, ZodDefault10, ZodCatch10, ZodNaN10, BRAND10, ZodBranded10, ZodPipeline10, ZodReadonly10, late10, ZodFirstPartyTypeKind10, instanceOfType10, stringType10, numberType10, nanType10, bigIntType10, booleanType10, dateType10, symbolType10, undefinedType10, nullType10, anyType10, unknownType10, neverType10, voidType10, arrayType10, objectType10, strictObjectType10, unionType10, discriminatedUnionType10, intersectionType10, tupleType10, recordType10, mapType10, setType10, functionType10, lazyType10, literalType10, enumType10, nativeEnumType10, promiseType10, effectsType10, optionalType10, nullableType10, preprocessType10, pipelineType10, ostring10, onumber10, oboolean10, coerce10, NEVER10;
-var init_types11 = __esm({
+var init_types12 = __esm({
   "node_modules/@jimp/plugin-fisheye/node_modules/zod/v3/types.js"() {
     init_ZodError10();
     init_errors10();
@@ -66501,11 +66794,11 @@ var init_types11 = __esm({
     init_parseUtil10();
     init_util11();
     ParseInputLazyPath10 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -69873,7 +70166,7 @@ var init_external10 = __esm({
     init_parseUtil10();
     init_typeAliases10();
     init_util11();
-    init_types11();
+    init_types12();
     init_ZodError10();
   }
 });
@@ -69921,8 +70214,8 @@ var init_esm21 = __esm({
           const sinA = (hy - 0.5) / rActual;
           const newX = Math.round((rn * cosA + 0.5) * width);
           const newY = Math.round((rn * sinA + 0.5) * height);
-          const color = source.getPixelColor(newX, newY);
-          image2.setPixelColor(color, x2, y2);
+          const color2 = source.getPixelColor(newX, newY);
+          image2.setPixelColor(color2, x2, y2);
         });
         image2.setPixelColor(source.getPixelColor(width / 2, height / 2), width / 2, height / 2);
         return image2;
@@ -70343,8 +70636,8 @@ var init_parseUtil11 = __esm({
     init_errors11();
     init_en11();
     makeIssue11 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -70644,7 +70937,7 @@ function custom11(check, _params = {}, fatal) {
   return ZodAny11.create();
 }
 var ParseInputLazyPath11, handleResult11, ZodType11, cuidRegex11, cuid2Regex11, ulidRegex11, uuidRegex11, nanoidRegex11, jwtRegex11, durationRegex11, emailRegex11, _emojiRegex11, emojiRegex11, ipv4Regex11, ipv4CidrRegex11, ipv6Regex11, ipv6CidrRegex11, base64Regex11, base64urlRegex11, dateRegexSource11, dateRegex11, ZodString11, ZodNumber11, ZodBigInt11, ZodBoolean11, ZodDate11, ZodSymbol11, ZodUndefined11, ZodNull11, ZodAny11, ZodUnknown11, ZodNever11, ZodVoid11, ZodArray11, ZodObject11, ZodUnion11, getDiscriminator11, ZodDiscriminatedUnion11, ZodIntersection11, ZodTuple11, ZodRecord11, ZodMap11, ZodSet11, ZodFunction11, ZodLazy11, ZodLiteral11, ZodEnum11, ZodNativeEnum11, ZodPromise11, ZodEffects11, ZodOptional11, ZodNullable11, ZodDefault11, ZodCatch11, ZodNaN11, BRAND11, ZodBranded11, ZodPipeline11, ZodReadonly11, late11, ZodFirstPartyTypeKind11, instanceOfType11, stringType11, numberType11, nanType11, bigIntType11, booleanType11, dateType11, symbolType11, undefinedType11, nullType11, anyType11, unknownType11, neverType11, voidType11, arrayType11, objectType11, strictObjectType11, unionType11, discriminatedUnionType11, intersectionType11, tupleType11, recordType11, mapType11, setType11, functionType11, lazyType11, literalType11, enumType11, nativeEnumType11, promiseType11, effectsType11, optionalType11, nullableType11, preprocessType11, pipelineType11, ostring11, onumber11, oboolean11, coerce11, NEVER11;
-var init_types12 = __esm({
+var init_types13 = __esm({
   "node_modules/@jimp/plugin-flip/node_modules/zod/v3/types.js"() {
     init_ZodError11();
     init_errors11();
@@ -70652,11 +70945,11 @@ var init_types12 = __esm({
     init_parseUtil11();
     init_util12();
     ParseInputLazyPath11 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -74024,7 +74317,7 @@ var init_external11 = __esm({
     init_parseUtil11();
     init_typeAliases11();
     init_util12();
-    init_types12();
+    init_types13();
     init_ZodError11();
   }
 });
@@ -74729,8 +75022,8 @@ var init_parseUtil12 = __esm({
     init_errors12();
     init_en12();
     makeIssue12 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -75030,7 +75323,7 @@ function custom12(check, _params = {}, fatal) {
   return ZodAny12.create();
 }
 var ParseInputLazyPath12, handleResult12, ZodType12, cuidRegex12, cuid2Regex12, ulidRegex12, uuidRegex12, nanoidRegex12, jwtRegex12, durationRegex12, emailRegex12, _emojiRegex12, emojiRegex12, ipv4Regex12, ipv4CidrRegex12, ipv6Regex12, ipv6CidrRegex12, base64Regex12, base64urlRegex12, dateRegexSource12, dateRegex12, ZodString12, ZodNumber12, ZodBigInt12, ZodBoolean12, ZodDate12, ZodSymbol12, ZodUndefined12, ZodNull12, ZodAny12, ZodUnknown12, ZodNever12, ZodVoid12, ZodArray12, ZodObject12, ZodUnion12, getDiscriminator12, ZodDiscriminatedUnion12, ZodIntersection12, ZodTuple12, ZodRecord12, ZodMap12, ZodSet12, ZodFunction12, ZodLazy12, ZodLiteral12, ZodEnum12, ZodNativeEnum12, ZodPromise12, ZodEffects12, ZodOptional12, ZodNullable12, ZodDefault12, ZodCatch12, ZodNaN12, BRAND12, ZodBranded12, ZodPipeline12, ZodReadonly12, late12, ZodFirstPartyTypeKind12, instanceOfType12, stringType12, numberType12, nanType12, bigIntType12, booleanType12, dateType12, symbolType12, undefinedType12, nullType12, anyType12, unknownType12, neverType12, voidType12, arrayType12, objectType12, strictObjectType12, unionType12, discriminatedUnionType12, intersectionType12, tupleType12, recordType12, mapType12, setType12, functionType12, lazyType12, literalType12, enumType12, nativeEnumType12, promiseType12, effectsType12, optionalType12, nullableType12, preprocessType12, pipelineType12, ostring12, onumber12, oboolean12, coerce12, NEVER12;
-var init_types13 = __esm({
+var init_types14 = __esm({
   "node_modules/@jimp/plugin-mask/node_modules/zod/v3/types.js"() {
     init_ZodError12();
     init_errors12();
@@ -75038,11 +75331,11 @@ var init_types13 = __esm({
     init_parseUtil12();
     init_util13();
     ParseInputLazyPath12 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -78410,7 +78703,7 @@ var init_external12 = __esm({
     init_parseUtil12();
     init_typeAliases12();
     init_util13();
-    init_types13();
+    init_types14();
     init_ZodError12();
   }
 });
@@ -78899,8 +79192,8 @@ var init_parseUtil13 = __esm({
     init_errors13();
     init_en13();
     makeIssue13 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -79200,7 +79493,7 @@ function custom13(check, _params = {}, fatal) {
   return ZodAny13.create();
 }
 var ParseInputLazyPath13, handleResult13, ZodType13, cuidRegex13, cuid2Regex13, ulidRegex13, uuidRegex13, nanoidRegex13, jwtRegex13, durationRegex13, emailRegex13, _emojiRegex13, emojiRegex13, ipv4Regex13, ipv4CidrRegex13, ipv6Regex13, ipv6CidrRegex13, base64Regex13, base64urlRegex13, dateRegexSource13, dateRegex13, ZodString13, ZodNumber13, ZodBigInt13, ZodBoolean13, ZodDate13, ZodSymbol13, ZodUndefined13, ZodNull13, ZodAny13, ZodUnknown13, ZodNever13, ZodVoid13, ZodArray13, ZodObject13, ZodUnion13, getDiscriminator13, ZodDiscriminatedUnion13, ZodIntersection13, ZodTuple13, ZodRecord13, ZodMap13, ZodSet13, ZodFunction13, ZodLazy13, ZodLiteral13, ZodEnum13, ZodNativeEnum13, ZodPromise13, ZodEffects13, ZodOptional13, ZodNullable13, ZodDefault13, ZodCatch13, ZodNaN13, BRAND13, ZodBranded13, ZodPipeline13, ZodReadonly13, late13, ZodFirstPartyTypeKind13, instanceOfType13, stringType13, numberType13, nanType13, bigIntType13, booleanType13, dateType13, symbolType13, undefinedType13, nullType13, anyType13, unknownType13, neverType13, voidType13, arrayType13, objectType13, strictObjectType13, unionType13, discriminatedUnionType13, intersectionType13, tupleType13, recordType13, mapType13, setType13, functionType13, lazyType13, literalType13, enumType13, nativeEnumType13, promiseType13, effectsType13, optionalType13, nullableType13, preprocessType13, pipelineType13, ostring13, onumber13, oboolean13, coerce13, NEVER13;
-var init_types14 = __esm({
+var init_types15 = __esm({
   "node_modules/@jimp/plugin-print/node_modules/zod/v3/types.js"() {
     init_ZodError13();
     init_errors13();
@@ -79208,11 +79501,11 @@ var init_types14 = __esm({
     init_parseUtil13();
     init_util14();
     ParseInputLazyPath13 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -82580,7 +82873,7 @@ var init_external13 = __esm({
     init_parseUtil13();
     init_typeAliases13();
     init_util14();
-    init_types14();
+    init_types15();
     init_ZodError13();
   }
 });
@@ -82594,22 +82887,22 @@ var init_zod13 = __esm({
 });
 
 // node_modules/@jimp/plugin-print/dist/esm/measure-text.js
-function measureText(font, text) {
+function measureText(font, text2) {
   let x2 = 0;
-  for (let i2 = 0; i2 < text.length; i2++) {
-    const char = text[i2];
+  for (let i2 = 0; i2 < text2.length; i2++) {
+    const char = text2[i2];
     const fontChar = font.chars[char];
     if (fontChar) {
       const fontKerning = font.kernings[char];
-      const nextChar = text[i2 + 1];
+      const nextChar = text2[i2 + 1];
       const kerning = fontKerning && nextChar && fontKerning[nextChar] ? fontKerning[nextChar] || 0 : 0;
       x2 += (fontChar.xadvance || 0) + kerning;
     }
   }
   return x2;
 }
-function splitLines(font, text, maxWidth) {
-  const words = text.replace(/[\r\n]+/g, " \n").split(" ");
+function splitLines(font, text2, maxWidth) {
+  const words = text2.replace(/[\r\n]+/g, " \n").split(" ");
   const lines = [];
   let currentLine = [];
   let longestLine = 0;
@@ -82653,8 +82946,8 @@ function splitLines(font, text, maxWidth) {
     longestLine
   };
 }
-function measureTextHeight(font, text, maxWidth) {
-  const { lines } = splitLines(font, text, maxWidth);
+function measureTextHeight(font, text2, maxWidth) {
+  const { lines } = splitLines(font, text2, maxWidth);
   return lines.length * font.common.lineHeight;
 }
 var init_measure_text = __esm({
@@ -82663,7 +82956,7 @@ var init_measure_text = __esm({
 });
 
 // node_modules/@jimp/plugin-print/dist/esm/types.js
-var init_types15 = __esm({
+var init_types16 = __esm({
   "node_modules/@jimp/plugin-print/dist/esm/types.js"() {
   }
 });
@@ -82695,9 +82988,9 @@ function drawCharacter(image2, font, x2, y2, char) {
   }
   return image2;
 }
-function printText(image2, font, x2, y2, text, defaultCharWidth) {
-  for (let i2 = 0; i2 < text.length; i2++) {
-    const stringChar = text[i2];
+function printText(image2, font, x2, y2, text2, defaultCharWidth) {
+  for (let i2 = 0; i2 < text2.length; i2++) {
+    const stringChar = text2[i2];
     let char;
     if (font.chars[stringChar]) {
       char = stringChar;
@@ -82711,7 +83004,7 @@ function printText(image2, font, x2, y2, text, defaultCharWidth) {
     if (fontChar) {
       drawCharacter(image2, font, x2, y2, fontChar);
     }
-    const nextChar = text[i2 + 1];
+    const nextChar = text2[i2 + 1];
     const kerning = fontKerning && nextChar && fontKerning[nextChar] ? fontKerning[nextChar] || 0 : 0;
     x2 += kerning + (fontChar.xadvance || defaultCharWidth);
   }
@@ -82724,7 +83017,7 @@ var init_esm25 = __esm({
     init_zod13();
     init_measure_text();
     init_measure_text();
-    init_types15();
+    init_types16();
     PrintOptionsSchema = external_exports13.object({
       /** the x position to draw the image */
       x: external_exports13.number(),
@@ -82768,7 +83061,7 @@ var init_esm25 = __esm({
           // eslint-disable-next-line prefer-const
           x: x2,
           y: y2,
-          text,
+          text: text2,
           // eslint-disable-next-line prefer-const
           maxWidth = Infinity,
           // eslint-disable-next-line prefer-const
@@ -82779,28 +83072,28 @@ var init_esm25 = __esm({
         } = PrintOptionsSchema.parse(options);
         let alignmentX;
         let alignmentY;
-        if (typeof text === "object" && text.text !== null && text.text !== void 0) {
-          alignmentX = text.alignmentX || HorizontalAlign.LEFT;
-          alignmentY = text.alignmentY || VerticalAlign.TOP;
-          ({ text } = text);
+        if (typeof text2 === "object" && text2.text !== null && text2.text !== void 0) {
+          alignmentX = text2.alignmentX || HorizontalAlign.LEFT;
+          alignmentY = text2.alignmentY || VerticalAlign.TOP;
+          ({ text: text2 } = text2);
         } else {
           alignmentX = HorizontalAlign.LEFT;
           alignmentY = VerticalAlign.TOP;
-          text = text.toString();
+          text2 = text2.toString();
         }
-        if (typeof text === "number") {
-          text = text.toString();
+        if (typeof text2 === "number") {
+          text2 = text2.toString();
         }
         if (maxHeight !== Infinity && alignmentY === VerticalAlign.BOTTOM) {
-          y2 += maxHeight - measureTextHeight(font, text, maxWidth);
+          y2 += maxHeight - measureTextHeight(font, text2, maxWidth);
         } else if (maxHeight !== Infinity && alignmentY === VerticalAlign.MIDDLE) {
-          y2 += maxHeight / 2 - measureTextHeight(font, text, maxWidth) / 2;
+          y2 += maxHeight / 2 - measureTextHeight(font, text2, maxWidth) / 2;
         }
         const defaultCharWidth = Object.entries(font.chars).find((c3) => c3[1].xadvance)?.[1].xadvance;
         if (typeof defaultCharWidth !== "number") {
           throw new Error("Could not find default character width");
         }
-        const { lines, longestLine } = splitLines(font, text, maxWidth);
+        const { lines, longestLine } = splitLines(font, text2, maxWidth);
         lines.forEach((line) => {
           const lineString = line.join(" ");
           const alignmentWidth = xOffsetBasedOnAlignment(font, lineString, maxWidth, alignmentX);
@@ -83226,8 +83519,8 @@ var init_parseUtil14 = __esm({
     init_errors14();
     init_en14();
     makeIssue14 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -83527,7 +83820,7 @@ function custom14(check, _params = {}, fatal) {
   return ZodAny14.create();
 }
 var ParseInputLazyPath14, handleResult14, ZodType14, cuidRegex14, cuid2Regex14, ulidRegex14, uuidRegex14, nanoidRegex14, jwtRegex14, durationRegex14, emailRegex14, _emojiRegex14, emojiRegex14, ipv4Regex14, ipv4CidrRegex14, ipv6Regex14, ipv6CidrRegex14, base64Regex14, base64urlRegex14, dateRegexSource14, dateRegex14, ZodString14, ZodNumber14, ZodBigInt14, ZodBoolean14, ZodDate14, ZodSymbol14, ZodUndefined14, ZodNull14, ZodAny14, ZodUnknown14, ZodNever14, ZodVoid14, ZodArray14, ZodObject14, ZodUnion14, getDiscriminator14, ZodDiscriminatedUnion14, ZodIntersection14, ZodTuple14, ZodRecord14, ZodMap14, ZodSet14, ZodFunction14, ZodLazy14, ZodLiteral14, ZodEnum14, ZodNativeEnum14, ZodPromise14, ZodEffects14, ZodOptional14, ZodNullable14, ZodDefault14, ZodCatch14, ZodNaN14, BRAND14, ZodBranded14, ZodPipeline14, ZodReadonly14, late14, ZodFirstPartyTypeKind14, instanceOfType14, stringType14, numberType14, nanType14, bigIntType14, booleanType14, dateType14, symbolType14, undefinedType14, nullType14, anyType14, unknownType14, neverType14, voidType14, arrayType14, objectType14, strictObjectType14, unionType14, discriminatedUnionType14, intersectionType14, tupleType14, recordType14, mapType14, setType14, functionType14, lazyType14, literalType14, enumType14, nativeEnumType14, promiseType14, effectsType14, optionalType14, nullableType14, preprocessType14, pipelineType14, ostring14, onumber14, oboolean14, coerce14, NEVER14;
-var init_types16 = __esm({
+var init_types17 = __esm({
   "node_modules/@jimp/plugin-rotate/node_modules/zod/v3/types.js"() {
     init_ZodError14();
     init_errors14();
@@ -83535,11 +83828,11 @@ var init_types16 = __esm({
     init_parseUtil14();
     init_util15();
     ParseInputLazyPath14 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -86907,7 +87200,7 @@ var init_external14 = __esm({
     init_parseUtil14();
     init_typeAliases14();
     init_util15();
-    init_types16();
+    init_types17();
     init_ZodError14();
   }
 });
@@ -87503,8 +87796,8 @@ var init_parseUtil15 = __esm({
     init_errors15();
     init_en15();
     makeIssue15 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -87804,7 +88097,7 @@ function custom15(check, _params = {}, fatal) {
   return ZodAny15.create();
 }
 var ParseInputLazyPath15, handleResult15, ZodType15, cuidRegex15, cuid2Regex15, ulidRegex15, uuidRegex15, nanoidRegex15, jwtRegex15, durationRegex15, emailRegex15, _emojiRegex15, emojiRegex15, ipv4Regex15, ipv4CidrRegex15, ipv6Regex15, ipv6CidrRegex15, base64Regex15, base64urlRegex15, dateRegexSource15, dateRegex15, ZodString15, ZodNumber15, ZodBigInt15, ZodBoolean15, ZodDate15, ZodSymbol15, ZodUndefined15, ZodNull15, ZodAny15, ZodUnknown15, ZodNever15, ZodVoid15, ZodArray15, ZodObject15, ZodUnion15, getDiscriminator15, ZodDiscriminatedUnion15, ZodIntersection15, ZodTuple15, ZodRecord15, ZodMap15, ZodSet15, ZodFunction15, ZodLazy15, ZodLiteral15, ZodEnum15, ZodNativeEnum15, ZodPromise15, ZodEffects15, ZodOptional15, ZodNullable15, ZodDefault15, ZodCatch15, ZodNaN15, BRAND15, ZodBranded15, ZodPipeline15, ZodReadonly15, late15, ZodFirstPartyTypeKind15, instanceOfType15, stringType15, numberType15, nanType15, bigIntType15, booleanType15, dateType15, symbolType15, undefinedType15, nullType15, anyType15, unknownType15, neverType15, voidType15, arrayType15, objectType15, strictObjectType15, unionType15, discriminatedUnionType15, intersectionType15, tupleType15, recordType15, mapType15, setType15, functionType15, lazyType15, literalType15, enumType15, nativeEnumType15, promiseType15, effectsType15, optionalType15, nullableType15, preprocessType15, pipelineType15, ostring15, onumber15, oboolean15, coerce15, NEVER15;
-var init_types17 = __esm({
+var init_types18 = __esm({
   "node_modules/@jimp/plugin-threshold/node_modules/zod/v3/types.js"() {
     init_ZodError15();
     init_errors15();
@@ -87812,11 +88105,11 @@ var init_types17 = __esm({
     init_parseUtil15();
     init_util16();
     ParseInputLazyPath15 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -91184,7 +91477,7 @@ var init_external15 = __esm({
     init_parseUtil15();
     init_typeAliases15();
     init_util16();
-    init_types17();
+    init_types18();
     init_ZodError15();
   }
 });
@@ -92387,19 +92680,19 @@ var init_image_q = __esm({
         this._pointContainer.setHeight(1);
         this._pointArray = this._pointContainer.getPointArray();
       }
-      add(color) {
-        this._pointArray.push(color);
+      add(color2) {
+        this._pointArray.push(color2);
         this._pointContainer.setWidth(this._pointArray.length);
       }
-      has(color) {
+      has(color2) {
         for (let i2 = this._pointArray.length - 1; i2 >= 0; i2--) {
-          if (color.uint32 === this._pointArray[i2].uint32)
+          if (color2.uint32 === this._pointArray[i2].uint32)
             return true;
         }
         return false;
       }
-      getNearestColor(colorDistanceCalculator, color) {
-        return this._pointArray[this._getNearestIndex(colorDistanceCalculator, color) | 0];
+      getNearestColor(colorDistanceCalculator, color2) {
+        return this._pointArray[this._getNearestIndex(colorDistanceCalculator, color2) | 0];
       }
       getPointContainer() {
         return this._pointContainer;
@@ -93083,12 +93376,12 @@ var init_image_q = __esm({
     __publicField(ColorHistogram, "_boxPixels", 2);
     __publicField(ColorHistogram, "_hueGroups", 10);
     RemovedColor = class {
-      constructor(index, color, distance3) {
+      constructor(index, color2, distance3) {
         __publicField(this, "index");
         __publicField(this, "color");
         __publicField(this, "distance");
         this.index = index;
-        this.color = color;
+        this.color = color2;
         this.distance = distance3;
       }
     };
@@ -93239,8 +93532,8 @@ var init_image_q = __esm({
             const g = this._greens[paletteIndex] / sum;
             const b = this._blues[paletteIndex] / sum;
             const a2 = this._alphas[paletteIndex] / sum;
-            const color = Point.createByRGBA(r2 | 0, g | 0, b | 0, a2 | 0);
-            palette2.add(color);
+            const color2 = Point.createByRGBA(r2 | 0, g | 0, b | 0, a2 | 0);
+            palette2.add(color2);
           }
         }
         palette2.sort();
@@ -93298,7 +93591,7 @@ var init_image_q = __esm({
         this._alphas = createArray1D(this._colors + 1);
         this._sums = createArray1D(this._colors + 1);
         for (let index = 0, l2 = this._pixels.length; index < l2; index++) {
-          const color = this._pixels[index];
+          const color2 = this._pixels[index];
           const match = -1;
           let bestMatch = match;
           let bestDistance = Number.MAX_VALUE;
@@ -93307,31 +93600,31 @@ var init_image_q = __esm({
             const foundGreen = lookupGreen[lookup];
             const foundBlue = lookupBlue[lookup];
             const foundAlpha = lookupAlpha[lookup];
-            const distance3 = this._distance.calculateRaw(foundRed, foundGreen, foundBlue, foundAlpha, color.r, color.g, color.b, color.a);
+            const distance3 = this._distance.calculateRaw(foundRed, foundGreen, foundBlue, foundAlpha, color2.r, color2.g, color2.b, color2.a);
             if (distance3 < bestDistance) {
               bestDistance = distance3;
               bestMatch = lookup;
             }
           }
-          this._reds[bestMatch] += color.r;
-          this._greens[bestMatch] += color.g;
-          this._blues[bestMatch] += color.b;
-          this._alphas[bestMatch] += color.a;
+          this._reds[bestMatch] += color2.r;
+          this._greens[bestMatch] += color2.g;
+          this._blues[bestMatch] += color2.b;
+          this._alphas[bestMatch] += color2.a;
           this._sums[bestMatch]++;
         }
       }
-      _addColor(color) {
+      _addColor(color2) {
         const bitsToRemove = 8 - this._significantBitsPerChannel;
-        const indexRed = (color.r >> bitsToRemove) + 1;
-        const indexGreen = (color.g >> bitsToRemove) + 1;
-        const indexBlue = (color.b >> bitsToRemove) + 1;
-        const indexAlpha = (color.a >> bitsToRemove) + 1;
+        const indexRed = (color2.r >> bitsToRemove) + 1;
+        const indexGreen = (color2.g >> bitsToRemove) + 1;
+        const indexBlue = (color2.b >> bitsToRemove) + 1;
+        const indexAlpha = (color2.a >> bitsToRemove) + 1;
         this._weights[indexAlpha][indexRed][indexGreen][indexBlue]++;
-        this._momentsRed[indexAlpha][indexRed][indexGreen][indexBlue] += color.r;
-        this._momentsGreen[indexAlpha][indexRed][indexGreen][indexBlue] += color.g;
-        this._momentsBlue[indexAlpha][indexRed][indexGreen][indexBlue] += color.b;
-        this._momentsAlpha[indexAlpha][indexRed][indexGreen][indexBlue] += color.a;
-        this._moments[indexAlpha][indexRed][indexGreen][indexBlue] += this._table[color.r] + this._table[color.g] + this._table[color.b] + this._table[color.a];
+        this._momentsRed[indexAlpha][indexRed][indexGreen][indexBlue] += color2.r;
+        this._momentsGreen[indexAlpha][indexRed][indexGreen][indexBlue] += color2.g;
+        this._momentsBlue[indexAlpha][indexRed][indexGreen][indexBlue] += color2.b;
+        this._momentsAlpha[indexAlpha][indexRed][indexGreen][indexBlue] += color2.a;
+        this._moments[indexAlpha][indexRed][indexGreen][indexBlue] += this._table[color2.r] + this._table[color2.g] + this._table[color2.b] + this._table[color2.a];
       }
       *_calculateMoments() {
         const area = [];
@@ -93410,20 +93703,20 @@ var init_image_q = __esm({
       static _volume(cube, moment) {
         return _WuQuant._volumeFloat(cube, moment) | 0;
       }
-      static _top(cube, direction, position, moment) {
+      static _top(cube, direction, position2, moment) {
         let result;
         switch (direction) {
           case _WuQuant._alpha:
-            result = moment[position][cube.redMaximum][cube.greenMaximum][cube.blueMaximum] - moment[position][cube.redMaximum][cube.greenMinimum][cube.blueMaximum] - moment[position][cube.redMinimum][cube.greenMaximum][cube.blueMaximum] + moment[position][cube.redMinimum][cube.greenMinimum][cube.blueMaximum] - (moment[position][cube.redMaximum][cube.greenMaximum][cube.blueMinimum] - moment[position][cube.redMaximum][cube.greenMinimum][cube.blueMinimum] - moment[position][cube.redMinimum][cube.greenMaximum][cube.blueMinimum] + moment[position][cube.redMinimum][cube.greenMinimum][cube.blueMinimum]);
+            result = moment[position2][cube.redMaximum][cube.greenMaximum][cube.blueMaximum] - moment[position2][cube.redMaximum][cube.greenMinimum][cube.blueMaximum] - moment[position2][cube.redMinimum][cube.greenMaximum][cube.blueMaximum] + moment[position2][cube.redMinimum][cube.greenMinimum][cube.blueMaximum] - (moment[position2][cube.redMaximum][cube.greenMaximum][cube.blueMinimum] - moment[position2][cube.redMaximum][cube.greenMinimum][cube.blueMinimum] - moment[position2][cube.redMinimum][cube.greenMaximum][cube.blueMinimum] + moment[position2][cube.redMinimum][cube.greenMinimum][cube.blueMinimum]);
             break;
           case _WuQuant._red:
-            result = moment[cube.alphaMaximum][position][cube.greenMaximum][cube.blueMaximum] - moment[cube.alphaMaximum][position][cube.greenMinimum][cube.blueMaximum] - moment[cube.alphaMinimum][position][cube.greenMaximum][cube.blueMaximum] + moment[cube.alphaMinimum][position][cube.greenMinimum][cube.blueMaximum] - (moment[cube.alphaMaximum][position][cube.greenMaximum][cube.blueMinimum] - moment[cube.alphaMaximum][position][cube.greenMinimum][cube.blueMinimum] - moment[cube.alphaMinimum][position][cube.greenMaximum][cube.blueMinimum] + moment[cube.alphaMinimum][position][cube.greenMinimum][cube.blueMinimum]);
+            result = moment[cube.alphaMaximum][position2][cube.greenMaximum][cube.blueMaximum] - moment[cube.alphaMaximum][position2][cube.greenMinimum][cube.blueMaximum] - moment[cube.alphaMinimum][position2][cube.greenMaximum][cube.blueMaximum] + moment[cube.alphaMinimum][position2][cube.greenMinimum][cube.blueMaximum] - (moment[cube.alphaMaximum][position2][cube.greenMaximum][cube.blueMinimum] - moment[cube.alphaMaximum][position2][cube.greenMinimum][cube.blueMinimum] - moment[cube.alphaMinimum][position2][cube.greenMaximum][cube.blueMinimum] + moment[cube.alphaMinimum][position2][cube.greenMinimum][cube.blueMinimum]);
             break;
           case _WuQuant._green:
-            result = moment[cube.alphaMaximum][cube.redMaximum][position][cube.blueMaximum] - moment[cube.alphaMaximum][cube.redMinimum][position][cube.blueMaximum] - moment[cube.alphaMinimum][cube.redMaximum][position][cube.blueMaximum] + moment[cube.alphaMinimum][cube.redMinimum][position][cube.blueMaximum] - (moment[cube.alphaMaximum][cube.redMaximum][position][cube.blueMinimum] - moment[cube.alphaMaximum][cube.redMinimum][position][cube.blueMinimum] - moment[cube.alphaMinimum][cube.redMaximum][position][cube.blueMinimum] + moment[cube.alphaMinimum][cube.redMinimum][position][cube.blueMinimum]);
+            result = moment[cube.alphaMaximum][cube.redMaximum][position2][cube.blueMaximum] - moment[cube.alphaMaximum][cube.redMinimum][position2][cube.blueMaximum] - moment[cube.alphaMinimum][cube.redMaximum][position2][cube.blueMaximum] + moment[cube.alphaMinimum][cube.redMinimum][position2][cube.blueMaximum] - (moment[cube.alphaMaximum][cube.redMaximum][position2][cube.blueMinimum] - moment[cube.alphaMaximum][cube.redMinimum][position2][cube.blueMinimum] - moment[cube.alphaMinimum][cube.redMaximum][position2][cube.blueMinimum] + moment[cube.alphaMinimum][cube.redMinimum][position2][cube.blueMinimum]);
             break;
           case _WuQuant._blue:
-            result = moment[cube.alphaMaximum][cube.redMaximum][cube.greenMaximum][position] - moment[cube.alphaMaximum][cube.redMaximum][cube.greenMinimum][position] - moment[cube.alphaMaximum][cube.redMinimum][cube.greenMaximum][position] + moment[cube.alphaMaximum][cube.redMinimum][cube.greenMinimum][position] - (moment[cube.alphaMinimum][cube.redMaximum][cube.greenMaximum][position] - moment[cube.alphaMinimum][cube.redMaximum][cube.greenMinimum][position] - moment[cube.alphaMinimum][cube.redMinimum][cube.greenMaximum][position] + moment[cube.alphaMinimum][cube.redMinimum][cube.greenMinimum][position]);
+            result = moment[cube.alphaMaximum][cube.redMaximum][cube.greenMaximum][position2] - moment[cube.alphaMaximum][cube.redMaximum][cube.greenMinimum][position2] - moment[cube.alphaMaximum][cube.redMinimum][cube.greenMaximum][position2] + moment[cube.alphaMaximum][cube.redMinimum][cube.greenMinimum][position2] - (moment[cube.alphaMinimum][cube.redMaximum][cube.greenMaximum][position2] - moment[cube.alphaMinimum][cube.redMaximum][cube.greenMinimum][position2] - moment[cube.alphaMinimum][cube.redMinimum][cube.greenMaximum][position2] + moment[cube.alphaMinimum][cube.redMinimum][cube.greenMinimum][position2]);
             break;
           default:
             throw new Error("impossible");
@@ -93462,12 +93755,12 @@ var init_image_q = __esm({
         const bottomWeight = _WuQuant._bottom(cube, direction, this._weights) | 0;
         let result = 0;
         let cutPosition = -1;
-        for (let position = first; position < last; ++position) {
-          let halfRed = bottomRed + _WuQuant._top(cube, direction, position, this._momentsRed);
-          let halfGreen = bottomGreen + _WuQuant._top(cube, direction, position, this._momentsGreen);
-          let halfBlue = bottomBlue + _WuQuant._top(cube, direction, position, this._momentsBlue);
-          let halfAlpha = bottomAlpha + _WuQuant._top(cube, direction, position, this._momentsAlpha);
-          let halfWeight = bottomWeight + _WuQuant._top(cube, direction, position, this._weights);
+        for (let position2 = first; position2 < last; ++position2) {
+          let halfRed = bottomRed + _WuQuant._top(cube, direction, position2, this._momentsRed);
+          let halfGreen = bottomGreen + _WuQuant._top(cube, direction, position2, this._momentsGreen);
+          let halfBlue = bottomBlue + _WuQuant._top(cube, direction, position2, this._momentsBlue);
+          let halfAlpha = bottomAlpha + _WuQuant._top(cube, direction, position2, this._momentsAlpha);
+          let halfWeight = bottomWeight + _WuQuant._top(cube, direction, position2, this._weights);
           if (halfWeight !== 0) {
             let halfDistance = halfRed * halfRed + halfGreen * halfGreen + halfBlue * halfBlue + halfAlpha * halfAlpha;
             let temp = halfDistance / halfWeight;
@@ -93481,7 +93774,7 @@ var init_image_q = __esm({
               temp += halfDistance / halfWeight;
               if (temp > result) {
                 result = temp;
-                cutPosition = position;
+                cutPosition = position2;
               }
             }
           }
@@ -94553,8 +94846,8 @@ var init_parseUtil16 = __esm({
     init_errors16();
     init_en16();
     makeIssue16 = (params) => {
-      const { data, path: path7, errorMaps, issueData } = params;
-      const fullPath = [...path7, ...issueData.path || []];
+      const { data, path: path13, errorMaps, issueData } = params;
+      const fullPath = [...path13, ...issueData.path || []];
       const fullIssue = {
         ...issueData,
         path: fullPath
@@ -94854,7 +95147,7 @@ function custom16(check, _params = {}, fatal) {
   return ZodAny16.create();
 }
 var ParseInputLazyPath16, handleResult16, ZodType16, cuidRegex16, cuid2Regex16, ulidRegex16, uuidRegex16, nanoidRegex16, jwtRegex16, durationRegex16, emailRegex16, _emojiRegex16, emojiRegex16, ipv4Regex16, ipv4CidrRegex16, ipv6Regex16, ipv6CidrRegex16, base64Regex16, base64urlRegex16, dateRegexSource16, dateRegex16, ZodString16, ZodNumber16, ZodBigInt16, ZodBoolean16, ZodDate16, ZodSymbol16, ZodUndefined16, ZodNull16, ZodAny16, ZodUnknown16, ZodNever16, ZodVoid16, ZodArray16, ZodObject16, ZodUnion16, getDiscriminator16, ZodDiscriminatedUnion16, ZodIntersection16, ZodTuple16, ZodRecord16, ZodMap16, ZodSet16, ZodFunction16, ZodLazy16, ZodLiteral16, ZodEnum16, ZodNativeEnum16, ZodPromise16, ZodEffects16, ZodOptional16, ZodNullable16, ZodDefault16, ZodCatch16, ZodNaN16, BRAND16, ZodBranded16, ZodPipeline16, ZodReadonly16, late16, ZodFirstPartyTypeKind16, instanceOfType16, stringType16, numberType16, nanType16, bigIntType16, booleanType16, dateType16, symbolType16, undefinedType16, nullType16, anyType16, unknownType16, neverType16, voidType16, arrayType16, objectType16, strictObjectType16, unionType16, discriminatedUnionType16, intersectionType16, tupleType16, recordType16, mapType16, setType16, functionType16, lazyType16, literalType16, enumType16, nativeEnumType16, promiseType16, effectsType16, optionalType16, nullableType16, preprocessType16, pipelineType16, ostring16, onumber16, oboolean16, coerce16, NEVER16;
-var init_types18 = __esm({
+var init_types19 = __esm({
   "node_modules/@jimp/plugin-quantize/node_modules/zod/v3/types.js"() {
     init_ZodError16();
     init_errors16();
@@ -94862,11 +95155,11 @@ var init_types18 = __esm({
     init_parseUtil16();
     init_util17();
     ParseInputLazyPath16 = class {
-      constructor(parent, value, path7, key) {
+      constructor(parent, value, path13, key) {
         this._cachedPath = [];
         this.parent = parent;
         this.data = value;
-        this._path = path7;
+        this._path = path13;
         this._key = key;
       }
       get path() {
@@ -98234,7 +98527,7 @@ var init_external16 = __esm({
     init_parseUtil16();
     init_typeAliases16();
     init_util17();
-    init_types18();
+    init_types19();
     init_ZodError16();
   }
 });
@@ -99222,14 +99515,14 @@ var require_XMLCData = __commonJS({
       XMLCharacterData = require_XMLCharacterData();
       module.exports = XMLCData = (function(superClass) {
         extend(XMLCData2, superClass);
-        function XMLCData2(parent, text) {
+        function XMLCData2(parent, text2) {
           XMLCData2.__super__.constructor.call(this, parent);
-          if (text == null) {
+          if (text2 == null) {
             throw new Error("Missing CDATA text. " + this.debugInfo());
           }
           this.name = "#cdata-section";
           this.type = NodeType.CData;
-          this.value = this.stringify.cdata(text);
+          this.value = this.stringify.cdata(text2);
         }
         XMLCData2.prototype.clone = function() {
           return Object.create(this);
@@ -99263,14 +99556,14 @@ var require_XMLComment = __commonJS({
       XMLCharacterData = require_XMLCharacterData();
       module.exports = XMLComment = (function(superClass) {
         extend(XMLComment2, superClass);
-        function XMLComment2(parent, text) {
+        function XMLComment2(parent, text2) {
           XMLComment2.__super__.constructor.call(this, parent);
-          if (text == null) {
+          if (text2 == null) {
             throw new Error("Missing comment text. " + this.debugInfo());
           }
           this.name = "#comment";
           this.type = NodeType.Comment;
-          this.value = this.stringify.comment(text);
+          this.value = this.stringify.comment(text2);
         }
         XMLComment2.prototype.clone = function() {
           return Object.create(this);
@@ -99778,13 +100071,13 @@ var require_XMLRaw = __commonJS({
       XMLNode = require_XMLNode();
       module.exports = XMLRaw = (function(superClass) {
         extend(XMLRaw2, superClass);
-        function XMLRaw2(parent, text) {
+        function XMLRaw2(parent, text2) {
           XMLRaw2.__super__.constructor.call(this, parent);
-          if (text == null) {
+          if (text2 == null) {
             throw new Error("Missing raw text. " + this.debugInfo());
           }
           this.type = NodeType.Raw;
-          this.value = this.stringify.raw(text);
+          this.value = this.stringify.raw(text2);
         }
         XMLRaw2.prototype.clone = function() {
           return Object.create(this);
@@ -99818,14 +100111,14 @@ var require_XMLText = __commonJS({
       XMLCharacterData = require_XMLCharacterData();
       module.exports = XMLText = (function(superClass) {
         extend(XMLText2, superClass);
-        function XMLText2(parent, text) {
+        function XMLText2(parent, text2) {
           XMLText2.__super__.constructor.call(this, parent);
-          if (text == null) {
+          if (text2 == null) {
             throw new Error("Missing element text. " + this.debugInfo());
           }
           this.name = "#text";
           this.type = NodeType.Text;
-          this.value = this.stringify.text(text);
+          this.value = this.stringify.text(text2);
         }
         Object.defineProperty(XMLText2.prototype, "isElementContentWhitespace", {
           get: function() {
@@ -100137,18 +100430,18 @@ var require_XMLNode = __commonJS({
           }
           return results;
         };
-        XMLNode2.prototype.element = function(name, attributes, text) {
+        XMLNode2.prototype.element = function(name, attributes, text2) {
           var childNode, item, j, k, key, lastChild, len, len1, ref2, ref3, val;
           lastChild = null;
-          if (attributes === null && text == null) {
-            ref2 = [{}, null], attributes = ref2[0], text = ref2[1];
+          if (attributes === null && text2 == null) {
+            ref2 = [{}, null], attributes = ref2[0], text2 = ref2[1];
           }
           if (attributes == null) {
             attributes = {};
           }
           attributes = getValue(attributes);
           if (!isObject(attributes)) {
-            ref3 = [attributes, text], text = ref3[0], attributes = ref3[1];
+            ref3 = [attributes, text2], text2 = ref3[0], attributes = ref3[1];
           }
           if (name != null) {
             name = getValue(name);
@@ -100193,21 +100486,21 @@ var require_XMLNode = __commonJS({
                 lastChild = this.element(key, val);
               }
             }
-          } else if (!this.options.keepNullNodes && text === null) {
+          } else if (!this.options.keepNullNodes && text2 === null) {
             lastChild = this.dummy();
           } else {
             if (!this.options.ignoreDecorators && this.stringify.convertTextKey && name.indexOf(this.stringify.convertTextKey) === 0) {
-              lastChild = this.text(text);
+              lastChild = this.text(text2);
             } else if (!this.options.ignoreDecorators && this.stringify.convertCDataKey && name.indexOf(this.stringify.convertCDataKey) === 0) {
-              lastChild = this.cdata(text);
+              lastChild = this.cdata(text2);
             } else if (!this.options.ignoreDecorators && this.stringify.convertCommentKey && name.indexOf(this.stringify.convertCommentKey) === 0) {
-              lastChild = this.comment(text);
+              lastChild = this.comment(text2);
             } else if (!this.options.ignoreDecorators && this.stringify.convertRawKey && name.indexOf(this.stringify.convertRawKey) === 0) {
-              lastChild = this.raw(text);
+              lastChild = this.raw(text2);
             } else if (!this.options.ignoreDecorators && this.stringify.convertPIKey && name.indexOf(this.stringify.convertPIKey) === 0) {
-              lastChild = this.instruction(name.substr(this.stringify.convertPIKey.length), text);
+              lastChild = this.instruction(name.substr(this.stringify.convertPIKey.length), text2);
             } else {
-              lastChild = this.node(name, attributes, text);
+              lastChild = this.node(name, attributes, text2);
             }
           }
           if (lastChild == null) {
@@ -100215,7 +100508,7 @@ var require_XMLNode = __commonJS({
           }
           return lastChild;
         };
-        XMLNode2.prototype.insertBefore = function(name, attributes, text) {
+        XMLNode2.prototype.insertBefore = function(name, attributes, text2) {
           var child, i2, newChild, refChild, removed;
           if (name != null ? name.type : void 0) {
             newChild = name;
@@ -100236,19 +100529,19 @@ var require_XMLNode = __commonJS({
             }
             i2 = this.parent.children.indexOf(this);
             removed = this.parent.children.splice(i2);
-            child = this.parent.element(name, attributes, text);
+            child = this.parent.element(name, attributes, text2);
             Array.prototype.push.apply(this.parent.children, removed);
             return child;
           }
         };
-        XMLNode2.prototype.insertAfter = function(name, attributes, text) {
+        XMLNode2.prototype.insertAfter = function(name, attributes, text2) {
           var child, i2, removed;
           if (this.isRoot) {
             throw new Error("Cannot insert elements at root level. " + this.debugInfo(name));
           }
           i2 = this.parent.children.indexOf(this);
           removed = this.parent.children.splice(i2 + 1);
-          child = this.parent.element(name, attributes, text);
+          child = this.parent.element(name, attributes, text2);
           Array.prototype.push.apply(this.parent.children, removed);
           return child;
         };
@@ -100261,7 +100554,7 @@ var require_XMLNode = __commonJS({
           [].splice.apply(this.parent.children, [i2, i2 - i2 + 1].concat(ref2 = [])), ref2;
           return this.parent;
         };
-        XMLNode2.prototype.node = function(name, attributes, text) {
+        XMLNode2.prototype.node = function(name, attributes, text2) {
           var child, ref2;
           if (name != null) {
             name = getValue(name);
@@ -100269,11 +100562,11 @@ var require_XMLNode = __commonJS({
           attributes || (attributes = {});
           attributes = getValue(attributes);
           if (!isObject(attributes)) {
-            ref2 = [attributes, text], text = ref2[0], attributes = ref2[1];
+            ref2 = [attributes, text2], text2 = ref2[0], attributes = ref2[1];
           }
           child = new XMLElement(this, name, attributes);
-          if (text != null) {
-            child.text(text);
+          if (text2 != null) {
+            child.text(text2);
           }
           this.children.push(child);
           return child;
@@ -100476,11 +100769,11 @@ var require_XMLNode = __commonJS({
             return "node: <" + name + ">, parent: <" + this.parent.name + ">";
           }
         };
-        XMLNode2.prototype.ele = function(name, attributes, text) {
-          return this.element(name, attributes, text);
+        XMLNode2.prototype.ele = function(name, attributes, text2) {
+          return this.element(name, attributes, text2);
         };
-        XMLNode2.prototype.nod = function(name, attributes, text) {
-          return this.node(name, attributes, text);
+        XMLNode2.prototype.nod = function(name, attributes, text2) {
+          return this.node(name, attributes, text2);
         };
         XMLNode2.prototype.txt = function(value) {
           return this.text(value);
@@ -100500,11 +100793,11 @@ var require_XMLNode = __commonJS({
         XMLNode2.prototype.dec = function(version, encoding, standalone) {
           return this.declaration(version, encoding, standalone);
         };
-        XMLNode2.prototype.e = function(name, attributes, text) {
-          return this.element(name, attributes, text);
+        XMLNode2.prototype.e = function(name, attributes, text2) {
+          return this.element(name, attributes, text2);
         };
-        XMLNode2.prototype.n = function(name, attributes, text) {
-          return this.node(name, attributes, text);
+        XMLNode2.prototype.n = function(name, attributes, text2) {
+          return this.node(name, attributes, text2);
         };
         XMLNode2.prototype.t = function(value) {
           return this.text(value);
@@ -101664,7 +101957,7 @@ var require_XMLDocumentCB = __commonJS({
         XMLDocumentCB2.prototype.dummy = function() {
           return this;
         };
-        XMLDocumentCB2.prototype.node = function(name, attributes, text) {
+        XMLDocumentCB2.prototype.node = function(name, attributes, text2) {
           var ref1;
           if (name == null) {
             throw new Error("Missing node name.");
@@ -101679,18 +101972,18 @@ var require_XMLDocumentCB = __commonJS({
           }
           attributes = getValue(attributes);
           if (!isObject(attributes)) {
-            ref1 = [attributes, text], text = ref1[0], attributes = ref1[1];
+            ref1 = [attributes, text2], text2 = ref1[0], attributes = ref1[1];
           }
           this.currentNode = new XMLElement(this, name, attributes);
           this.currentNode.children = false;
           this.currentLevel++;
           this.openTags[this.currentLevel] = this.currentNode;
-          if (text != null) {
-            this.text(text);
+          if (text2 != null) {
+            this.text(text2);
           }
           return this;
         };
-        XMLDocumentCB2.prototype.element = function(name, attributes, text) {
+        XMLDocumentCB2.prototype.element = function(name, attributes, text2) {
           var child, i2, len, oldValidationFlag, ref1, root;
           if (this.currentNode && this.currentNode.type === NodeType.DocType) {
             this.dtdElement.apply(this, arguments);
@@ -101710,7 +102003,7 @@ var require_XMLDocumentCB = __commonJS({
                 }
               }
             } else {
-              this.node(name, attributes, text);
+              this.node(name, attributes, text2);
             }
           }
           return this;
@@ -101960,8 +102253,8 @@ var require_XMLDocumentCB = __commonJS({
         XMLDocumentCB2.prototype.ele = function() {
           return this.element.apply(this, arguments);
         };
-        XMLDocumentCB2.prototype.nod = function(name, attributes, text) {
-          return this.node(name, attributes, text);
+        XMLDocumentCB2.prototype.nod = function(name, attributes, text2) {
+          return this.node(name, attributes, text2);
         };
         XMLDocumentCB2.prototype.txt = function(value) {
           return this.text(value);
@@ -101981,11 +102274,11 @@ var require_XMLDocumentCB = __commonJS({
         XMLDocumentCB2.prototype.dtd = function(root, pubID, sysID) {
           return this.doctype(root, pubID, sysID);
         };
-        XMLDocumentCB2.prototype.e = function(name, attributes, text) {
-          return this.element(name, attributes, text);
+        XMLDocumentCB2.prototype.e = function(name, attributes, text2) {
+          return this.element(name, attributes, text2);
         };
-        XMLDocumentCB2.prototype.n = function(name, attributes, text) {
-          return this.node(name, attributes, text);
+        XMLDocumentCB2.prototype.n = function(name, attributes, text2) {
+          return this.node(name, attributes, text2);
         };
         XMLDocumentCB2.prototype.t = function(value) {
           return this.text(value);
@@ -103084,10 +103377,10 @@ var require_sax = __commonJS({
         if (parser.textNode) emit(parser, "ontext", parser.textNode);
         parser.textNode = "";
       }
-      function textopts(opt, text) {
-        if (opt.trim) text = text.trim();
-        if (opt.normalize) text = text.replace(/\s+/g, " ");
-        return text;
+      function textopts(opt, text2) {
+        if (opt.trim) text2 = text2.trim();
+        if (opt.normalize) text2 = text2.replace(/\s+/g, " ");
+        return text2;
       }
       function error(parser, er) {
         closeText(parser);
@@ -104287,17 +104580,17 @@ var require_parser3 = __commonJS({
             };
           })(this);
           ontext = /* @__PURE__ */ (function(_this) {
-            return function(text) {
+            return function(text2) {
               var charChild, s2;
               s2 = stack[stack.length - 1];
               if (s2) {
-                s2[charkey] += text;
-                if (_this.options.explicitChildren && _this.options.preserveChildrenOrder && _this.options.charsAsChildren && (_this.options.includeWhiteChars || text.replace(/\\n/g, "").trim() !== "")) {
+                s2[charkey] += text2;
+                if (_this.options.explicitChildren && _this.options.preserveChildrenOrder && _this.options.charsAsChildren && (_this.options.includeWhiteChars || text2.replace(/\\n/g, "").trim() !== "")) {
                   s2[_this.options.childkey] = s2[_this.options.childkey] || [];
                   charChild = {
                     "#name": "__text__"
                   };
-                  charChild[charkey] = text;
+                  charChild[charkey] = text2;
                   if (_this.options.normalize) {
                     charChild[charkey] = charChild[charkey].replace(/\s{2,}/g, " ").trim();
                   }
@@ -104309,9 +104602,9 @@ var require_parser3 = __commonJS({
           })(this);
           this.saxParser.ontext = ontext;
           return this.saxParser.oncdata = /* @__PURE__ */ (function(_this) {
-            return function(text) {
+            return function(text2) {
               var s2;
-              s2 = ontext(text);
+              s2 = ontext(text2);
               if (s2) {
                 return s2.cdata = true;
               }
@@ -104600,11 +104893,11 @@ var require_parse_bmfont_binary = __commonJS({
     }
     function readPages(buf, i2, size) {
       var pages = [];
-      var text = readNameNT(buf, i2);
-      var len = text.length + 1;
+      var text2 = readNameNT(buf, i2);
+      var len = text2.length + 1;
       var count = size / len;
       for (var c3 = 0; c3 < count; c3++) {
-        pages[c3] = buf.slice(i2, i2 + text.length).toString("utf8");
+        pages[c3] = buf.slice(i2, i2 + text2.length).toString("utf8");
         i2 += len;
       }
       return pages;
@@ -108734,8 +109027,8 @@ var init_quantizer_wu = __esm({
             const r2 = Math.round(this.volume(cube, this.momentsR) / weight);
             const g = Math.round(this.volume(cube, this.momentsG) / weight);
             const b = Math.round(this.volume(cube, this.momentsB) / weight);
-            const color = 255 << 24 | (r2 & 255) << 16 | (g & 255) << 8 | b & 255;
-            colors.push(color);
+            const color2 = 255 << 24 | (r2 & 255) << 16 | (g & 255) << 8 | b & 255;
+            colors.push(color2);
           }
         }
         return colors;
@@ -108854,14 +109147,14 @@ var init_quantizer_wu = __esm({
             throw new Error("unexpected direction $direction");
         }
       }
-      top(cube, direction, position, moment) {
+      top(cube, direction, position2, moment) {
         switch (direction) {
           case directions.RED:
-            return moment[this.getIndex(position, cube.g1, cube.b1)] - moment[this.getIndex(position, cube.g1, cube.b0)] - moment[this.getIndex(position, cube.g0, cube.b1)] + moment[this.getIndex(position, cube.g0, cube.b0)];
+            return moment[this.getIndex(position2, cube.g1, cube.b1)] - moment[this.getIndex(position2, cube.g1, cube.b0)] - moment[this.getIndex(position2, cube.g0, cube.b1)] + moment[this.getIndex(position2, cube.g0, cube.b0)];
           case directions.GREEN:
-            return moment[this.getIndex(cube.r1, position, cube.b1)] - moment[this.getIndex(cube.r1, position, cube.b0)] - moment[this.getIndex(cube.r0, position, cube.b1)] + moment[this.getIndex(cube.r0, position, cube.b0)];
+            return moment[this.getIndex(cube.r1, position2, cube.b1)] - moment[this.getIndex(cube.r1, position2, cube.b0)] - moment[this.getIndex(cube.r0, position2, cube.b1)] + moment[this.getIndex(cube.r0, position2, cube.b0)];
           case directions.BLUE:
-            return moment[this.getIndex(cube.r1, cube.g1, position)] - moment[this.getIndex(cube.r1, cube.g0, position)] - moment[this.getIndex(cube.r0, cube.g1, position)] + moment[this.getIndex(cube.r0, cube.g0, position)];
+            return moment[this.getIndex(cube.r1, cube.g1, position2)] - moment[this.getIndex(cube.r1, cube.g0, position2)] - moment[this.getIndex(cube.r0, cube.g1, position2)] + moment[this.getIndex(cube.r0, cube.g0, position2)];
           default:
             throw new Error("unexpected direction $direction");
         }
@@ -109731,17 +110024,17 @@ function themeFromSourceColor(source, customColors = []) {
     customColors: customColors.map((c3) => customColor(source, c3))
   };
 }
-function customColor(source, color) {
-  let value = color.value;
+function customColor(source, color2) {
+  let value = color2.value;
   const from = value;
   const to2 = source;
-  if (color.blend) {
+  if (color2.blend) {
     value = Blend.harmonize(from, to2);
   }
   const palette2 = CorePalette.of(value);
   const tones = palette2.a1;
   return {
-    color,
+    color: color2,
     value,
     light: {
       color: tones.tone(40),
@@ -109910,9 +110203,9 @@ function argbToCss(argb, alpha = 1) {
   const r2 = (argb & 16711680) >> 16;
   const g = (argb & 65280) >> 8;
   const b = argb & 255;
-  return alpha >= 1 ? `#${toHex2(r2)}${toHex2(g)}${toHex2(b)}` : `rgba(${r2}, ${g}, ${b}, ${round2(alpha)})`;
+  return alpha >= 1 ? `#${toHex3(r2)}${toHex3(g)}${toHex3(b)}` : `rgba(${r2}, ${g}, ${b}, ${round2(alpha)})`;
 }
-function toHex2(v) {
+function toHex3(v) {
   return v.toString(16).padStart(2, "0");
 }
 function round2(v) {
@@ -110035,7 +110328,7 @@ var init_tokens = __esm({
 
 // dist/themes/tarkov.js
 function cssString(value) {
-  const escaped = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, "\\a ");
+  const escaped = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n\f]/g, "\\a ");
   return `"${escaped}"`;
 }
 function rgba(rgb, alpha) {
@@ -110048,7 +110341,9 @@ function clamp012(v) {
   return Math.min(1, Math.max(0, v));
 }
 function tarkovTokenRows(opts) {
-  const p2 = TARKOV_PALETTE;
+  const p2 = opts.palette ?? TARKOV_PALETTE;
+  const ACCENT_RGB = p2.accentRgb;
+  const MUTED_RGB = p2.mutedRgb;
   const visible = opts.wallpaperVisible;
   const surfaceAlpha = visible ? 0.72 : 1;
   const panelAlpha = visible ? 0.62 : 1;
@@ -110065,57 +110360,57 @@ function tarkovTokenRows(opts) {
     `--color-sidebar:${rgba(p2.panelAltRgb, panelAlpha)};`,
     `--color-header:${rgba(p2.panelRgb, panelAlpha)};`,
     `--color-surface:${rgba(p2.raisedRgb, surfaceAlpha)};`,
-    `--color-surface-hover:${rgba(ACCENT_RGB2, visible ? 0.18 : 0.14)};`,
-    `--color-hover:${rgba(ACCENT_RGB2, visible ? 0.18 : 0.14)};`,
-    `--color-selected:${rgba(ACCENT_RGB2, visible ? 0.24 : 0.2)};`,
+    `--color-surface-hover:${rgba(ACCENT_RGB, visible ? 0.18 : 0.14)};`,
+    `--color-hover:${rgba(ACCENT_RGB, visible ? 0.18 : 0.14)};`,
+    `--color-selected:${rgba(ACCENT_RGB, visible ? 0.24 : 0.2)};`,
     `--color-card:${rgba(p2.raisedRgb, surfaceAlpha)};`,
-    `--color-card-selected:${rgba(ACCENT_RGB2, visible ? 0.26 : 0.22)};`,
-    `--color-card-border:${rgba(ACCENT_RGB2, 0.3)};`,
+    `--color-card-selected:${rgba(ACCENT_RGB, visible ? 0.26 : 0.22)};`,
+    `--color-card-border:${rgba(ACCENT_RGB, 0.3)};`,
     `--color-popover:${rgba(p2.popoverRgb, popoverAlpha)};`,
-    `--color-popover-foreground:${p2.text};`,
+    `--color-popover-foreground:${p2.popoverText};`,
     `--color-popover-header:${rgba(p2.panelAltRgb, popoverAlpha)};`,
-    `--color-popover-border:${rgba(ACCENT_RGB2, 0.32)};`,
+    `--color-popover-border:${rgba(ACCENT_RGB, 0.32)};`,
     `--color-menu:${rgba(p2.popoverRgb, popoverAlpha)};`,
-    `--color-menu-hover:${rgba(ACCENT_RGB2, 0.2)};`,
+    `--color-menu-hover:${rgba(ACCENT_RGB, 0.2)};`,
     `--color-tab:${rgba(p2.panelRgb, panelAlpha)};`,
     `--color-tab-active:${rgba(p2.raisedRgb, surfaceAlpha)};`,
-    `--color-tab-border:${rgba(ACCENT_RGB2, 0.3)};`,
-    `--color-input:${rgba(p2.deep, inputAlpha)};`,
-    `--color-input-focused:${rgba(p2.deep, clamp012(inputAlpha + 0.2))};`,
-    `--color-input-border:${rgba(ACCENT_RGB2, 0.32)};`,
-    `--color-input-border-hover:${rgba(ACCENT_RGB2, 0.5)};`,
+    `--color-tab-border:${rgba(ACCENT_RGB, 0.3)};`,
+    `--color-input:${rgba(p2.deepRgb, inputAlpha)};`,
+    `--color-input-focused:${rgba(p2.deepRgb, clamp012(inputAlpha + 0.2))};`,
+    `--color-input-border:${rgba(ACCENT_RGB, 0.32)};`,
+    `--color-input-border-hover:${rgba(ACCENT_RGB, 0.5)};`,
     `--color-input-border-focused:${p2.accent};`,
     `--color-foreground:${p2.text};`,
     `--color-foreground-subtle:${p2.muted};`,
     `--color-foreground-subtlest:${rgba(MUTED_RGB, 0.72)};`,
     `--color-foreground-inverse:${p2.background};`,
     `--color-primary:${p2.accent};`,
-    `--color-primary-foreground:${p2.background};`,
-    `--color-secondary:${rgba(ACCENT_RGB2, 0.16)};`,
+    `--color-primary-foreground:${p2.onAccent};`,
+    `--color-secondary:${rgba(ACCENT_RGB, 0.16)};`,
     `--color-accent:${p2.warning};`,
     `--color-brand:${p2.accent};`,
-    `--color-border:${rgba(ACCENT_RGB2, 0.28)};`,
-    `--color-border-hover:${rgba(ACCENT_RGB2, 0.5)};`,
-    `--color-border-color-interactive:${rgba(ACCENT_RGB2, 0.36)};`,
-    `--color-border-color-interactive-hover:${rgba(ACCENT_RGB2, 0.6)};`,
+    `--color-border:${rgba(ACCENT_RGB, 0.28)};`,
+    `--color-border-hover:${rgba(ACCENT_RGB, 0.5)};`,
+    `--color-border-color-interactive:${rgba(ACCENT_RGB, 0.36)};`,
+    `--color-border-color-interactive-hover:${rgba(ACCENT_RGB, 0.6)};`,
     `--color-border-color-interactive-active:${p2.accent};`,
-    `--divider-color:${rgba(ACCENT_RGB2, 0.2)};`,
-    `--color-find-highlight:${rgba(ACCENT_RGB2, 0.3)};`,
-    `--color-find-highlight-active:${rgba(ACCENT_RGB2, 0.5)};`,
-    `--color-tag:${rgba(ACCENT_RGB2, 0.14)};`,
+    `--divider-color:${rgba(ACCENT_RGB, 0.2)};`,
+    `--color-find-highlight:${rgba(ACCENT_RGB, 0.3)};`,
+    `--color-find-highlight-active:${rgba(ACCENT_RGB, 0.5)};`,
+    `--color-tag:${rgba(ACCENT_RGB, 0.14)};`,
     // Inline code only gets a warm chip; the syntax palette is untouched.
-    `--color-markdown-inline-code:${rgba(ACCENT_RGB2, 0.12)};`,
+    `--color-markdown-inline-code:${rgba(ACCENT_RGB, 0.12)};`,
     `--color-tooltip:${rgba(p2.popoverRgb, visible ? 0.97 : 1)};`,
-    `--color-tooltip-foreground:${p2.text};`,
+    `--color-tooltip-foreground:${p2.popoverText};`,
     `--color-toast:${rgba(p2.popoverRgb, visible ? 0.97 : 1)};`,
     `--color-terminal-bg:${p2.deep};`,
     `--color-terminal-fg:${p2.text};`,
     // Local hooks for the component skin below; not ZCode tokens.
     `--tarkov-accent:${p2.accent};`,
-    `--tarkov-accent-soft:${rgba(ACCENT_RGB2, visible ? 0.2 : 0.16)};`,
-    `--tarkov-hover:${rgba(ACCENT_RGB2, visible ? 0.18 : 0.14)};`,
+    `--tarkov-accent-soft:${rgba(ACCENT_RGB, visible ? 0.2 : 0.16)};`,
+    `--tarkov-hover:${rgba(ACCENT_RGB, visible ? 0.18 : 0.14)};`,
     `--tarkov-highlight:${p2.highlight};`,
-    `--tarkov-panel-border:${rgba(ACCENT_RGB2, 0.3)};`,
+    `--tarkov-panel-border:${rgba(ACCENT_RGB, 0.3)};`,
     opts.dim > 0 ? `--zcode-beautify-dim:${opts.dim / 100};` : ""
   ].filter(Boolean);
 }
@@ -110124,7 +110419,118 @@ function buildTarkovVariableOverrides(opts) {
   return `${LIGHT_SCOPES}{${rows}}
 ${DARK_SCOPES}{${rows}}`;
 }
-function buildTarkovComponentCss() {
+function greetingCss(p2, greeting) {
+  const ACCENT_RGB = p2.accentRgb;
+  return `
+/* Tarkov: the empty-chat beta notice.
+ *
+ * Visual language is dsh-theme-tarkov's own #tarkov-beta-banner (MIT; see
+ * THIRD_PARTY_NOTICES.md): a translucent orange warning band, a dark hexagonal
+ * "!" badge and two black lines \u2014 nothing else, no plate, no frame, no blur.
+ * Its fixed pixel sizes are re-expressed against ZCode's greeting font-size
+ * variable, so at that variable's 30px default they resolve to the reference
+ * values: badge 43.5x37.5 (reference 42x36), line 1 18px/700, line 2 15px/400,
+ * both #111111 with the reference's 1.5px letter-spacing and 5px line gap.
+ *
+ * Anchor: p[data-v4-draft-greeting="true"] \u2014 a semantic data attribute emitted by
+ * ZCode's own empty-chat component (verified live; see docs/dev/zcode-dom-notes.md).
+ * No hashed class names are involved.
+ *
+ * The element becomes the band itself, so no extra DOM is created and there is
+ * nothing to tear down. ZCode's own visible greeting span becomes the text
+ * column: its text is never rewritten, only collapsed to zero size, and the two
+ * lines are drawn by that span's pseudo-elements. Dropping the stylesheet \u2014
+ * which is exactly what leaving Tarkov mode does \u2014 restores the real greeting
+ * byte for byte.
+ *
+ * Every rule also requires that two-span structure (the aria-hidden measuring
+ * span plus the visible one) through :has(), and targets only the last span, so
+ * if that markup ever changes the whole notice stops matching and the stock
+ * greeting is drawn instead of a half-painted band. Nothing here can duplicate
+ * itself either. The element only mounts on the empty-chat screen, so opening a
+ * real session stops matching too.
+ */
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-sizing: border-box;
+  width: min(94%, 720px);
+  margin: 18px auto 10px;
+  padding: 15px 22px 15px 16px;
+  border-radius: 6px;
+  text-align: left;
+  /* The band itself. One knob for its strength, as in the reference project,
+     which ships the same variable \u2014 at 0.55, its own default.
+   Measured on a real renderer over ZCode's empty-chat backdrop, the painted
+   band is rgb(160,86,35) at 0.55 and rgb(171,94,37) at 0.62, against #111111
+   text: 3.5:1 and 3.9:1, so both clear the 3:1 large-text bar.
+   v0.2 raises the accent itself (see themes/palette.ts), which raises the band
+   with it: the hue is unchanged, the band is still translucent, and the ink on
+   it gains contrast rather than losing it.
+   The --zct-banner-opacity variable remains the single knob for tuning it. */
+  background: rgba(${ACCENT_RGB}, var(--zct-banner-opacity, 0.62));
+}
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child)::before {
+  /* The warning badge: the reference's hexagon, cut from the deepest surface
+     tone with the accent as the glyph colour. */
+  content: "!";
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--v4-draft-greeting-font-size, 30px) * 1.45);
+  height: calc(var(--v4-draft-greeting-font-size, 30px) * 1.25);
+  background: ${p2.background};
+  color: ${p2.accent};
+  font-weight: 800;
+  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.8);
+  line-height: 1;
+  font-family: system-ui, "Microsoft YaHei", sans-serif;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child {
+  /* ZCode's own greeting span doubles as the notice's text column: collapsed to
+     zero size so its text cannot paint, but never emptied, so the real greeting
+     is still in the DOM to come back to. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  font-size: 0;
+  line-height: 0;
+}
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child::before {
+  content: ${cssString(greeting.line1)};
+  display: block;
+  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.6);
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 1.5px;
+  color: ${p2.bandInk};
+}
+p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child::after {
+  content: ${cssString(greeting.line2)};
+  display: block;
+  /* The reference project's 5px gap between the two lines, at ZCode's scale. */
+  margin-top: calc(var(--v4-draft-greeting-font-size, 30px) * 0.1667);
+  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.5);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1.5px;
+  color: ${p2.bandInk};
+}
+p[data-v4-draft-greeting="true"] > span[aria-hidden="true"] {
+  /* ZCode keeps this one purely to measure the greeting's width, so its box has
+     to survive (no display: none); it is only made non-painting. */
+  visibility: hidden;
+}
+`.trim();
+}
+function buildTarkovComponentCss(opts = {}) {
+  const p2 = opts.palette ?? TARKOV_PALETTE;
+  const ACCENT_RGB = p2.accentRgb;
+  const greetingBlock = opts.greeting === null ? "" : greetingCss(p2, opts.greeting ?? DEFAULT_GREETING);
   const containerSlots = [
     '[data-slot="card"]',
     '[data-slot="dialog-content"]',
@@ -110188,144 +110594,33 @@ ${itemActive} {
 [data-slot="progress-indicator"] { background-color: var(--tarkov-accent); }
 [data-slot="switch"][data-state="checked"] { background-color: var(--color-primary); }
 
-/* Tarkov: the empty-chat beta notice.
- *
- * Visual language is dsh-theme-tarkov's own #tarkov-beta-banner (MIT; see
- * THIRD_PARTY_NOTICES.md): a translucent orange warning band, a dark hexagonal
- * "!" badge and two black lines \u2014 nothing else, no plate, no frame, no blur.
- * Its fixed pixel sizes are re-expressed against ZCode's greeting font-size
- * variable, so at that variable's 30px default they resolve to the reference
- * values: badge 43.5x37.5 (reference 42x36), line 1 18px/700, line 2 15px/400,
- * both #111111 with the reference's 1.5px letter-spacing and 5px line gap.
- *
- * Anchor: p[data-v4-draft-greeting="true"] \u2014 a semantic data attribute emitted by
- * ZCode's own empty-chat component (verified live; see docs/dev/zcode-dom-notes.md).
- * No hashed class names are involved.
- *
- * The element becomes the band itself, so no extra DOM is created and there is
- * nothing to tear down. ZCode's own visible greeting span becomes the text
- * column: its text is never rewritten, only collapsed to zero size, and the two
- * lines are drawn by that span's pseudo-elements. Dropping the stylesheet \u2014
- * which is exactly what leaving Tarkov mode does \u2014 restores the real greeting
- * byte for byte.
- *
- * Every rule also requires that two-span structure (the aria-hidden measuring
- * span plus the visible one) through :has(), and targets only the last span, so
- * if that markup ever changes the whole notice stops matching and the stock
- * greeting is drawn instead of a half-painted band. Nothing here can duplicate
- * itself either. The element only mounts on the empty-chat screen, so opening a
- * real session stops matching too.
- */
-p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  box-sizing: border-box;
-  width: min(94%, 720px);
-  margin: 18px auto 10px;
-  padding: 15px 22px 15px 16px;
-  border-radius: 6px;
-  text-align: left;
-  /* The band itself. One knob for its strength, as in the reference project,
-     which ships the same variable \u2014 at 0.55, its own default.
-     Measured on a real renderer over ZCode's empty-chat backdrop, the painted
-     band is rgb(160,86,35) at 0.55 and rgb(171,94,37) at 0.62, against #111111
-     text: 3.5:1 and 3.9:1, so both clear the 3:1 large-text bar.
-     Shipped at the top of the agreed 0.45-0.62 range (0.62) because the owner
-     read the 0.55 band as slightly dark on a real display: the hue and RGB stay
-     #e07930, only the strength changes, and the band is still translucent.
-     The --zct-banner-opacity variable remains the single knob for tuning it. */
-  background: rgba(224, 121, 48, var(--zct-banner-opacity, 0.62));
-}
-p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child)::before {
-  /* The warning badge: the reference's hexagon, cut from the deepest surface
-     tone with the accent as the glyph colour. */
-  content: "!";
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: calc(var(--v4-draft-greeting-font-size, 30px) * 1.45);
-  height: calc(var(--v4-draft-greeting-font-size, 30px) * 1.25);
-  background: #1c1207;
-  color: #e07930;
-  font-weight: 800;
-  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.8);
-  line-height: 1;
-  font-family: system-ui, "Microsoft YaHei", sans-serif;
-  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-}
-p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child {
-  /* ZCode's own greeting span doubles as the notice's text column: collapsed to
-     zero size so its text cannot paint, but never emptied, so the real greeting
-     is still in the DOM to come back to. */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-  font-size: 0;
-  line-height: 0;
-}
-p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child::before {
-  content: ${cssString(TARKOV_GREETING.line1)};
-  display: block;
-  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.6);
-  font-weight: 700;
-  line-height: 1.5;
-  letter-spacing: 1.5px;
-  color: #111111;
-}
-p[data-v4-draft-greeting="true"]:has(> span:not([aria-hidden]):last-child) > span:not([aria-hidden]):last-child::after {
-  content: ${cssString(TARKOV_GREETING.line2)};
-  display: block;
-  /* The reference project's 5px gap between the two lines, at ZCode's scale. */
-  margin-top: calc(var(--v4-draft-greeting-font-size, 30px) * 0.1667);
-  font-size: calc(var(--v4-draft-greeting-font-size, 30px) * 0.5);
-  font-weight: 400;
-  line-height: 1.5;
-  letter-spacing: 1.5px;
-  color: #111111;
-}
-p[data-v4-draft-greeting="true"] > span[aria-hidden="true"] {
-  /* ZCode keeps this one purely to measure the greeting's width, so its box has
-     to survive (no display: none); it is only made non-painting. */
-  visibility: hidden;
-}
+${greetingBlock}
 
 /* Deliberately NOT styled: code blocks, success/warning/destructive states,
    git/diff colors. Readability and semantics outrank the theme. */
 `.trim();
 }
-var TARKOV_PALETTE, ACCENT_RGB2, MUTED_RGB, TARKOV_GREETING;
+var TARKOV_PALETTE, TARKOV_GREETING, DEFAULT_GREETING;
 var init_tarkov = __esm({
   "dist/themes/tarkov.js"() {
     "use strict";
     init_tokenScopes();
-    TARKOV_PALETTE = {
-      accent: "#e07930",
-      deep: "#140d04",
-      background: "#1c1207",
-      panelRgb: "26, 18, 10",
-      panelAltRgb: "30, 20, 10",
-      raisedRgb: "42, 29, 16",
-      popoverRgb: "46, 32, 18",
-      text: "#e8d9c8",
-      highlight: "#ffd7ae",
-      warning: "#ffb27a",
-      muted: "#8b877c"
-    };
-    ACCENT_RGB2 = "224, 121, 48";
-    MUTED_RGB = "139, 135, 124";
+    init_palette();
+    TARKOV_PALETTE = DEFAULT_PALETTE;
     TARKOV_GREETING = {
       line1: "\u6CE8\u610F\uFF01\u8FD9\u662F\u201CZCode\u201D\u7684Beta\u6D4B\u8BD5\u7248\u672C\u3002",
       line2: "Beta\u6D4B\u8BD5\u7248\u672C\u4E0D\u4EE3\u8868\u672C\u4EA7\u54C1\u7684\u6700\u7EC8\u8D28\u91CF\u3002\u611F\u8C22\u60A8\u7684\u7406\u89E3\u548C\u652F\u6301\uFF0C\u795D\u4F60\u597D\u8FD0\uFF01"
+    };
+    DEFAULT_GREETING = {
+      line1: TARKOV_GREETING.line1,
+      line2: TARKOV_GREETING.line2
     };
   }
 });
 
 // dist/core/colorMode.js
 function isColorMode(value) {
-  return typeof value === "string" && COLOR_MODES.includes(value);
+  return typeof value === "string" && COLOR_MODES2.includes(value);
 }
 function migrateColorMode(stored) {
   if (isColorMode(stored?.colorMode))
@@ -110337,15 +110632,11 @@ function migrateColorMode(stored) {
 function legacyMonetFlag(mode) {
   return mode === "monet";
 }
-function withColorMode(stored) {
-  const mode = migrateColorMode(stored);
-  return { ...stored, colorMode: mode, monet: legacyMonetFlag(mode) };
-}
-var COLOR_MODES, DEFAULT_COLOR_MODE;
+var COLOR_MODES2, DEFAULT_COLOR_MODE;
 var init_colorMode = __esm({
   "dist/core/colorMode.js"() {
     "use strict";
-    COLOR_MODES = ["monet", "tarkov", "native"];
+    COLOR_MODES2 = ["monet", "tarkov", "native"];
     DEFAULT_COLOR_MODE = "monet";
   }
 });
@@ -110358,14 +110649,20 @@ function resolveBanner(config) {
   if (resolveColorMode(config) !== "tarkov")
     return null;
   const banner = config.banner ?? DEFAULT_BANNER;
-  return banner.enabled ? banner : null;
+  if (resolveBannerMode(banner) === "off")
+    return null;
+  const palette2 = resolvePalette({ background: config.background, accent: config.accent });
+  const bandRgb = parseHex(palette2.background) ?? parseHex(TARKOV_BACKGROUND);
+  const surface = roundRgb(compositeOver(parseHex(palette2.accent), bandRgb, banner.opacity));
+  const accentInk = toHex(ensureContrast(readableInk(surface, [parseHex(TARKOV_INK), { r: 255, g: 255, b: 255 }]), surface, 4.5));
+  return { ...banner, accent: palette2.accent, accentRgb: palette2.accentRgb, accentInk };
 }
 function buildPayload(config, assets) {
   const parts = [];
   const resolved = config.fit === "smart" ? assets?.focus.fit ?? "cover" : config.fit === "contain" ? "contain" : "cover";
   const focusX = config.fit === "smart" ? assets?.focus.x ?? 0.5 : 0.5;
   const focusY = config.fit === "smart" ? assets?.focus.y ?? 0.5 : 0.5;
-  const position = `${Math.round(focusX * 100)}% ${Math.round(focusY * 100)}%`;
+  const position2 = `${Math.round(focusX * 100)}% ${Math.round(focusY * 100)}%`;
   parts.push(`
 html, body { background: transparent !important; }
 #zcode-beautify-wallpaper {
@@ -110373,7 +110670,7 @@ html, body { background: transparent !important; }
   inset: 0;
   z-index: -2147483646;
   background-size: ${resolved};
-  background-position: ${resolved === "contain" ? "center" : position};
+  background-position: ${resolved === "contain" ? "center" : position2};
   background-repeat: no-repeat;
   pointer-events: none;
   filter: blur(${config.blur}px);
@@ -110402,11 +110699,18 @@ html, body { background: transparent !important; }
   }
   const mode = resolveColorMode(config);
   if (mode === "tarkov") {
+    const palette2 = resolvePalette({ background: config.background, accent: config.accent });
     parts.push(buildTarkovVariableOverrides({
       dim: config.dim,
-      wallpaperVisible: config.wallpaperVisible
+      wallpaperVisible: config.wallpaperVisible,
+      palette: palette2
     }));
-    parts.push(buildTarkovComponentCss());
+    parts.push(buildTarkovComponentCss({
+      palette: palette2,
+      // Null omits the notice's rules entirely, which is what brings ZCode's
+      // own greeting back.
+      greeting: config.greeting.enabled ? { line1: config.greeting.line1, line2: config.greeting.line2 } : null
+    }));
   } else if (mode === "monet") {
     if (assets) {
       parts.push(buildVariableOverrides(assets.theme, {
@@ -110468,6 +110772,8 @@ var init_inject = __esm({
     init_tarkov();
     init_colorMode();
     init_banner();
+    init_palette();
+    init_tarkov();
     DEFAULT_CONFIG = {
       port: 9222,
       blur: 0,
@@ -110476,70 +110782,714 @@ var init_inject = __esm({
       colorMode: DEFAULT_COLOR_MODE,
       wallpaperVisible: true,
       fit: "cover",
-      banner: DEFAULT_BANNER
+      banner: DEFAULT_BANNER,
+      background: DEFAULT_PALETTE.background,
+      accent: DEFAULT_PALETTE.accent,
+      greeting: { enabled: true, ...DEFAULT_GREETING }
     };
+  }
+});
+
+// dist/core/dataRoot.js
+import fs3 from "node:fs";
+import os from "node:os";
+import path from "node:path";
+function dataRootOverride() {
+  const raw = process.env[DATA_DIR_ENV];
+  return raw && raw.trim().length > 0 ? path.resolve(raw.trim()) : void 0;
+}
+function platformBase() {
+  const home = os.homedir();
+  if (process.platform === "win32") {
+    const local = process.env.LOCALAPPDATA;
+    return local && local.trim().length > 0 ? local : path.join(home, "AppData", "Local");
+  }
+  if (process.platform === "darwin")
+    return path.join(home, "Library", "Application Support");
+  const xdg = process.env.XDG_DATA_HOME;
+  return xdg && xdg.trim().length > 0 ? xdg : path.join(home, ".local", "share");
+}
+function dataRoot() {
+  return dataRootOverride() ?? path.join(platformBase(), APP_DIR_NAME, "data");
+}
+function mediaDir(kind) {
+  return path.join(dataRoot(), kind);
+}
+function prefsFile() {
+  return path.join(dataRoot(), "prefs.json");
+}
+function ensureDataRoot() {
+  const root = dataRoot();
+  fs3.mkdirSync(root, { recursive: true });
+  for (const kind of MEDIA_KINDS)
+    fs3.mkdirSync(path.join(root, kind), { recursive: true });
+  return root;
+}
+var DATA_DIR_ENV, APP_DIR_NAME;
+var init_dataRoot = __esm({
+  "dist/core/dataRoot.js"() {
+    "use strict";
+    init_types();
+    DATA_DIR_ENV = "ZCODE_TARKOV_DATA_DIR";
+    APP_DIR_NAME = "zcode-tarkov";
+  }
+});
+
+// dist/media/paths.js
+import fs4 from "node:fs";
+import path2 from "node:path";
+function isMediaKind(value) {
+  return typeof value === "string" && MEDIA_KINDS.includes(value);
+}
+function isSafeBasename(name) {
+  if (typeof name !== "string")
+    return false;
+  if (name.length === 0 || name.length > 200)
+    return false;
+  if (name === "." || name === "..")
+    return false;
+  if (name.includes("/") || name.includes("\\") || name.includes("\0"))
+    return false;
+  if (name.includes(":"))
+    return false;
+  if (/[. ]$/.test(name))
+    return false;
+  if (/[\u0000-\u001f\u007f]/.test(name))
+    return false;
+  return true;
+}
+function sanitizeFilename(input, fallback = "track") {
+  let raw = typeof input === "string" ? input : "";
+  raw = raw.split(/[\\/]/).pop() ?? "";
+  raw = raw.replace(/[\u0000-\u001f\u007f]/g, "").trim();
+  raw = raw.replace(/[<>:"|?*]/g, "_");
+  raw = raw.replace(/^\.+/, "").replace(/[. ]+$/, "");
+  if (raw.length === 0)
+    raw = fallback;
+  if (raw.length > 160) {
+    const ext = path2.extname(raw).slice(0, 16);
+    raw = raw.slice(0, 160 - ext.length) + ext;
+  }
+  return raw;
+}
+function extensionOf(name) {
+  return path2.extname(name).toLowerCase();
+}
+function contentTypeFor(name, kind) {
+  const ext = extensionOf(name);
+  if (kind === "pet")
+    return IMAGE_CONTENT_TYPES[ext];
+  if (kind === "status")
+    return TEXT_CONTENT_TYPES[ext];
+  if (kind === "music" || kind === "sounds" || kind === "voice")
+    return MEDIA_CONTENT_TYPES[ext];
+  return MEDIA_CONTENT_TYPES[ext] ?? IMAGE_CONTENT_TYPES[ext] ?? TEXT_CONTENT_TYPES[ext];
+}
+function isAllowedForKind(name, kind) {
+  return contentTypeFor(name, kind) !== void 0;
+}
+function resolveMediaFile(kind, basename) {
+  if (!isSafeBasename(basename)) {
+    throw new UnsafePathError("invalid file name");
+  }
+  const dir = mediaDir(kind);
+  const candidate = path2.join(dir, basename);
+  let realDir;
+  let realFile;
+  try {
+    realDir = fs4.realpathSync(dir);
+    realFile = fs4.realpathSync(candidate);
+  } catch {
+    throw new UnsafePathError("file not found");
+  }
+  const rel = path2.relative(realDir, realFile);
+  if (rel.length === 0 || rel.startsWith("..") || path2.isAbsolute(rel)) {
+    throw new UnsafePathError("file is outside the media directory");
+  }
+  let stat;
+  try {
+    stat = fs4.statSync(realFile);
+  } catch {
+    throw new UnsafePathError("file not found");
+  }
+  if (!stat.isFile())
+    throw new UnsafePathError("not a regular file");
+  if (path2.basename(realFile).toLowerCase() !== basename.toLowerCase()) {
+    throw new UnsafePathError("file name does not resolve to itself");
+  }
+  return realFile;
+}
+function listMediaFiles(kind) {
+  let entries;
+  try {
+    entries = fs4.readdirSync(mediaDir(kind));
+  } catch {
+    return [];
+  }
+  const out = [];
+  for (const name of entries) {
+    if (!isSafeBasename(name))
+      continue;
+    if (!isAllowedForKind(name, kind))
+      continue;
+    try {
+      if (!fs4.lstatSync(path2.join(mediaDir(kind), name)).isFile())
+        continue;
+    } catch {
+      continue;
+    }
+    out.push(name);
+  }
+  out.sort((a2, b) => a2.localeCompare(b, "en"));
+  return out;
+}
+var MEDIA_CONTENT_TYPES, IMAGE_CONTENT_TYPES, TEXT_CONTENT_TYPES, UnsafePathError;
+var init_paths = __esm({
+  "dist/media/paths.js"() {
+    "use strict";
+    init_dataRoot();
+    init_types();
+    MEDIA_CONTENT_TYPES = {
+      ".mp3": "audio/mpeg",
+      ".wav": "audio/wav",
+      ".ogg": "audio/ogg",
+      ".oga": "audio/ogg",
+      ".m4a": "audio/mp4",
+      ".aac": "audio/aac",
+      ".flac": "audio/flac",
+      ".webm": "audio/webm",
+      ".opus": "audio/ogg"
+    };
+    IMAGE_CONTENT_TYPES = {
+      ".png": "image/png",
+      ".webp": "image/webp",
+      ".gif": "image/gif",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg"
+    };
+    TEXT_CONTENT_TYPES = {
+      ".txt": "text/plain"
+    };
+    UnsafePathError = class extends Error {
+    };
+  }
+});
+
+// dist/prefs/defaults.js
+function defaultBanner() {
+  return {
+    // v0.1 always showed the band; v0.2 keeps that as the default, and the
+    // switch exists so a user who finds it noisy can remove it completely.
+    mode: "full",
+    text1: DEFAULT_BANNER_TEXT2.line1,
+    text2: DEFAULT_BANNER_TEXT2.line2,
+    height: 56,
+    opacity: 0.92
+  };
+}
+function defaultPrefs() {
+  return {
+    version: PREFS_VERSION,
+    appearance: {
+      colorMode: "tarkov",
+      wallpaperVisible: false,
+      blur: 0,
+      dim: 22,
+      fit: "cover",
+      wallpaperPath: void 0,
+      banner: defaultBanner(),
+      // The shipped colours. While these two are unchanged the theme renders the
+      // hand-tuned palette byte-for-byte; a derivation only runs once the user
+      // actually picks a colour, so upgrading cannot shift anyone's theme.
+      background: TARKOV_BACKGROUND,
+      accent: TARKOV_ACCENT,
+      greeting: {
+        enabled: true,
+        line1: DEFAULT_GREETING.line1,
+        line2: DEFAULT_GREETING.line2
+      }
+    },
+    audio: {
+      enabled: true,
+      masterVolume: 0.7,
+      bgm: {
+        enabled: true,
+        volume: 0.35,
+        shuffle: true,
+        repeat: "all",
+        trackId: void 0,
+        disabledTracks: []
+      },
+      sfx: {
+        enabled: true,
+        volume: 0.55,
+        // Every event starts on; `tool` is the noisy one and can be switched off
+        // from the panel without touching the other four.
+        events: { start: true, approval: true, done: true, error: true, tool: true }
+      },
+      voice: {
+        enabled: true,
+        volume: 0.75,
+        chance: 1
+      }
+    },
+    pet: {
+      enabled: true,
+      scale: 84,
+      opacity: 0.95,
+      position: void 0,
+      voiceOnClick: true
+    },
+    status: {
+      // Off by default, unlike every other subsystem, and for a specific
+      // reason rather than caution in general: ZCode 3.12.3 exposes no stable
+      // handle on the element that carries the running status text, so the
+      // takeover resolves it structurally and cannot be proven safe on every
+      // build. A feature that might not act is better shipped off, labelled in
+      // the settings centre, and turned on deliberately — the alternative is a
+      // silent no-op that users report as a bug. See
+      // docs/dev/zcode-runtime-signals.md §3.6.
+      enabled: false,
+      language: "zh",
+      triggers: { reasoning: true, tool: true, progress: true },
+      anyTheme: false
+    }
+  };
+}
+var DEFAULT_BANNER_TEXT2;
+var init_defaults = __esm({
+  "dist/prefs/defaults.js"() {
+    "use strict";
+    init_palette();
+    init_tarkov();
+    init_types();
+    DEFAULT_BANNER_TEXT2 = {
+      line1: "ATTENTION! ZCODE TACTICAL INTERFACE ACTIVE",
+      line2: "Experimental interface. Verify your task, tool calls and working tree before deployment."
+    };
+  }
+});
+
+// dist/prefs/prefs.js
+import fs5 from "node:fs";
+import path3 from "node:path";
+function readJson(file) {
+  try {
+    const raw = fs5.readFileSync(file, "utf8").replace(/^\uFEFF/, "");
+    return JSON.parse(raw);
+  } catch {
+    return void 0;
+  }
+}
+function isRecord(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+function clampNumber(value, min, max, fallback) {
+  const n2 = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n2))
+    return fallback;
+  return Math.min(max, Math.max(min, n2));
+}
+function oneOf(value, allowed, fallback) {
+  return typeof value === "string" && allowed.includes(value) ? value : fallback;
+}
+function boolOr(value, fallback) {
+  return typeof value === "boolean" ? value : fallback;
+}
+function text(value, maxLength, fallback) {
+  if (typeof value !== "string")
+    return fallback;
+  const cleaned = value.replace(/[\u0000-\u001f\u007f]/g, "").trim();
+  if (cleaned.length === 0)
+    return fallback;
+  return cleaned.length > maxLength ? cleaned.slice(0, maxLength) : cleaned;
+}
+function position(value) {
+  if (!isRecord(value))
+    return void 0;
+  const x2 = Number(value.x);
+  const y2 = Number(value.y);
+  if (!Number.isFinite(x2) || !Number.isFinite(y2))
+    return void 0;
+  return { x: Math.round(x2), y: Math.round(y2) };
+}
+function nameList(value, limit = 2e3) {
+  if (!Array.isArray(value))
+    return [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const entry of value) {
+    if (typeof entry !== "string")
+      continue;
+    if (!isSafeBasename(entry))
+      continue;
+    seen.add(entry);
+    if (seen.size >= limit)
+      break;
+  }
+  return [...seen];
+}
+function eventSwitches(value, allowed, fallback) {
+  const out = {};
+  for (const key of allowed) {
+    out[key] = isRecord(value) && typeof value[key] === "boolean" ? value[key] : fallback[key] !== false;
+  }
+  return out;
+}
+function validateBanner(raw) {
+  const d = defaultBanner();
+  if (!isRecord(raw))
+    return d;
+  return {
+    mode: oneOf(raw.mode, BANNER_MODES, d.mode),
+    text1: text(raw.text1, 240, d.text1),
+    text2: text(raw.text2, 400, d.text2),
+    height: Math.round(clampNumber(raw.height, 24, 160, d.height)),
+    opacity: clampNumber(raw.opacity, 0, 1, d.opacity)
+  };
+}
+function color(value, fallback) {
+  const parsed = parseHex(value);
+  return parsed ? toHex(parsed) : fallback;
+}
+function validateGreeting(raw) {
+  const d = defaultPrefs().appearance.greeting;
+  if (!isRecord(raw))
+    return d;
+  return {
+    enabled: boolOr(raw.enabled, d.enabled),
+    line1: text(raw.line1, 240, d.line1),
+    line2: text(raw.line2, 400, d.line2)
+  };
+}
+function validateAppearance(raw) {
+  const d = defaultPrefs().appearance;
+  if (!isRecord(raw))
+    return d;
+  const wallpaperPath = typeof raw.wallpaperPath === "string" && raw.wallpaperPath.trim().length > 0 ? raw.wallpaperPath : void 0;
+  return {
+    colorMode: oneOf(raw.colorMode, COLOR_MODES, d.colorMode),
+    wallpaperVisible: boolOr(raw.wallpaperVisible, d.wallpaperVisible),
+    blur: clampNumber(raw.blur, 0, 100, d.blur),
+    dim: clampNumber(raw.dim, 0, 100, d.dim),
+    fit: oneOf(raw.fit, WALLPAPER_FITS, d.fit),
+    wallpaperPath,
+    banner: validateBanner(raw.banner),
+    background: color(raw.background, d.background),
+    accent: color(raw.accent, d.accent),
+    greeting: validateGreeting(raw.greeting)
+  };
+}
+function validateAudio(raw) {
+  const d = defaultPrefs().audio;
+  if (!isRecord(raw))
+    return d;
+  const bgm = isRecord(raw.bgm) ? raw.bgm : {};
+  const sfx = isRecord(raw.sfx) ? raw.sfx : {};
+  const voice = isRecord(raw.voice) ? raw.voice : {};
+  return {
+    enabled: boolOr(raw.enabled, d.enabled),
+    masterVolume: clampNumber(raw.masterVolume, 0, 1, d.masterVolume),
+    bgm: {
+      enabled: boolOr(bgm.enabled, d.bgm.enabled),
+      volume: clampNumber(bgm.volume, 0, 1, d.bgm.volume),
+      shuffle: boolOr(bgm.shuffle, d.bgm.shuffle),
+      repeat: bgm.repeat === "one" ? "one" : d.bgm.repeat,
+      trackId: typeof bgm.trackId === "string" && bgm.trackId.length > 0 ? bgm.trackId : void 0,
+      disabledTracks: nameList(bgm.disabledTracks)
+    },
+    sfx: {
+      enabled: boolOr(sfx.enabled, d.sfx.enabled),
+      volume: clampNumber(sfx.volume, 0, 1, d.sfx.volume),
+      events: eventSwitches(sfx.events, SFX_EVENTS, d.sfx.events)
+    },
+    voice: {
+      enabled: boolOr(voice.enabled, d.voice.enabled),
+      volume: clampNumber(voice.volume, 0, 1, d.voice.volume),
+      chance: clampNumber(voice.chance, 0, 1, d.voice.chance)
+    }
+  };
+}
+function validatePet(raw) {
+  const d = defaultPrefs().pet;
+  if (!isRecord(raw))
+    return d;
+  return {
+    enabled: boolOr(raw.enabled, d.enabled),
+    scale: Math.round(clampNumber(raw.scale, 24, 320, d.scale)),
+    opacity: clampNumber(raw.opacity, 0.1, 1, d.opacity),
+    position: position(raw.position),
+    voiceOnClick: boolOr(raw.voiceOnClick, d.voiceOnClick)
+  };
+}
+function validateStatus(raw) {
+  const d = defaultPrefs().status;
+  if (!isRecord(raw))
+    return d;
+  return {
+    enabled: boolOr(raw.enabled, d.enabled),
+    language: oneOf(raw.language, STATUS_LANGUAGES, d.language),
+    triggers: eventSwitches(raw.triggers, STATUS_TRIGGERS, d.triggers),
+    anyTheme: boolOr(raw.anyTheme, d.anyTheme)
+  };
+}
+function validatePrefs(raw) {
+  if (!isRecord(raw))
+    return defaultPrefs();
+  return {
+    version: PREFS_VERSION,
+    appearance: validateAppearance(raw.appearance),
+    audio: validateAudio(raw.audio),
+    pet: validatePet(raw.pet),
+    status: validateStatus(raw.status)
+  };
+}
+function migrateV01Appearance(legacy) {
+  const d = defaultPrefs().appearance;
+  if (!isRecord(legacy))
+    return d;
+  const legacyBanner = isRecord(legacy.banner) ? legacy.banner : void 0;
+  const banner = legacyBanner ? {
+    mode: legacyBanner.enabled === false ? "off" : "full",
+    text1: text(legacyBanner.text1, 240, d.banner.text1),
+    text2: text(legacyBanner.text2, 400, d.banner.text2),
+    height: Math.round(clampNumber(legacyBanner.height, 24, 160, d.banner.height)),
+    opacity: clampNumber(legacyBanner.opacity, 0, 1, d.banner.opacity)
+  } : d.banner;
+  const colorMode = legacy.colorMode !== void 0 ? oneOf(legacy.colorMode, COLOR_MODES, d.colorMode) : typeof legacy.monet === "boolean" ? legacy.monet ? "monet" : "native" : d.colorMode;
+  return {
+    colorMode,
+    wallpaperVisible: boolOr(legacy.wallpaperVisible, d.wallpaperVisible),
+    blur: clampNumber(legacy.blur, 0, 100, d.blur),
+    dim: clampNumber(legacy.dim, 0, 100, d.dim),
+    fit: oneOf(legacy.fit, WALLPAPER_FITS, d.fit),
+    wallpaperPath: typeof legacy.wallpaperPath === "string" && legacy.wallpaperPath.trim().length > 0 ? legacy.wallpaperPath : void 0,
+    banner,
+    // The v0.1 file had no concept of a custom palette or an editable greeting,
+    // so a migrated install keeps the shipped colours and the shipped notice —
+    // which is exactly what it was showing before the upgrade.
+    background: d.background,
+    accent: d.accent,
+    greeting: d.greeting
+  };
+}
+function timestampSuffix() {
+  return (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
+}
+function quarantine(file) {
+  try {
+    if (!fs5.existsSync(file))
+      return void 0;
+    const dest = `${file}.bak-${timestampSuffix()}`;
+    fs5.copyFileSync(file, dest);
+    return dest;
+  } catch {
+    return void 0;
+  }
+}
+function loadPrefs(legacyConfigPath2) {
+  const file = prefsFile();
+  const raw = readJson(file);
+  if (raw === void 0) {
+    if (fs5.existsSync(file)) {
+      const backup = quarantine(file);
+      return {
+        prefs: defaultPrefs(),
+        recovered: { reason: "prefs.json could not be parsed; defaults restored", backup }
+      };
+    }
+    if (legacyConfigPath2 && fs5.existsSync(legacyConfigPath2)) {
+      const legacyRaw = readJson(legacyConfigPath2);
+      if (isRecord(legacyRaw)) {
+        const base = defaultPrefs();
+        return {
+          prefs: { ...base, appearance: migrateV01Appearance(legacyRaw) },
+          migratedFrom: legacyConfigPath2
+        };
+      }
+    }
+    return { prefs: defaultPrefs() };
+  }
+  return { prefs: validatePrefs(raw) };
+}
+function serializePrefs(prefs) {
+  return `${JSON.stringify(prefs, null, 2)}
+`;
+}
+function savePrefs(prefs) {
+  const root = ensureDataRoot();
+  const file = prefsFile();
+  const tmp = path3.join(root, `.prefs.${process.pid}.${Date.now()}.tmp`);
+  fs5.writeFileSync(tmp, serializePrefs(prefs));
+  fs5.renameSync(tmp, file);
+}
+function mediaSubdirs() {
+  return MEDIA_KINDS.map((kind) => ({ kind, path: path3.join(dataRoot(), kind) }));
+}
+var init_prefs = __esm({
+  "dist/prefs/prefs.js"() {
+    "use strict";
+    init_dataRoot();
+    init_paths();
+    init_palette();
+    init_defaults();
+    init_types();
+  }
+});
+
+// dist/prefs/store.js
+function setLegacyConfigPath(file) {
+  legacyConfigPath = file;
+  cached = void 0;
+  loadInfo = void 0;
+}
+function getPrefs() {
+  if (!cached) {
+    loadInfo = loadPrefs(legacyConfigPath);
+    cached = loadInfo.prefs;
+  }
+  return cached;
+}
+function prefsLoadInfo() {
+  getPrefs();
+  return { recovered: loadInfo?.recovered, migratedFrom: loadInfo?.migratedFrom };
+}
+function setPrefs(next) {
+  const validated = validatePrefs(next);
+  savePrefs(validated);
+  cached = validated;
+  return validated;
+}
+var cached, loadInfo, legacyConfigPath;
+var init_store = __esm({
+  "dist/prefs/store.js"() {
+    "use strict";
+    init_prefs();
   }
 });
 
 // dist/core/launch.js
 var launch_exports = {};
 __export(launch_exports, {
-  configFile: () => configFile,
   dataDir: () => dataDir,
   findZcodeExecutable: () => findZcodeExecutable,
+  initSettings: () => initSettings,
   isZcodeProcessRunning: () => isZcodeProcessRunning,
   launchZcode: () => launchZcode,
+  legacyConfigFile: () => legacyConfigFile,
   loadConfig: () => loadConfig,
   readJsonFile: () => readJsonFile,
   relaunchZcode: () => relaunchZcode,
-  saveConfig: () => saveConfig
+  saveConfig: () => saveConfig,
+  settingsFile: () => settingsFile
 });
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
-import fs3 from "node:fs";
-import os from "node:os";
-import path from "node:path";
+import fs6 from "node:fs";
+import os2 from "node:os";
+import path4 from "node:path";
 function dataDir() {
   const override = process.env.ZCODE_BEAUTIFY_DATA_DIR;
   if (override)
     return override;
-  const root = path.join(os.homedir(), ".zcode", "cli", "plugins", "data");
-  const pluginScoped = path.join(root, "zcode-tarkov@zcode-tarkov");
-  if (fs3.existsSync(pluginScoped))
+  const root = path4.join(os2.homedir(), ".zcode", "cli", "plugins", "data");
+  const pluginScoped = path4.join(root, "zcode-tarkov@zcode-tarkov");
+  if (fs6.existsSync(pluginScoped))
     return pluginScoped;
-  const own = path.join(root, "zcode-tarkov");
-  if (fs3.existsSync(own))
+  const own = path4.join(root, "zcode-tarkov");
+  if (fs6.existsSync(own))
     return own;
   for (const legacy of LEGACY_DATA_DIRS) {
-    const dir = path.join(root, legacy);
-    if (fs3.existsSync(dir))
+    const dir = path4.join(root, legacy);
+    if (fs6.existsSync(dir))
       return dir;
   }
   return own;
 }
-function configFile() {
-  return path.join(dataDir(), "config.json");
+function legacyConfigFile() {
+  return path4.join(dataDir(), "config.json");
+}
+function settingsFile() {
+  return prefsFile();
+}
+function registerLegacyPath() {
+  if (legacyRegistered)
+    return;
+  legacyRegistered = true;
+  setLegacyConfigPath(legacyConfigFile());
+}
+function initSettings() {
+  registerLegacyPath();
+  getPrefs();
 }
 function readJsonFile(file) {
   try {
-    const raw = fs3.readFileSync(file, "utf8").replace(/^\uFEFF/, "");
+    const raw = fs6.readFileSync(file, "utf8").replace(/^\uFEFF/, "");
     return JSON.parse(raw);
   } catch {
     return void 0;
   }
 }
+function appearanceToConfig(appearance) {
+  return {
+    wallpaperPath: appearance.wallpaperPath,
+    blur: appearance.blur,
+    dim: appearance.dim,
+    fit: appearance.fit,
+    colorMode: appearance.colorMode,
+    // Kept in sync on read as well as on write: a v0.1 consumer reading an
+    // in-memory config still resolves an equivalent appearance from the boolean.
+    monet: appearance.colorMode === "monet",
+    wallpaperVisible: appearance.wallpaperVisible,
+    banner: { enabled: appearance.banner.mode !== "off", ...appearance.banner },
+    // The palette and the greeting are what the payload builder paints with, so
+    // they have to travel with every read — not only through the v0.2 prefs
+    // route. Leaving them out here would render the shipped colours no matter
+    // what the user chose.
+    background: appearance.background,
+    accent: appearance.accent,
+    greeting: appearance.greeting
+  };
+}
+function configToAppearance(config, base) {
+  const banner = config.banner ?? { ...base.banner, enabled: base.banner.mode !== "off" };
+  const mode = banner.enabled === false ? "off" : banner.mode && BANNER_MODES.includes(banner.mode) ? banner.mode : base.banner.mode;
+  return {
+    colorMode: config.colorMode ?? base.colorMode,
+    wallpaperVisible: config.wallpaperVisible ?? base.wallpaperVisible,
+    blur: config.blur ?? base.blur,
+    dim: config.dim ?? base.dim,
+    fit: config.fit ?? base.fit,
+    // Not `?? base`: clearing the wallpaper is a real operation (`/api/reset`),
+    // and an absent key is how the caller says so.
+    wallpaperPath: config.wallpaperPath,
+    banner: {
+      mode,
+      text1: banner.text1 ?? base.banner.text1,
+      text2: banner.text2 ?? base.banner.text2,
+      height: banner.height ?? base.banner.height,
+      opacity: banner.opacity ?? base.banner.opacity
+    },
+    // Carried through from the stored appearance: the v0.1 `/api/config` route
+    // has no concept of these, and a config write (blur, dim, wallpaper) must
+    // not reset a palette or greeting the user chose in the v0.2 panel.
+    background: base.background,
+    accent: base.accent,
+    greeting: base.greeting
+  };
+}
 function loadConfig() {
-  const stored = readJsonFile(configFile());
-  return stored ? withColorMode(stored) : {};
+  registerLegacyPath();
+  return appearanceToConfig(getPrefs().appearance);
 }
 function saveConfig(config) {
-  fs3.mkdirSync(dataDir(), { recursive: true });
-  fs3.writeFileSync(configFile(), JSON.stringify(withColorMode(config), null, 2));
+  registerLegacyPath();
+  const prefs = getPrefs();
+  setPrefs({ ...prefs, appearance: configToAppearance(config, prefs.appearance) });
 }
 function findZcodeExecutable() {
   return ZCODE_EXE_CANDIDATES.map((p2) => p2).find((p2) => {
     try {
-      return fs3.statSync(p2).isFile();
+      return fs6.statSync(p2).isFile();
     } catch {
       return false;
     }
@@ -110619,17 +111569,20 @@ async function relaunchZcode(port) {
   const result = await launchZcode(port);
   return { killed, started: result.started || result.reason === "already-running-with-cdp" };
 }
-var LEGACY_DATA_DIRS, ZCODE_EXE_CANDIDATES, execFileAsync;
+var LEGACY_DATA_DIRS, legacyRegistered, ZCODE_EXE_CANDIDATES, execFileAsync;
 var init_launch = __esm({
   "dist/core/launch.js"() {
     "use strict";
     init_cdp();
-    init_colorMode();
+    init_dataRoot();
+    init_store();
+    init_types();
     LEGACY_DATA_DIRS = ["zcode-beautify@zcode-beautify", "zcode-beautify"];
+    legacyRegistered = false;
     ZCODE_EXE_CANDIDATES = process.platform === "win32" ? [
-      process.env.ZCODE_WINDOWS_APP_INSTALL_DIR ? path.join(process.env.ZCODE_WINDOWS_APP_INSTALL_DIR, "ZCode.exe") : void 0,
+      process.env.ZCODE_WINDOWS_APP_INSTALL_DIR ? path4.join(process.env.ZCODE_WINDOWS_APP_INSTALL_DIR, "ZCode.exe") : void 0,
       "C:\\Program Files\\ZCode\\ZCode.exe",
-      path.join(os.homedir(), "AppData", "Local", "Programs", "ZCode", "ZCode.exe")
+      path4.join(os2.homedir(), "AppData", "Local", "Programs", "ZCode", "ZCode.exe")
     ].filter(Boolean) : process.platform === "darwin" ? ["/Applications/ZCode.app/Contents/MacOS/ZCode"] : ["/usr/bin/zcode", "/opt/ZCode/zcode"];
     execFileAsync = promisify(execFile);
   }
@@ -110644,8 +111597,8 @@ __export(session_exports, {
   reapplyStored: () => reapplyStored,
   resetAppearance: () => resetAppearance
 });
-import fs4 from "node:fs";
-import path2 from "node:path";
+import fs7 from "node:fs";
+import path5 from "node:path";
 function mergedConfig(opts, stored = loadConfig()) {
   const colorMode = opts.colorMode ?? (typeof opts.monet === "boolean" ? opts.monet ? "monet" : "native" : migrateColorMode(stored));
   return {
@@ -110666,14 +111619,14 @@ async function reapplyStored() {
   return applyToZCode(config, await buildPayloadFromConfig(config));
 }
 async function applyWallpaper(imagePath, opts) {
-  const abs = path2.resolve(imagePath);
-  if (!fs4.existsSync(abs))
+  const abs = path5.resolve(imagePath);
+  if (!fs7.existsSync(abs))
     throw new Error(`Image not found: ${abs}`);
   const config = mergedConfig(opts);
-  fs4.mkdirSync(dataDir(), { recursive: true });
-  const dest = path2.join(dataDir(), "wallpaper" + path2.extname(abs).toLowerCase());
+  fs7.mkdirSync(dataDir(), { recursive: true });
+  const dest = path5.join(dataDir(), "wallpaper" + path5.extname(abs).toLowerCase());
   if (dest !== abs)
-    fs4.copyFileSync(abs, dest);
+    fs7.copyFileSync(abs, dest);
   const assets = await loadWallpaper(dest);
   const payload = buildPayload(config, assets);
   saveConfig({ ...config, wallpaperPath: dest });
@@ -110693,7 +111646,7 @@ async function resetAppearance(port) {
 }
 async function buildPayloadFromConfig(config) {
   let assets;
-  if (config.wallpaperPath && fs4.existsSync(config.wallpaperPath)) {
+  if (config.wallpaperPath && fs7.existsSync(config.wallpaperPath)) {
     assets = await loadWallpaper(config.wallpaperPath);
   }
   return buildPayload(config, assets);
@@ -110708,23 +111661,23 @@ var init_session = __esm({
 });
 
 // dist/core/autostart.js
-import fs5 from "node:fs";
-import os2 from "node:os";
-import path3 from "node:path";
+import fs8 from "node:fs";
+import os3 from "node:os";
+import path6 from "node:path";
 function startupDir() {
-  const appData = process.env.APPDATA ?? path3.join(os2.homedir(), "AppData", "Roaming");
-  return path3.join(appData, "Microsoft", "Windows", "Start Menu", "Programs", "Startup");
+  const appData = process.env.APPDATA ?? path6.join(os3.homedir(), "AppData", "Roaming");
+  return path6.join(appData, "Microsoft", "Windows", "Start Menu", "Programs", "Startup");
 }
 function launchAgentPath() {
-  return path3.join(os2.homedir(), "Library", "LaunchAgents", `${AUTOSTART_LABEL}.plist`);
+  return path6.join(os3.homedir(), "Library", "LaunchAgents", `${AUTOSTART_LABEL}.plist`);
 }
 function xdgAutostartPath() {
-  const configHome = process.env.XDG_CONFIG_HOME ?? path3.join(os2.homedir(), ".config");
-  return path3.join(configHome, "autostart", `${AUTOSTART_ID}.desktop`);
+  const configHome = process.env.XDG_CONFIG_HOME ?? path6.join(os3.homedir(), ".config");
+  return path6.join(configHome, "autostart", `${AUTOSTART_ID}.desktop`);
 }
 function autostartEntryPath() {
   if (process.platform === "win32")
-    return path3.join(startupDir(), `${AUTOSTART_ID}.vbs`);
+    return path6.join(startupDir(), `${AUTOSTART_ID}.vbs`);
   if (process.platform === "darwin")
     return launchAgentPath();
   if (process.platform === "linux")
@@ -110734,9 +111687,9 @@ function autostartEntryPath() {
 function cliEntryPath() {
   const entry = process.argv[1];
   try {
-    return fs5.realpathSync(entry);
+    return fs8.realpathSync(entry);
   } catch {
-    return path3.resolve(entry ?? "");
+    return path6.resolve(entry ?? "");
   }
 }
 function vbsLiteral(value) {
@@ -110761,6 +111714,9 @@ function windowsScript(spec) {
   if (spec.dataDir) {
     lines.push(`CreateObject("WScript.Shell").Environment("PROCESS")("ZCODE_BEAUTIFY_DATA_DIR") = ${vbsLiteral(spec.dataDir)}`);
   }
+  if (spec.userDataDir) {
+    lines.push(`CreateObject("WScript.Shell").Environment("PROCESS")("ZCODE_TARKOV_DATA_DIR") = ${vbsLiteral(spec.userDataDir)}`);
+  }
   lines.push(`CreateObject("WScript.Shell").Run ${vbsLiteral(command)}, 0, False`, ``);
   return lines.join("\r\n");
 }
@@ -110768,10 +111724,15 @@ function xmlText(value) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 function macosScript(spec) {
-  const envBlock = spec.dataDir ? `  <key>EnvironmentVariables</key>
+  const envKeys = [
+    spec.dataDir ? `    <key>ZCODE_BEAUTIFY_DATA_DIR</key>
+    <string>${xmlText(spec.dataDir)}</string>` : "",
+    spec.userDataDir ? `    <key>ZCODE_TARKOV_DATA_DIR</key>
+    <string>${xmlText(spec.userDataDir)}</string>` : ""
+  ].filter(Boolean);
+  const envBlock = envKeys.length ? `  <key>EnvironmentVariables</key>
   <dict>
-    <key>ZCODE_BEAUTIFY_DATA_DIR</key>
-    <string>${xmlText(spec.dataDir)}</string>
+${envKeys.join("\n")}
   </dict>
 ` : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -110803,7 +111764,11 @@ function desktopArg(part) {
 }
 function linuxScript(spec) {
   const exec = [spec.nodePath, spec.cliPath, "serve", "--port", String(spec.cdpPort), "--api-port", String(spec.apiPort)].map(desktopArg).join(" ");
-  const dataEnv = spec.dataDir ? `env ${desktopArg(`ZCODE_BEAUTIFY_DATA_DIR=${spec.dataDir}`)} ` : "";
+  const envAssignments = [
+    spec.dataDir ? `ZCODE_BEAUTIFY_DATA_DIR=${spec.dataDir}` : "",
+    spec.userDataDir ? `ZCODE_TARKOV_DATA_DIR=${spec.userDataDir}` : ""
+  ].filter(Boolean);
+  const dataEnv = envAssignments.length ? `env ${envAssignments.map(desktopArg).join(" ")} ` : "";
   return `[Desktop Entry]
 Type=Application
 Name=ZCode Beautify
@@ -110819,22 +111784,22 @@ function getAutostartStatus() {
   if (!entryPath) {
     return { platform, supported: false, installed: false, note: `autostart is not implemented for ${platform}` };
   }
-  return { platform, supported: true, installed: fs5.existsSync(entryPath), entryPath };
+  return { platform, supported: true, installed: fs8.existsSync(entryPath), entryPath };
 }
 function installAutostart(spec) {
   const entryPath = autostartEntryPath();
   if (!entryPath)
     return getAutostartStatus();
   const script = process.platform === "win32" ? windowsScript(spec) : process.platform === "darwin" ? macosScript(spec) : linuxScript(spec);
-  fs5.mkdirSync(path3.dirname(entryPath), { recursive: true });
-  fs5.writeFileSync(entryPath, script);
+  fs8.mkdirSync(path6.dirname(entryPath), { recursive: true });
+  fs8.writeFileSync(entryPath, script);
   return getAutostartStatus();
 }
 function uninstallAutostart() {
   const entryPath = autostartEntryPath();
   if (!entryPath)
     return getAutostartStatus();
-  fs5.rmSync(entryPath, { force: true });
+  fs8.rmSync(entryPath, { force: true });
   return getAutostartStatus();
 }
 var AUTOSTART_ID, AUTOSTART_LABEL;
@@ -110847,25 +111812,25 @@ var init_autostart = __esm({
 });
 
 // dist/core/recovery.js
-import fs6 from "node:fs";
-import path4 from "node:path";
+import fs9 from "node:fs";
+import path7 from "node:path";
 function normalizeMode(value) {
   return typeof value === "string" && RECOVERY_MODES.includes(value) ? value : void 0;
 }
 function recoveryFile() {
-  return path4.join(dataDir(), "recovery.json");
+  return path7.join(dataDir(), "recovery.json");
 }
 function loadRecovery() {
   try {
-    const raw = JSON.parse(fs6.readFileSync(recoveryFile(), "utf8"));
+    const raw = JSON.parse(fs9.readFileSync(recoveryFile(), "utf8"));
     return { mode: normalizeMode(raw.mode) ?? DEFAULT_RECOVERY_MODE, updatedAt: raw.updatedAt };
   } catch {
     return { mode: DEFAULT_RECOVERY_MODE };
   }
 }
 function saveRecovery(config) {
-  fs6.mkdirSync(dataDir(), { recursive: true });
-  fs6.writeFileSync(recoveryFile(), JSON.stringify(config, null, 2));
+  fs9.mkdirSync(dataDir(), { recursive: true });
+  fs9.writeFileSync(recoveryFile(), JSON.stringify(config, null, 2));
 }
 function setRecoveryMode(mode) {
   const next = { mode, updatedAt: (/* @__PURE__ */ new Date()).toISOString() };
@@ -110895,7 +111860,19 @@ var init_recovery = __esm({
 });
 
 // dist/panel/panelScript.js
-function buildPanelScript(apiPort, token) {
+function panelAccentCss(rgb) {
+  const at = (alpha) => `rgba(${rgb},${alpha})`;
+  return {
+    border: at(0.45),
+    muted: at(0.28),
+    ctlBg: at(0.14),
+    ctlBorder: at(0.35),
+    ctlHover: at(0.26)
+  };
+}
+function buildPanelScript(apiPort, token, palette2 = DEFAULT_PALETTE) {
+  const accentHex = palette2.accent;
+  const accentCss = panelAccentCss(palette2.accentRgb);
   const api = `http://127.0.0.1:${apiPort}`;
   return `(function(){
   var API = ${JSON.stringify(api)};
@@ -110927,16 +111904,16 @@ function buildPanelScript(apiPort, token) {
     // --- Tarkov skin: deep brown, warm orange, squarer corners ------------
     '#zcode-beautify-panel-root[data-zb-theme="tarkov"] {',
       ' --zb-bg: rgba(26,18,10,.94);',
-      ' --zb-border: rgba(224,121,48,.45);',
+      ' --zb-border: ${accentCss.border};',
       ' --zb-radius: 4px;',
       ' --zb-radius-sm: 3px;',
       ' --zb-radius-pill: 3px;',
       ' --zb-text: #e8d9c8;',
-      ' --zb-muted: rgba(224,121,48,.28);',
-      ' --zb-ctl-bg: rgba(224,121,48,.14);',
-      ' --zb-ctl-border: rgba(224,121,48,.35);',
-      ' --zb-ctl-hover: rgba(224,121,48,.26);',
-      ' --zb-accent: #e07930;',
+      ' --zb-muted: ${accentCss.muted};',
+      ' --zb-ctl-bg: ${accentCss.ctlBg};',
+      ' --zb-ctl-border: ${accentCss.ctlBorder};',
+      ' --zb-ctl-hover: ${accentCss.ctlHover};',
+      ' --zb-accent: ${accentHex};',
       ' --zb-shadow: 0 8px 28px rgba(0,0,0,.6); }',
 
     '#zcode-beautify-panel-root, #zcode-beautify-panel-root * { box-sizing: border-box; font-family: var(--zb-font); }',
@@ -111357,24 +112334,907 @@ var PANEL_ROOT_ID;
 var init_panelScript = __esm({
   "dist/panel/panelScript.js"() {
     "use strict";
+    init_palette();
     PANEL_ROOT_ID = "zcode-beautify-panel-root";
+  }
+});
+
+// dist/media/stream.js
+import fs10 from "node:fs";
+function parseRange(header, size) {
+  if (typeof header !== "string" || header.length === 0)
+    return void 0;
+  const match = /^bytes=(.*)$/i.exec(header.trim());
+  if (!match)
+    return void 0;
+  const spec = match[1].trim();
+  if (spec.includes(","))
+    return void 0;
+  const m = /^(\d*)-(\d*)$/.exec(spec);
+  if (!m)
+    return void 0;
+  const [, rawStart, rawEnd] = m;
+  if (rawStart === "" && rawEnd === "")
+    return void 0;
+  if (size === 0)
+    return null;
+  if (rawStart === "") {
+    const suffix = Number(rawEnd);
+    if (!Number.isFinite(suffix) || suffix <= 0)
+      return null;
+    const start2 = Math.max(0, size - suffix);
+    return { start: start2, end: size - 1 };
+  }
+  const start = Number(rawStart);
+  if (!Number.isFinite(start) || start >= size)
+    return null;
+  let end;
+  if (rawEnd === "") {
+    end = size - 1;
+  } else {
+    const parsedEnd = Number(rawEnd);
+    if (!Number.isFinite(parsedEnd))
+      return void 0;
+    if (parsedEnd < start)
+      return null;
+    end = Math.min(parsedEnd, size - 1);
+  }
+  return { start, end };
+}
+function baseMediaHeaders(contentType, size) {
+  return {
+    "Content-Type": contentType,
+    "Accept-Ranges": "bytes",
+    // Media is user content fetched by the renderer from a localhost origin.
+    // It is never a document: forbidding sniffing and framing keeps a crafted
+    // media file from being interpreted as markup.
+    "X-Content-Type-Options": "nosniff",
+    "Content-Disposition": "inline",
+    // Required, not optional. The renderer is a `file://` document, so every
+    // request it makes to this service is cross-origin, and the player sets
+    // `crossOrigin = "anonymous"` on the audio element so that
+    // `createMediaElementSource` can route it through the gain graph without
+    // silencing it. An audio element in that mode rejects a response that
+    // carries no `Access-Control-Allow-Origin`, which would make every track
+    // fail to load — the difference between "music plays" and "nothing plays".
+    //
+    // `*` is safe here because this is not the authorisation boundary: the only
+    // way to reach this route is the media token in the query string, which a
+    // hostile page cannot know. Adding the header lets the *legitimate*
+    // requester read a response it already had to authenticate for; it does not
+    // let anyone else read one. The JSON API sends the same header for the same
+    // reason.
+    "Access-Control-Allow-Origin": "*",
+    // A track's bytes never change under the same name in practice, but a
+    // stale cached copy after a re-upload would be confusing; require
+    // revalidation and let the 304 path handle it.
+    "Cache-Control": "private, max-age=0, must-revalidate",
+    "Content-Length": size
+  };
+}
+function sendFile(res, opts) {
+  let stat;
+  try {
+    stat = fs10.statSync(opts.file);
+  } catch {
+    return fail(res, 404, "not found");
+  }
+  if (!stat.isFile())
+    return fail(res, 404, "not found");
+  const size = stat.size;
+  const range = parseRange(opts.rangeHeader, size);
+  if (range === null) {
+    try {
+      res.writeHead(416, {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Accept-Ranges": "bytes",
+        "Content-Range": `bytes */${size}`
+      });
+      res.end();
+    } catch {
+    }
+    return { status: 416, sent: 0, error: "range not satisfiable" };
+  }
+  const headers = baseMediaHeaders(opts.contentType, size);
+  if (!range) {
+    try {
+      res.writeHead(200, headers);
+    } catch {
+      return { status: 200, sent: 0 };
+    }
+    if (opts.headOnly) {
+      res.end();
+      return { status: 200, sent: 0 };
+    }
+    return pump(res, opts.file, void 0, void 0, headers["Content-Length"]);
+  }
+  const length = range.end - range.start + 1;
+  try {
+    res.writeHead(206, {
+      ...headers,
+      "Content-Length": length,
+      "Content-Range": `bytes ${range.start}-${range.end}/${size}`
+    });
+  } catch {
+    return { status: 206, sent: 0 };
+  }
+  if (opts.headOnly) {
+    res.end();
+    return { status: 206, sent: 0 };
+  }
+  return pump(res, opts.file, range.start, range.end, length);
+}
+function pump(res, file, start, end, expected) {
+  const stream = fs10.createReadStream(file, start === void 0 ? {} : { start, end });
+  stream.on("error", () => {
+    try {
+      res.destroy();
+    } catch {
+    }
+  });
+  res.on("close", () => {
+    if (!stream.destroyed)
+      stream.destroy();
+  });
+  stream.pipe(res);
+  return { status: start === void 0 ? 200 : 206, sent: expected };
+}
+function fail(res, status, message) {
+  try {
+    res.writeHead(status, { "Content-Type": "text/plain; charset=utf-8" });
+    res.end(message);
+  } catch {
+  }
+  return { status, sent: 0, error: message };
+}
+var MAX_UPLOAD_BYTES;
+var init_stream2 = __esm({
+  "dist/media/stream.js"() {
+    "use strict";
+    MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
+  }
+});
+
+// dist/api/body.js
+import fs11 from "node:fs";
+function readJsonBody(req, limit = MAX_JSON_BODY_BYTES) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on("data", (chunk) => {
+      size += chunk.length;
+      if (size > limit) {
+        reject(new BodyTooLargeError(limit));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => {
+      const raw = Buffer.concat(chunks).toString("utf8").replace(/^\uFEFF/, "").trim();
+      if (raw.length === 0) {
+        resolve(void 0);
+        return;
+      }
+      try {
+        resolve(JSON.parse(raw));
+      } catch (err) {
+        reject(new Error(`invalid JSON body: ${err.message}`));
+      }
+    });
+    req.on("error", reject);
+  });
+}
+function readBodyToFile(req, dest, limit = MAX_UPLOAD_BYTES) {
+  return new Promise((resolve, reject) => {
+    let bytes = 0;
+    let done = false;
+    const out = fs11.createWriteStream(dest);
+    const cleanup = (err) => {
+      if (done)
+        return;
+      done = true;
+      out.destroy();
+      try {
+        fs11.rmSync(dest, { force: true });
+      } catch {
+      }
+      reject(err);
+    };
+    req.on("data", (chunk) => {
+      if (done)
+        return;
+      bytes += chunk.length;
+      if (bytes > limit) {
+        req.destroy();
+        cleanup(new BodyTooLargeError(limit));
+      }
+    });
+    req.on("error", cleanup);
+    out.on("error", cleanup);
+    req.pipe(out);
+    out.on("finish", () => {
+      if (done)
+        return;
+      done = true;
+      resolve({ bytes });
+    });
+  });
+}
+var MAX_JSON_BODY_BYTES, BodyTooLargeError;
+var init_body = __esm({
+  "dist/api/body.js"() {
+    "use strict";
+    init_stream2();
+    MAX_JSON_BODY_BYTES = 256 * 1024;
+    BodyTooLargeError = class extends Error {
+      limit;
+      constructor(limit) {
+        super(`request body exceeds ${limit} bytes`);
+        this.limit = limit;
+      }
+    };
+  }
+});
+
+// dist/media/library.js
+import fs12 from "node:fs";
+import path8 from "node:path";
+function displayName(filename) {
+  const ext = path8.extname(filename);
+  return (ext ? filename.slice(0, -ext.length) : filename) || filename;
+}
+function readChunk(file, start, length) {
+  let fd;
+  try {
+    fd = fs12.openSync(file, "r");
+    const buf = Buffer.alloc(length);
+    const read2 = fs12.readSync(fd, buf, 0, length, start);
+    return read2 === length ? buf : void 0;
+  } catch {
+    return void 0;
+  } finally {
+    if (fd !== void 0) {
+      try {
+        fs12.closeSync(fd);
+      } catch {
+      }
+    }
+  }
+}
+function wavDuration(file, size) {
+  const head = readChunk(file, 0, Math.min(size, 4096));
+  if (!head || head.length < 12)
+    return void 0;
+  if (head.toString("ascii", 0, 4) !== "RIFF" || head.toString("ascii", 8, 12) !== "WAVE")
+    return void 0;
+  let offset = 12;
+  let byteRate;
+  let dataSize;
+  while (offset + 8 <= head.length) {
+    const id = head.toString("ascii", offset, offset + 4);
+    const chunkSize = head.readUInt32LE(offset + 4);
+    if (id === "fmt " && offset + 8 + 16 <= head.length) {
+      byteRate = head.readUInt32LE(offset + 8 + 8);
+    } else if (id === "data") {
+      dataSize = chunkSize;
+      break;
+    }
+    if (chunkSize <= 0)
+      break;
+    offset += 8 + chunkSize + chunkSize % 2;
+  }
+  if (!byteRate || byteRate <= 0 || dataSize === void 0)
+    return void 0;
+  return dataSize / byteRate;
+}
+function flacDuration(file) {
+  const head = readChunk(file, 0, 42);
+  if (!head || head.length < 42)
+    return void 0;
+  if (head.toString("ascii", 0, 4) !== "fLaC")
+    return void 0;
+  const b = head.subarray(8);
+  const sampleRate = (b[10] << 12 | b[11] << 4 | b[12] >> 4) & 1048575;
+  const totalSamples = (b[13] & 15) * 2 ** 32 + b[14] * 2 ** 24 + b[15] * 2 ** 16 + b[16] * 2 ** 8 + b[17];
+  if (!sampleRate || !totalSamples)
+    return void 0;
+  return totalSamples / sampleRate;
+}
+function mp3Duration(file, size) {
+  const head = readChunk(file, 0, Math.min(size, 8192));
+  if (!head || head.length < 4)
+    return void 0;
+  let offset = 0;
+  if (head.toString("ascii", 0, 3) === "ID3" && head.length >= 10) {
+    const tagSize = (head[6] & 127) << 21 | (head[7] & 127) << 14 | (head[8] & 127) << 7 | head[9] & 127;
+    offset = 10 + tagSize;
+  }
+  let scan2 = offset;
+  while (scan2 + 4 <= head.length) {
+    if (head[scan2] === 255 && (head[scan2 + 1] & 224) === 224)
+      break;
+    scan2 += 1;
+  }
+  if (scan2 + 4 > head.length)
+    return void 0;
+  const versionBits = head[scan2 + 1] >> 3 & 3;
+  const channelMode = head[scan2 + 3] >> 6 & 3;
+  const sampleRate = MPEG_SAMPLE_RATES[head[scan2 + 2] >> 2 & 3];
+  if (versionBits === 1 || !sampleRate)
+    return void 0;
+  const sideInfo = versionBits === 3 ? channelMode === 3 ? 17 : 32 : channelMode === 3 ? 9 : 17;
+  const tag = scan2 + 4 + sideInfo;
+  if (tag + 12 > head.length)
+    return void 0;
+  const marker = head.toString("ascii", tag, tag + 4);
+  if (marker !== "Xing" && marker !== "Info")
+    return void 0;
+  const flags = head.readUInt32BE(tag + 4);
+  if ((flags & 1) === 0)
+    return void 0;
+  const frames = head.readUInt32BE(tag + 8);
+  if (frames <= 0)
+    return void 0;
+  const samplesPerFrame = versionBits === 3 ? 1152 : 576;
+  return frames * samplesPerFrame / sampleRate;
+}
+function probeDuration(file, size) {
+  const ext = extensionOf(file);
+  try {
+    if (ext === ".wav")
+      return wavDuration(file, size);
+    if (ext === ".flac")
+      return flacDuration(file);
+    if (ext === ".mp3")
+      return mp3Duration(file, size);
+  } catch {
+    return void 0;
+  }
+  return void 0;
+}
+function listTracks(prefs) {
+  const disabled = new Set(prefs.audio.bgm.disabledTracks);
+  return listMediaFiles("music").map((filename) => {
+    const full = path8.join(mediaDir("music"), filename);
+    let size = 0;
+    let mtimeMs = 0;
+    try {
+      const stat = fs12.statSync(full);
+      size = stat.size;
+      mtimeMs = stat.mtimeMs;
+    } catch {
+    }
+    return {
+      id: filename,
+      filename,
+      displayName: displayName(filename),
+      enabled: !disabled.has(filename),
+      size,
+      mtimeMs,
+      durationSeconds: size > 0 ? probeDuration(full, size) : void 0
+    };
+  });
+}
+function listPool(kind) {
+  return listMediaFiles(kind).map((filename) => {
+    let size = 0;
+    try {
+      size = fs12.statSync(path8.join(mediaDir(kind), filename)).size;
+    } catch {
+    }
+    return { id: filename, filename, size };
+  });
+}
+function addMediaFile(kind, originalName, source) {
+  if (source.size === 0)
+    return { ok: false, status: 400, error: "file is empty" };
+  if (source.size > MAX_UPLOAD_BYTES) {
+    return { ok: false, status: 413, error: `file is larger than ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)} MB` };
+  }
+  const filename = sanitizeFilename(originalName);
+  if (!isAllowedForKind(filename, kind)) {
+    return { ok: false, status: 415, error: `unsupported file type for ${kind}/` };
+  }
+  const dir = mediaDir(kind);
+  fs12.mkdirSync(dir, { recursive: true });
+  const dest = path8.join(dir, filename);
+  try {
+    if (fs12.existsSync(dest) && fs12.lstatSync(dest).isSymbolicLink()) {
+      return { ok: false, status: 409, error: "refusing to replace a linked file" };
+    }
+  } catch {
+  }
+  const replaced = fs12.existsSync(dest);
+  try {
+    fs12.renameSync(source.path, dest);
+  } catch {
+    fs12.copyFileSync(source.path, dest);
+    fs12.rmSync(source.path, { force: true });
+  }
+  return { ok: true, filename, size: source.size, replaced };
+}
+function deleteMediaFile(kind, basename) {
+  const full = resolveMediaFile(kind, basename);
+  const size = fs12.statSync(full).size;
+  fs12.rmSync(full);
+  return size;
+}
+function mediaFileExists(kind, basename) {
+  try {
+    resolveMediaFile(kind, basename);
+    return true;
+  } catch (err) {
+    if (err instanceof UnsafePathError)
+      return false;
+    return false;
+  }
+}
+var MPEG_SAMPLE_RATES;
+var init_library = __esm({
+  "dist/media/library.js"() {
+    "use strict";
+    init_dataRoot();
+    init_paths();
+    init_stream2();
+    MPEG_SAMPLE_RATES = [44100, 48e3, 32e3];
+  }
+});
+
+// dist/status/pool.js
+function parsePhrasePool(text2) {
+  if (typeof text2 !== "string" || text2.length === 0)
+    return [];
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const rawLine of text2.split(/\r?\n/)) {
+    if (out.length >= MAX_PHRASES)
+      break;
+    const line = rawLine.replace(/\uFEFF/g, "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "").trim();
+    if (line.length === 0)
+      continue;
+    if (line.startsWith("#"))
+      continue;
+    const phrase = line.length > MAX_PHRASE_LENGTH ? line.slice(0, MAX_PHRASE_LENGTH) : line;
+    if (seen.has(phrase))
+      continue;
+    seen.add(phrase);
+    out.push(phrase);
+  }
+  return out;
+}
+function defaultPool(language) {
+  return [...DEFAULT_POOLS[language] ?? DEFAULT_POOLS.en];
+}
+function resolvePool(language, userFileText) {
+  if (typeof userFileText === "string") {
+    const parsed = parsePhrasePool(userFileText);
+    if (parsed.length > 0)
+      return { phrases: parsed, source: "user" };
+  }
+  return { phrases: defaultPool(language), source: "bundled" };
+}
+var MAX_PHRASES, MAX_PHRASE_LENGTH, DEFAULT_PHRASES_EN, DEFAULT_PHRASES_ZH, DEFAULT_POOLS;
+var init_pool = __esm({
+  "dist/status/pool.js"() {
+    "use strict";
+    MAX_PHRASES = 500;
+    MAX_PHRASE_LENGTH = 120;
+    DEFAULT_PHRASES_EN = [
+      "Checking the exfil route\u2026",
+      "Repacking the tactical rig\u2026",
+      "Confirming the supply manifest\u2026",
+      "Scanning the workspace\u2026",
+      "Trading intel\u2026",
+      "Sweeping the sector\u2026",
+      "Recalculating the route\u2026",
+      "Holding position\u2026",
+      "Relaying coordinates\u2026",
+      "Cross-checking the inventory\u2026",
+      "Assessing the approach\u2026",
+      "Warming up the optics\u2026",
+      "Sorting recovered items\u2026",
+      "Waiting on the next report\u2026",
+      "Verifying the perimeter\u2026",
+      "Logging the contact\u2026"
+    ];
+    DEFAULT_PHRASES_ZH = [
+      "\u6B63\u5728\u68C0\u67E5\u64A4\u79BB\u8DEF\u7EBF\u2026\u2026",
+      "\u6B63\u5728\u6574\u7406\u6218\u672F\u80CC\u5305\u2026\u2026",
+      "\u6B63\u5728\u786E\u8BA4\u8865\u7ED9\u6E05\u5355\u2026\u2026",
+      "\u6B63\u5728\u626B\u63CF\u5DE5\u4F5C\u533A\u2026\u2026",
+      "\u6B63\u5728\u4EA4\u6362\u60C5\u62A5\u2026\u2026",
+      "\u6B63\u5728\u641C\u7D22\u533A\u57DF\u2026\u2026",
+      "\u6B63\u5728\u91CD\u65B0\u89C4\u5212\u8DEF\u7EBF\u2026\u2026",
+      "\u6B63\u5728\u539F\u5730\u5F85\u547D\u2026\u2026",
+      "\u6B63\u5728\u4F20\u9012\u5750\u6807\u2026\u2026",
+      "\u6B63\u5728\u6838\u5BF9\u5E93\u5B58\u2026\u2026",
+      "\u6B63\u5728\u8BC4\u4F30\u63A5\u8FD1\u8DEF\u7EBF\u2026\u2026",
+      "\u6B63\u5728\u8C03\u8BD5\u7784\u5177\u2026\u2026",
+      "\u6B63\u5728\u6E05\u70B9\u56DE\u6536\u7269\u8D44\u2026\u2026",
+      "\u6B63\u5728\u7B49\u5F85\u4E0B\u4E00\u4EFD\u62A5\u544A\u2026\u2026",
+      "\u6B63\u5728\u786E\u8BA4\u5468\u8FB9\u5B89\u5168\u2026\u2026",
+      "\u6B63\u5728\u8BB0\u5F55\u63A5\u89E6\u60C5\u51B5\u2026\u2026"
+    ];
+    DEFAULT_POOLS = {
+      zh: DEFAULT_PHRASES_ZH,
+      en: DEFAULT_PHRASES_EN
+    };
+  }
+});
+
+// dist/api/hostRoutes.js
+import fs13 from "node:fs";
+import path9 from "node:path";
+import { randomBytes } from "node:crypto";
+function hasFullToken(ctx) {
+  const header = ctx.req.headers["x-zb-token"];
+  return typeof header === "string" && header.length > 0 && header === ctx.token;
+}
+function hasMediaAccess(ctx) {
+  if (hasFullToken(ctx))
+    return true;
+  const q = ctx.url.searchParams.get("token");
+  if (typeof q === "string" && q.length > 0 && q === ctx.mediaToken)
+    return true;
+  const header = ctx.req.headers["x-zb-token"];
+  return typeof header === "string" && header.length > 0 && header === ctx.mediaToken;
+}
+function mergePatch(base, patch) {
+  if (typeof patch !== "object" || patch === null || Array.isArray(patch))
+    return base;
+  const out = { ...base };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === void 0)
+      continue;
+    const current = out[key];
+    if (typeof value === "object" && value !== null && !Array.isArray(value) && typeof current === "object" && current !== null && !Array.isArray(current)) {
+      out[key] = mergePatch(current, value);
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+function errorStatus(err) {
+  if (err instanceof UnsafePathError)
+    return { status: 400, error: err.message };
+  const message = err instanceof Error ? err.message : String(err);
+  if (/too large|exceeds/i.test(message))
+    return { status: 413, error: message };
+  return { status: 400, error: message };
+}
+function userStatusText(language) {
+  try {
+    return fs13.readFileSync(resolveMediaFile("status", `texts.${language}.txt`), "utf8");
+  } catch {
+    return void 0;
+  }
+}
+async function handleHostRoute(ctx) {
+  const { method, url, res } = ctx;
+  const p2 = url.pathname;
+  if (p2 === "/api/prefs") {
+    if (!hasFullToken(ctx)) {
+      ctx.sendJson(res, 403, { error: "missing or invalid token" });
+      return true;
+    }
+    if (method === "GET") {
+      ctx.sendJson(res, 200, { prefs: ctx.readPrefs(), status: ctx.prefsStatus() });
+      return true;
+    }
+    if (method === "POST") {
+      const patch = await readJsonBody(ctx.req);
+      const merged = mergePatch(ctx.readPrefs(), patch);
+      const next = validatePrefs(merged);
+      await ctx.writePrefs(next);
+      ctx.sendJson(res, 200, { ok: true, prefs: next });
+      return true;
+    }
+    ctx.sendJson(res, 405, { error: "method not allowed" });
+    return true;
+  }
+  if (p2 === "/api/system" && method === "GET") {
+    if (!hasFullToken(ctx)) {
+      ctx.sendJson(res, 403, { error: "missing or invalid token" });
+      return true;
+    }
+    const status = ctx.prefsStatus();
+    ctx.sendJson(res, 200, {
+      version: ctx.version,
+      service: APP_DIR_NAME,
+      pid: process.pid,
+      startedAt: new Date(ctx.startedAt).toISOString(),
+      uptimeSeconds: Math.round((Date.now() - ctx.startedAt) / 1e3),
+      dataRoot: dataRoot(),
+      mediaDirs: mediaSubdirs(),
+      prefs: { migratedFrom: status.migratedFrom, recovered: status.recovered }
+    });
+    return true;
+  }
+  if (p2 === "/api/library/music" && method === "GET") {
+    if (!hasFullToken(ctx)) {
+      ctx.sendJson(res, 403, { error: "missing or invalid token" });
+      return true;
+    }
+    const prefs = ctx.readPrefs();
+    ctx.sendJson(res, 200, {
+      tracks: listTracks(prefs),
+      current: prefs.audio.bgm.trackId ?? null,
+      empty: listTracks(prefs).length === 0
+    });
+    return true;
+  }
+  if (p2 === "/api/library/music/add" && method === "POST") {
+    if (!hasFullToken(ctx)) {
+      ctx.sendJson(res, 403, { error: "missing or invalid token" });
+      return true;
+    }
+    ensureDataRoot();
+    const dir = mediaDir("music");
+    const tmp = path9.join(dir, `.upload.${process.pid}.${randomBytes(6).toString("hex")}.tmp`);
+    let written;
+    try {
+      written = await readBodyToFile(ctx.req, tmp);
+    } catch (err) {
+      try {
+        fs13.rmSync(tmp, { force: true });
+      } catch {
+      }
+      const status = err instanceof BodyTooLargeError ? 413 : 400;
+      ctx.sendJson(res, status, { error: err instanceof Error ? err.message : String(err) });
+      return true;
+    }
+    let result;
+    try {
+      result = addMediaFile("music", url.searchParams.get("name"), { path: tmp, size: written.bytes });
+    } catch (err) {
+      try {
+        fs13.rmSync(tmp, { force: true });
+      } catch {
+      }
+      ctx.sendJson(res, 500, { error: `could not store the upload: ${err.message}` });
+      return true;
+    }
+    if (!result.ok) {
+      try {
+        fs13.rmSync(tmp, { force: true });
+      } catch {
+      }
+      ctx.sendJson(res, result.status, { error: result.error });
+      return true;
+    }
+    ctx.sendJson(res, 200, { ...result });
+    return true;
+  }
+  if (p2 === "/api/library/music/delete" && method === "POST") {
+    if (!hasFullToken(ctx)) {
+      ctx.sendJson(res, 403, { error: "missing or invalid token" });
+      return true;
+    }
+    const body = await readJsonBody(ctx.req);
+    const name = body?.name;
+    try {
+      const removed = deleteMediaFile("music", name);
+      const prefs = ctx.readPrefs();
+      if (prefs.audio.bgm.trackId === name) {
+        await ctx.writePrefs({ ...prefs, audio: { ...prefs.audio, bgm: { ...prefs.audio.bgm, trackId: void 0 } } });
+      }
+      ctx.sendJson(res, 200, { ok: true, removed });
+    } catch (err) {
+      const { status, error } = errorStatus(err);
+      ctx.sendJson(res, status, { error });
+    }
+    return true;
+  }
+  if (p2 === "/api/library/music/toggle" && method === "POST") {
+    if (!hasFullToken(ctx)) {
+      ctx.sendJson(res, 403, { error: "missing or invalid token" });
+      return true;
+    }
+    const body = await readJsonBody(ctx.req);
+    const name = typeof body?.name === "string" ? body.name : "";
+    if (!mediaFileExists("music", name)) {
+      ctx.sendJson(res, 404, { error: "unknown track" });
+      return true;
+    }
+    const prefs = ctx.readPrefs();
+    const disabled = new Set(prefs.audio.bgm.disabledTracks);
+    const enabled = body?.enabled === void 0 ? disabled.has(name) : body.enabled === true;
+    if (enabled)
+      disabled.delete(name);
+    else
+      disabled.add(name);
+    await ctx.writePrefs({
+      ...prefs,
+      audio: { ...prefs.audio, bgm: { ...prefs.audio.bgm, disabledTracks: [...disabled] } }
+    });
+    ctx.sendJson(res, 200, { ok: true, name, enabled });
+    return true;
+  }
+  const poolMatch = /^\/api\/pool\/(sounds|voice|pet|status)$/.exec(p2);
+  if (poolMatch && method === "GET") {
+    if (!hasFullToken(ctx)) {
+      ctx.sendJson(res, 403, { error: "missing or invalid token" });
+      return true;
+    }
+    const kind = poolMatch[1];
+    ctx.sendJson(res, 200, { kind, entries: listPool(kind) });
+    return true;
+  }
+  const poolFileMatch = /^\/api\/pool\/(sounds|voice|pet|status)\/delete$/.exec(p2);
+  if (poolFileMatch && method === "POST") {
+    if (!hasFullToken(ctx)) {
+      ctx.sendJson(res, 403, { error: "missing or invalid token" });
+      return true;
+    }
+    const body = await readJsonBody(ctx.req);
+    try {
+      const removed = deleteMediaFile(poolFileMatch[1], body?.name);
+      ctx.sendJson(res, 200, { ok: true, removed });
+    } catch (err) {
+      const { status, error } = errorStatus(err);
+      ctx.sendJson(res, status, { error });
+    }
+    return true;
+  }
+  if (p2 === "/api/status/phrases" && method === "GET") {
+    if (!hasFullToken(ctx)) {
+      ctx.sendJson(res, 403, { error: "missing or invalid token" });
+      return true;
+    }
+    const prefs = ctx.readPrefs();
+    const lang = url.searchParams.get("lang") === "en" ? "en" : prefs.status.language;
+    const resolved = resolvePool(lang, userStatusText(lang));
+    ctx.sendJson(res, 200, { language: lang, source: resolved.source, count: resolved.phrases.length, phrases: resolved.phrases });
+    return true;
+  }
+  const mediaMatch = /^\/api\/media\/([^/]+)\/([^/]+)$/.exec(p2);
+  if (mediaMatch && (method === "GET" || method === "HEAD")) {
+    if (!hasMediaAccess(ctx)) {
+      ctx.sendJson(res, 403, { error: "missing or invalid media token" });
+      return true;
+    }
+    const kindRaw = mediaMatch[1];
+    const name = decodeURIComponent(mediaMatch[2]);
+    if (!isMediaKind(kindRaw)) {
+      ctx.sendJson(res, 404, { error: "unknown media kind" });
+      return true;
+    }
+    const kind = kindRaw;
+    if (!isAllowedForKind(name, kind)) {
+      ctx.sendJson(res, 415, { error: "unsupported media type" });
+      return true;
+    }
+    const contentType = contentTypeFor(name, kind);
+    if (!contentType) {
+      ctx.sendJson(res, 415, { error: "unsupported media type" });
+      return true;
+    }
+    let file;
+    try {
+      file = resolveMediaFile(kind, name);
+    } catch (err) {
+      if (err instanceof UnsafePathError) {
+        ctx.sendJson(res, 404, { error: err.message });
+        return true;
+      }
+      throw err;
+    }
+    sendFile(res, {
+      file,
+      contentType,
+      rangeHeader: ctx.req.headers.range,
+      headOnly: method === "HEAD"
+    });
+    return true;
+  }
+  return false;
+}
+var init_hostRoutes = __esm({
+  "dist/api/hostRoutes.js"() {
+    "use strict";
+    init_dataRoot();
+    init_body();
+    init_prefs();
+    init_library();
+    init_paths();
+    init_stream2();
+    init_pool();
+  }
+});
+
+// dist/client/boot.js
+import fs14 from "node:fs";
+import path10 from "node:path";
+import { fileURLToPath } from "node:url";
+function bundleCandidates() {
+  const override = process.env[CLIENT_BUNDLE_ENV];
+  const here = path10.dirname(fileURLToPath(import.meta.url));
+  const candidates = [];
+  if (override && override.trim().length > 0)
+    candidates.push(path10.resolve(override.trim()));
+  candidates.push(path10.join(here, "client.js"));
+  candidates.push(path10.join(here, "..", "client.js"));
+  return candidates;
+}
+function loadClientBundle() {
+  if (cachedBundle !== void 0)
+    return cachedBundle;
+  const tried = bundleCandidates();
+  for (const candidate of tried) {
+    try {
+      const source = fs14.readFileSync(candidate, "utf8");
+      if (source.trim().length > 0) {
+        cachedBundle = source;
+        return source;
+      }
+    } catch {
+    }
+  }
+  throw new ClientBundleMissingError(tried);
+}
+function buildClientScript(params, bundle) {
+  const source = bundle ?? loadClientBundle();
+  const boot = {
+    apiPort: params.apiPort,
+    token: params.token,
+    mediaToken: params.mediaToken,
+    version: params.version
+  };
+  return `window[${JSON.stringify(CLIENT_BOOT_GLOBAL)}] = ${JSON.stringify(boot)};
+${source}`;
+}
+var CLIENT_BOOT_GLOBAL, CLIENT_BUNDLE_ENV, cachedBundle, ClientBundleMissingError;
+var init_boot = __esm({
+  "dist/client/boot.js"() {
+    "use strict";
+    CLIENT_BOOT_GLOBAL = "__ZCT_BOOT__";
+    CLIENT_BUNDLE_ENV = "ZCODE_TARKOV_CLIENT_BUNDLE";
+    ClientBundleMissingError = class extends Error {
+      tried;
+      constructor(tried) {
+        super(`the injected client bundle was not found. Looked in: ${tried.join(", ")}. Run \`npm run build\` to produce dist/client.js, or set ${CLIENT_BUNDLE_ENV}.`);
+        this.tried = tried;
+      }
+    };
+  }
+});
+
+// dist/core/version.js
+function pluginVersion() {
+  try {
+    return true ? "0.2.0" : "0.0.0-dev";
+  } catch {
+    return "0.0.0-dev";
+  }
+}
+var init_version = __esm({
+  "dist/core/version.js"() {
+    "use strict";
   }
 });
 
 // dist/core/server.js
 var server_exports = {};
 __export(server_exports, {
+  LEGACY_SERVICE_IDS: () => LEGACY_SERVICE_IDS,
+  SERVICE_ID: () => SERVICE_ID,
   existingServePid: () => existingServePid,
+  isOurService: () => isOurService,
   startServe: () => startServe
 });
 import http from "node:http";
-import fs7 from "node:fs";
-import path5 from "node:path";
-import { randomBytes } from "node:crypto";
+import fs15 from "node:fs";
+import path11 from "node:path";
+import { randomBytes as randomBytes2 } from "node:crypto";
+function isOurService(name) {
+  return typeof name === "string" && (name === SERVICE_ID || LEGACY_SERVICE_IDS.includes(name));
+}
 async function getAssets(wallpaperPath) {
-  if (!wallpaperPath || !fs7.existsSync(wallpaperPath))
+  if (!wallpaperPath || !fs15.existsSync(wallpaperPath))
     return void 0;
-  const mtimeMs = fs7.statSync(wallpaperPath).mtimeMs;
+  const mtimeMs = fs15.statSync(wallpaperPath).mtimeMs;
   if (cachedAssets?.file === wallpaperPath && cachedAssets.mtimeMs === mtimeMs) {
     return cachedAssets.assets;
   }
@@ -111386,10 +113246,10 @@ function currentConfig() {
   return { ...DEFAULT_CONFIG, ...loadConfig() };
 }
 function backupFile() {
-  return path5.join(dataDir(), "config.backup.json");
+  return path11.join(dataDir(), "config.backup.json");
 }
 function hasBackup() {
-  return fs7.existsSync(backupFile());
+  return fs15.existsSync(backupFile());
 }
 function publicConfig(config) {
   return {
@@ -111400,7 +113260,7 @@ function publicConfig(config) {
     banner: config.banner ?? DEFAULT_CONFIG.banner,
     wallpaperVisible: config.wallpaperVisible,
     fit: config.fit,
-    wallpaperSet: Boolean(config.wallpaperPath && fs7.existsSync(config.wallpaperPath)),
+    wallpaperSet: Boolean(config.wallpaperPath && fs15.existsSync(config.wallpaperPath)),
     hasBackup: hasBackup(),
     cdpPort: config.port
   };
@@ -111429,8 +113289,13 @@ function sanitizeBanner(raw) {
     return void 0;
   const out = { ...DEFAULT_CONFIG.banner };
   let touched = false;
-  if (typeof raw.enabled === "boolean") {
+  if (typeof raw.mode === "string" && BANNER_MODES.includes(raw.mode)) {
+    out.mode = raw.mode;
+    out.enabled = out.mode !== "off";
+    touched = true;
+  } else if (typeof raw.enabled === "boolean") {
     out.enabled = raw.enabled;
+    out.mode = raw.enabled ? "full" : "off";
     touched = true;
   }
   if (typeof raw.text1 === "string" && raw.text1.length > 0 && raw.text1.length <= 240) {
@@ -111455,7 +113320,7 @@ async function registerScript(session, source) {
   const { identifier } = await session.conn.send("Page.addScriptToEvaluateOnNewDocument", { source });
   return identifier;
 }
-async function holdSession(target, config, apiPort, token) {
+async function holdSession(target, config, apiPort, token, mediaToken) {
   if (!target.webSocketDebuggerUrl)
     return;
   const conn = await CdpConnection.connect(target.webSocketDebuggerUrl);
@@ -111475,16 +113340,26 @@ async function holdSession(target, config, apiPort, token) {
     });
     session.themeScriptId = identifier;
     await conn.send("Runtime.evaluate", { expression: bootstrap, returnByValue: true });
-    const panelScript = buildPanelScript(apiPort, token);
+    const panelScript = buildPanelScript(apiPort, token, resolvePalette({ background: config.background, accent: config.accent }));
     await conn.send("Page.addScriptToEvaluateOnNewDocument", { source: panelScript });
     await conn.send("Runtime.evaluate", { expression: panelScript, returnByValue: true });
+    try {
+      const clientScript = buildClientScript({ apiPort, token, mediaToken, version: pluginVersion() });
+      await conn.send("Page.addScriptToEvaluateOnNewDocument", { source: clientScript });
+      await conn.send("Runtime.evaluate", { expression: clientScript, returnByValue: true });
+    } catch (err) {
+      if (!warnedAboutClientBundle) {
+        warnedAboutClientBundle = true;
+        console.error(`serve: the v0.2 client was not injected \u2014 ${err.message}`);
+      }
+    }
     held.set(target.id, session);
   } catch (err) {
     conn.close();
     throw err;
   }
 }
-async function pushConfigToSessions(config) {
+async function pushConfigToSessions(config, apiPort, token) {
   const assets = await getAssets(config.wallpaperPath);
   const payload = buildPayload(config, assets);
   const bootstrap = buildBootstrapScript({
@@ -111493,6 +113368,7 @@ async function pushConfigToSessions(config) {
     fit: payload.fit,
     banner: payload.banner
   });
+  const panelScript = buildPanelScript(apiPort, token, resolvePalette({ background: config.background, accent: config.accent }));
   let ok = 0;
   for (const [id, session] of held) {
     try {
@@ -111502,6 +113378,8 @@ async function pushConfigToSessions(config) {
       }
       session.themeScriptId = await registerScript(session, bootstrap);
       await session.conn.send("Runtime.evaluate", { expression: bootstrap, returnByValue: true });
+      await session.conn.send("Runtime.evaluate", { expression: panelScript, returnByValue: true }).catch(() => {
+      });
       ok++;
     } catch {
       session.conn.close();
@@ -111510,14 +113388,14 @@ async function pushConfigToSessions(config) {
   }
   return ok;
 }
-async function poll(config, apiPort, token) {
+async function poll(config, apiPort, token, mediaToken) {
   try {
     const targets = pickRendererTargets(await listTargets(config.port));
     const current = new Set(targets.map((t2) => t2.id));
     for (const t2 of targets) {
       if (!held.has(t2.id)) {
         try {
-          await holdSession(t2, config, apiPort, token);
+          await holdSession(t2, config, apiPort, token, mediaToken);
           console.log(`serve: panel + theme injected into "${t2.title}" (${t2.id})`);
         } catch {
         }
@@ -111574,7 +113452,7 @@ async function existingServePid(apiPort) {
       signal: AbortSignal.timeout(1e3)
     });
     const body = await res.json();
-    return body?.service === "zcode-beautify" ? body.pid : void 0;
+    return isOurService(body?.service) ? body.pid : void 0;
   } catch {
     return void 0;
   }
@@ -111598,7 +113476,15 @@ function readBody(req) {
 }
 async function startServe(opts) {
   const { cdpPort, apiPort } = opts;
-  const token = randomBytes(16).toString("hex");
+  initSettings();
+  try {
+    ensureDataRoot();
+  } catch (err) {
+    console.error(`serve: could not create the user data directory \u2014 ${err.message}`);
+  }
+  const startedAt = Date.now();
+  const token = randomBytes2(16).toString("hex");
+  const mediaToken = randomBytes2(16).toString("hex");
   const runtimeConfig = () => ({ ...currentConfig(), port: cdpPort });
   const persisted = (config) => ({
     ...config,
@@ -111623,6 +113509,25 @@ async function startServe(opts) {
         sendJson(res, 204, {});
         return;
       }
+      const handled = await handleHostRoute({
+        method: req.method ?? "GET",
+        url,
+        req,
+        res,
+        token,
+        mediaToken,
+        readPrefs: getPrefs,
+        writePrefs: async (next) => {
+          setPrefs(next);
+          await pushConfigToSessions(runtimeConfig(), apiPort, token).catch(() => 0);
+        },
+        prefsStatus: prefsLoadInfo,
+        version: pluginVersion(),
+        startedAt,
+        sendJson
+      });
+      if (handled)
+        return;
       if (url.pathname !== "/api/health" && !authorized(req, token)) {
         sendJson(res, 403, { error: "missing or invalid token" });
         return;
@@ -111635,7 +113540,7 @@ async function startServe(opts) {
         const patch = sanitize(JSON.parse(await readBody(req)));
         const config = { ...runtimeConfig(), ...patch };
         saveConfig(persisted(config));
-        const windows = await pushConfigToSessions(config).catch(() => 0);
+        const windows = await pushConfigToSessions(config, apiPort, token).catch(() => 0);
         sendJson(res, 200, { ok: true, windows, ...publicConfig(config) });
         return;
       }
@@ -111650,20 +113555,20 @@ async function startServe(opts) {
           throw new Error(`image too large (max ${MAX_WALLPAPER_BYTES / 1024 / 1024} MB)`);
         }
         const config = runtimeConfig();
-        fs7.mkdirSync(dataDir(), { recursive: true });
-        const dest = path5.join(dataDir(), "wallpaper" + IMAGE_EXT[m[1]]);
-        fs7.writeFileSync(dest, bytes);
-        cachedAssets = { file: dest, mtimeMs: fs7.statSync(dest).mtimeMs, assets: await loadWallpaper(dest) };
+        fs15.mkdirSync(dataDir(), { recursive: true });
+        const dest = path11.join(dataDir(), "wallpaper" + IMAGE_EXT[m[1]]);
+        fs15.writeFileSync(dest, bytes);
+        cachedAssets = { file: dest, mtimeMs: fs15.statSync(dest).mtimeMs, assets: await loadWallpaper(dest) };
         saveConfig(persisted({ ...config, wallpaperPath: dest }));
-        const windows = await pushConfigToSessions({ ...config, wallpaperPath: dest }).catch(() => 0);
+        const windows = await pushConfigToSessions({ ...config, wallpaperPath: dest }, apiPort, token).catch(() => 0);
         sendJson(res, 200, { ok: true, windows, ...publicConfig({ ...config, wallpaperPath: dest }) });
         return;
       }
       if (req.method === "POST" && url.pathname === "/api/reset") {
         const stored = loadConfig();
-        if (stored.wallpaperPath && fs7.existsSync(stored.wallpaperPath)) {
-          fs7.mkdirSync(dataDir(), { recursive: true });
-          fs7.writeFileSync(backupFile(), JSON.stringify(stored));
+        if (stored.wallpaperPath && fs15.existsSync(stored.wallpaperPath)) {
+          fs15.mkdirSync(dataDir(), { recursive: true });
+          fs15.writeFileSync(backupFile(), JSON.stringify(stored));
         }
         for (const [id, session] of held) {
           try {
@@ -111689,7 +113594,7 @@ async function startServe(opts) {
           throw new Error("no wallpaper backup available");
         const config = { ...DEFAULT_CONFIG, ...saved };
         saveConfig(config);
-        const windows = await pushConfigToSessions(config).catch(() => 0);
+        const windows = await pushConfigToSessions(config, apiPort, token).catch(() => 0);
         sendJson(res, 200, { ok: true, windows, ...publicConfig(config) });
         return;
       }
@@ -111725,7 +113630,7 @@ async function startServe(opts) {
         return;
       }
       if (req.method === "GET" && url.pathname === "/api/health") {
-        sendJson(res, 200, { ok: true, service: "zcode-beautify", pid: process.pid });
+        sendJson(res, 200, { ok: true, service: SERVICE_ID, pid: process.pid });
         return;
       }
       sendJson(res, 404, { error: "not found" });
@@ -111742,13 +113647,13 @@ async function startServe(opts) {
   });
   console.log(`serve: control API on http://127.0.0.1:${apiPort} \u2014 Ctrl+C to stop`);
   console.log(`serve: injecting into ZCode renderers on CDP port ${cdpPort}`);
-  await poll(runtimeConfig(), apiPort, token);
+  await poll(runtimeConfig(), apiPort, token, mediaToken);
   for (; ; ) {
     await new Promise((r2) => setTimeout(r2, POLL_MS));
-    await poll(runtimeConfig(), apiPort, token);
+    await poll(runtimeConfig(), apiPort, token, mediaToken);
   }
 }
-var MAX_WALLPAPER_BYTES, MAX_BODY_BYTES, POLL_MS, runtimeState, nextProcessProbe, cachedAssets, held, IMAGE_EXT;
+var MAX_WALLPAPER_BYTES, MAX_BODY_BYTES, POLL_MS, SERVICE_ID, LEGACY_SERVICE_IDS, runtimeState, nextProcessProbe, cachedAssets, held, warnedAboutClientBundle, IMAGE_EXT;
 var init_server = __esm({
   "dist/core/server.js"() {
     "use strict";
@@ -111758,14 +113663,24 @@ var init_server = __esm({
     init_monet();
     init_panelScript();
     init_launch();
+    init_dataRoot();
+    init_types();
+    init_palette();
     init_recovery();
     init_autostart();
+    init_store();
+    init_hostRoutes();
+    init_boot();
+    init_version();
     MAX_WALLPAPER_BYTES = 20 * 1024 * 1024;
     MAX_BODY_BYTES = MAX_WALLPAPER_BYTES + 1024 * 1024;
     POLL_MS = 1500;
+    SERVICE_ID = "zcode-tarkov";
+    LEGACY_SERVICE_IDS = ["zcode-beautify"];
     runtimeState = { cdpReachable: false, rendererCount: 0, zcodeRunning: false };
     nextProcessProbe = 0;
     held = /* @__PURE__ */ new Map();
+    warnedAboutClientBundle = false;
     IMAGE_EXT = {
       "image/jpeg": ".jpg",
       "image/png": ".png",
@@ -111783,8 +113698,8 @@ init_session();
 init_colorMode();
 init_autostart();
 init_recovery();
-import fs8 from "node:fs";
-import path6 from "node:path";
+import fs16 from "node:fs";
+import path12 from "node:path";
 
 // dist/core/launchers.js
 import { execFile as execFile2 } from "node:child_process";
@@ -111957,14 +113872,15 @@ Commands:
   autostart [install|uninstall]  Start the resident service at sign-in (used by mode "always")
   repair-launchers [--dry-run]   Add --remote-debugging-port to ZCode launch entries missing it
 `;
-var MODE_LIST = COLOR_MODES.join(" | ");
+var MODE_LIST = COLOR_MODES2.join(" | ");
 function autostartSpec(cdpPort, apiPort = 9223) {
   return {
     nodePath: process.execPath,
     cliPath: cliEntryPath(),
     cdpPort,
     apiPort,
-    dataDir: process.env.ZCODE_BEAUTIFY_DATA_DIR
+    dataDir: process.env.ZCODE_BEAUTIFY_DATA_DIR,
+    userDataDir: process.env.ZCODE_TARKOV_DATA_DIR
   };
 }
 async function main() {
@@ -112147,12 +114063,12 @@ async function startServeDetached(cdpPort, apiPort) {
   if (already !== void 0) {
     throw new Error(`a beautify service is already running on http://127.0.0.1:${apiPort} (pid ${already}) \u2014 open its panel, or stop that process first`);
   }
-  fs8.mkdirSync(dataDir(), { recursive: true });
-  const logFile = path6.join(dataDir(), "serve.log");
-  const out = fs8.openSync(logFile, "a");
+  fs16.mkdirSync(dataDir(), { recursive: true });
+  const logFile = path12.join(dataDir(), "serve.log");
+  const out = fs16.openSync(logFile, "a");
   const child = spawn2(process.execPath, [process.argv[1], "serve", "--port", String(cdpPort), "--api-port", String(apiPort)], { detached: true, stdio: ["ignore", out, out], windowsHide: true });
   child.unref();
-  fs8.closeSync(out);
+  fs16.closeSync(out);
   for (let i2 = 0; i2 < 20; i2++) {
     await new Promise((r2) => setTimeout(r2, 500));
     try {

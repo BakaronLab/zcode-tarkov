@@ -8,6 +8,7 @@ dist/*
 !dist/cli.js
 !dist/mcp/
 !dist/mcp/server.js
+!dist/client.js
 *.tsbuildinfo
 
 # logs

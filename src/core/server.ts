@@ -24,13 +24,45 @@ import { buildPayload, DEFAULT_CONFIG, resolveColorMode, type BeautifyConfig } f
 import { isColorMode } from "./colorMode.js";
 import { loadWallpaper, type WallpaperAssets } from "./monet.js";
 import { buildPanelScript } from "../panel/panelScript.js";
-import { dataDir, isZcodeProcessRunning, loadConfig, readJsonFile, relaunchZcode, saveConfig } from "./launch.js";
+import { dataDir, initSettings, isZcodeProcessRunning, loadConfig, readJsonFile, relaunchZcode, saveConfig } from "./launch.js";
+import { ensureDataRoot } from "./dataRoot.js";
+import { BANNER_MODES } from "../prefs/types.js";
+import { resolvePalette } from "../themes/palette.js";
 import { applyRecoveryMode, loadRecovery, normalizeMode } from "./recovery.js";
 import { cliEntryPath, getAutostartStatus } from "./autostart.js";
+import { getPrefs, prefsLoadInfo, setPrefs } from "../prefs/store.js";
+import { handleHostRoute } from "../api/hostRoutes.js";
+import { buildClientScript, CLIENT_BOOT_GLOBAL } from "../client/boot.js";
+import { pluginVersion } from "./version.js";
 
 const MAX_WALLPAPER_BYTES = 20 * 1024 * 1024;
 const MAX_BODY_BYTES = MAX_WALLPAPER_BYTES + 1024 * 1024;
 const POLL_MS = 1500;
+
+/**
+ * The service's own name, as reported by `/api/health` and by any log line that
+ * identifies it.
+ *
+ * `zcode-beautify` was the v0.1 name and is still *accepted* on read, so a CLI
+ * or launcher from an older install can recognise a running v0.2 service instead
+ * of starting a second one on the same port; the reverse (a v0.2 CLI finding a
+ * v0.1 service) is handled by the same list, which is exactly the upgrade path
+ * that matters.
+ */
+export const SERVICE_ID = "zcode-tarkov";
+export const LEGACY_SERVICE_IDS = ["zcode-beautify"];
+
+/**
+ * True when a `/api/health` payload came from this product.
+ *
+ * Both names count, in both directions: a v0.2 CLI must find a running v0.1
+ * service (and refuse to start a second one on the same port), and a v0.1 CLI
+ * must find a running v0.2 service. Anything that identified itself as ours is
+ * ours, regardless of which release it came from.
+ */
+export function isOurService(name: unknown): boolean {
+  return typeof name === "string" && (name === SERVICE_ID || LEGACY_SERVICE_IDS.includes(name));
+}
 
 export interface ServeOptions {
   cdpPort: number;
@@ -118,13 +150,26 @@ function sanitize(body: any): Partial<BeautifyConfig> {
   return out;
 }
 
-/** Banner overrides are additive: unspecified fields keep their current value. */
+/**
+ * Banner overrides are additive: unspecified fields keep their current value.
+ *
+ * The v0.1 body carried `enabled: boolean`; v0.2 replaced it with a three-valued
+ * `mode`. `enabled` is still honored because a v0.1 caller — an older panel left
+ * open across an upgrade — sends it and nothing else, and a request that asks
+ * for the band to be switched off must switch it off. `mode` wins when both are
+ * present, since it is the field the v0.2 UI actually reads.
+ */
 function sanitizeBanner(raw: any): BeautifyConfig["banner"] | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const out = { ...DEFAULT_CONFIG.banner };
   let touched = false;
-  if (typeof raw.enabled === "boolean") {
+  if (typeof raw.mode === "string" && (BANNER_MODES as readonly string[]).includes(raw.mode)) {
+    out.mode = raw.mode as (typeof BANNER_MODES)[number];
+    out.enabled = out.mode !== "off";
+    touched = true;
+  } else if (typeof raw.enabled === "boolean") {
     out.enabled = raw.enabled;
+    out.mode = raw.enabled ? "full" : "off";
     touched = true;
   }
   if (typeof raw.text1 === "string" && raw.text1.length > 0 && raw.text1.length <= 240) {
@@ -162,7 +207,8 @@ async function holdSession(
   target: { id: string; webSocketDebuggerUrl?: string },
   config: BeautifyConfig,
   apiPort: number,
-  token: string
+  token: string,
+  mediaToken: string
 ): Promise<void> {
   if (!target.webSocketDebuggerUrl) return;
   const conn = await CdpConnection.connect(target.webSocketDebuggerUrl);
@@ -187,9 +233,28 @@ async function holdSession(
     session.themeScriptId = identifier;
     await conn.send("Runtime.evaluate", { expression: bootstrap, returnByValue: true });
 
-    const panelScript = buildPanelScript(apiPort, token);
+    const panelScript = buildPanelScript(
+      apiPort,
+      token,
+      resolvePalette({ background: config.background, accent: config.accent })
+    );
     await conn.send("Page.addScriptToEvaluateOnNewDocument", { source: panelScript });
     await conn.send("Runtime.evaluate", { expression: panelScript, returnByValue: true });
+
+    // The v0.2 client (audio, dock, pet, status, settings centre). A missing
+    // bundle is a build problem, not a renderer problem: it is reported once and
+    // the theme and the v0.1 panel stay working, which is the right blast radius
+    // for a packaging mistake.
+    try {
+      const clientScript = buildClientScript({ apiPort, token, mediaToken, version: pluginVersion() });
+      await conn.send("Page.addScriptToEvaluateOnNewDocument", { source: clientScript });
+      await conn.send("Runtime.evaluate", { expression: clientScript, returnByValue: true });
+    } catch (err) {
+      if (!warnedAboutClientBundle) {
+        warnedAboutClientBundle = true;
+        console.error(`serve: the v0.2 client was not injected — ${(err as Error).message}`);
+      }
+    }
 
     held.set(target.id, session);
   } catch (err) {
@@ -198,8 +263,15 @@ async function holdSession(
   }
 }
 
+/** Set when the bundle warning has already been logged, so it is said once. */
+let warnedAboutClientBundle = false;
+
 /** Re-evaluates the theme bootstrap in every live session after a config change. */
-async function pushConfigToSessions(config: BeautifyConfig): Promise<number> {
+async function pushConfigToSessions(
+  config: BeautifyConfig,
+  apiPort: number,
+  token: string
+): Promise<number> {
   const assets = await getAssets(config.wallpaperPath);
   const payload = buildPayload(config, assets);
   const bootstrap = buildBootstrapScript({
@@ -208,6 +280,17 @@ async function pushConfigToSessions(config: BeautifyConfig): Promise<number> {
     fit: payload.fit,
     banner: payload.banner,
   });
+  // The v0.1 panel carries its own Tarkov skin, accent included, built from the
+  // palette at injection time. Re-pushing only the theme bootstrap would leave
+  // that panel on the colour it was first injected with — a stale accent in the
+  // one surface a user is most likely to be looking at while they change it.
+  // Re-evaluating the panel script is idempotent: it removes any previous copy
+  // of itself before installing.
+  const panelScript = buildPanelScript(
+    apiPort,
+    token,
+    resolvePalette({ background: config.background, accent: config.accent })
+  );
   let ok = 0;
   for (const [id, session] of held) {
     try {
@@ -218,6 +301,9 @@ async function pushConfigToSessions(config: BeautifyConfig): Promise<number> {
       }
       session.themeScriptId = await registerScript(session, bootstrap);
       await session.conn.send("Runtime.evaluate", { expression: bootstrap, returnByValue: true });
+      await session.conn
+        .send("Runtime.evaluate", { expression: panelScript, returnByValue: true })
+        .catch(() => {});
       ok++;
     } catch {
       session.conn.close();
@@ -227,14 +313,19 @@ async function pushConfigToSessions(config: BeautifyConfig): Promise<number> {
   return ok;
 }
 
-async function poll(config: BeautifyConfig, apiPort: number, token: string): Promise<void> {
+async function poll(
+  config: BeautifyConfig,
+  apiPort: number,
+  token: string,
+  mediaToken: string
+): Promise<void> {
   try {
     const targets = pickRendererTargets(await listTargets(config.port));
     const current = new Set(targets.map((t) => t.id));
     for (const t of targets) {
       if (!held.has(t.id)) {
         try {
-          await holdSession(t, config, apiPort, token);
+          await holdSession(t, config, apiPort, token, mediaToken);
           console.log(`serve: panel + theme injected into "${t.title}" (${t.id})`);
         } catch {
           /* retry next tick */
@@ -305,7 +396,7 @@ export async function existingServePid(apiPort: number): Promise<number | undefi
       signal: AbortSignal.timeout(1000),
     });
     const body = (await res.json()) as { service?: string; pid?: number };
-    return body?.service === "zcode-beautify" ? body.pid : undefined;
+    return isOurService(body?.service) ? body.pid : undefined;
   } catch {
     return undefined;
   }
@@ -340,10 +431,35 @@ const IMAGE_EXT: Record<string, string> = {
 export async function startServe(opts: ServeOptions): Promise<void> {
   const { cdpPort, apiPort } = opts;
 
+  // Load (and migrate) the settings before the first request can arrive, so a
+  // slow disk shows up at start-up rather than as a panel that hangs once.
+  initSettings();
+
+  // Materialise the data tree at start-up rather than lazily on the first
+  // settings write. The README tells users to drop their music into these
+  // folders, and a folder that only appears after they change a setting is a
+  // folder they will conclude does not exist.
+  try {
+    ensureDataRoot();
+  } catch (err) {
+    // A read-only or full disk must not stop the service: the theme and the
+    // panel are still useful, and the first write that fails will report it.
+    console.error(`serve: could not create the user data directory — ${(err as Error).message}`);
+  }
+
+  // Recorded once so `/api/system` can report uptime without a second clock.
+  const startedAt = Date.now();
+
   // This API can replace the user's wallpaper and even relaunch ZCode, and it
   // answers anything that can reach localhost. The token only ever travels
   // inside the injected panel script, so a random web page cannot drive it.
   const token = randomBytes(16).toString("hex");
+
+  // A second, strictly weaker secret for media reads. `<audio>` and `<img>`
+  // cannot attach a header, so this one is allowed in a query string — and it
+  // authorises nothing but reading media, because a URL ends up in logs and
+  // history where a full-access token must never appear.
+  const mediaToken = randomBytes(16).toString("hex");
 
   // `serve --port N` must win over the port stored in the config file: reading
   // the merged config alone silently dialed the stored port while still
@@ -383,6 +499,34 @@ export async function startServe(opts: ServeOptions): Promise<void> {
         return;
       }
 
+      // The v0.2 surface (prefs, media library, byte-range streaming) carries
+      // its own authorisation, because media reads accept the weaker query
+      // token and the v0.1 check below would reject them.
+      const handled = await handleHostRoute({
+        method: req.method ?? "GET",
+        url,
+        req,
+        res,
+        token,
+        mediaToken,
+        readPrefs: getPrefs,
+        writePrefs: async (next) => {
+          setPrefs(next);
+          // The band, the wallpaper and the palette are not merely stored — they
+          // are part of the payload the service injects. Writing the file and
+          // stopping there would make the settings panel's band switch look like
+          // it worked while the band on screen did not move until something else
+          // happened to trigger a push. The route awaits this, so the panel's
+          // confirmation is sent only after the renderer has the new payload.
+          await pushConfigToSessions(runtimeConfig(), apiPort, token).catch(() => 0);
+        },
+        prefsStatus: prefsLoadInfo,
+        version: pluginVersion(),
+        startedAt,
+        sendJson,
+      });
+      if (handled) return;
+
       // /api/health stays open: it identifies the service but exposes nothing,
       // and the CLI relies on it to detect an already-running instance.
       if (url.pathname !== "/api/health" && !authorized(req, token)) {
@@ -399,7 +543,7 @@ export async function startServe(opts: ServeOptions): Promise<void> {
         const patch = sanitize(JSON.parse(await readBody(req)));
         const config = { ...runtimeConfig(), ...patch };
         saveConfig(persisted(config));
-        const windows = await pushConfigToSessions(config).catch(() => 0);
+        const windows = await pushConfigToSessions(config, apiPort, token).catch(() => 0);
         sendJson(res, 200, { ok: true, windows, ...publicConfig(config) });
         return;
       }
@@ -419,7 +563,7 @@ export async function startServe(opts: ServeOptions): Promise<void> {
         fs.writeFileSync(dest, bytes);
         cachedAssets = { file: dest, mtimeMs: fs.statSync(dest).mtimeMs, assets: await loadWallpaper(dest) };
         saveConfig(persisted({ ...config, wallpaperPath: dest }));
-        const windows = await pushConfigToSessions({ ...config, wallpaperPath: dest }).catch(() => 0);
+        const windows = await pushConfigToSessions({ ...config, wallpaperPath: dest }, apiPort, token).catch(() => 0);
         sendJson(res, 200, { ok: true, windows, ...publicConfig({ ...config, wallpaperPath: dest }) });
         return;
       }
@@ -457,7 +601,7 @@ export async function startServe(opts: ServeOptions): Promise<void> {
         if (!saved) throw new Error("no wallpaper backup available");
         const config: BeautifyConfig = { ...DEFAULT_CONFIG, ...saved };
         saveConfig(config);
-        const windows = await pushConfigToSessions(config).catch(() => 0);
+        const windows = await pushConfigToSessions(config, apiPort, token).catch(() => 0);
         sendJson(res, 200, { ok: true, windows, ...publicConfig(config) });
         return;
       }
@@ -496,7 +640,7 @@ export async function startServe(opts: ServeOptions): Promise<void> {
       }
 
       if (req.method === "GET" && url.pathname === "/api/health") {
-        sendJson(res, 200, { ok: true, service: "zcode-beautify", pid: process.pid });
+        sendJson(res, 200, { ok: true, service: SERVICE_ID, pid: process.pid });
         return;
       }
 
@@ -521,9 +665,9 @@ export async function startServe(opts: ServeOptions): Promise<void> {
   console.log(`serve: injecting into ZCode renderers on CDP port ${cdpPort}`);
 
   // Initial pass, then keep polling so restarts of the app get re-injected.
-  await poll(runtimeConfig(), apiPort, token);
+  await poll(runtimeConfig(), apiPort, token, mediaToken);
   for (;;) {
     await new Promise((r) => setTimeout(r, POLL_MS));
-    await poll(runtimeConfig(), apiPort, token);
+    await poll(runtimeConfig(), apiPort, token, mediaToken);
   }
 }

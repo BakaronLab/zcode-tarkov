@@ -14,7 +14,7 @@ function valueOf(rows, token) {
 }
 
 test("palette matches the documented Tarkov base colors", () => {
-  assert.equal(TARKOV_PALETTE.accent, "#e07930");
+  assert.equal(TARKOV_PALETTE.accent, "#ee8a3a");
   assert.equal(TARKOV_PALETTE.background, "#1c1207");
   assert.equal(TARKOV_PALETTE.text, "#e8d9c8");
   assert.equal(TARKOV_PALETTE.highlight, "#ffd7ae");
@@ -60,9 +60,9 @@ test("every semantic token required by the spec is emitted", () => {
 test("foreground and accent come from the fixed palette, not from a wallpaper", () => {
   const rows = tarkovTokenRows(VISIBLE);
   assert.equal(valueOf(rows, "--color-foreground"), "#e8d9c8");
-  assert.equal(valueOf(rows, "--color-primary"), "#e07930");
-  assert.equal(valueOf(rows, "--color-brand"), "#e07930");
-  assert.equal(valueOf(rows, "--color-input-border-focused"), "#e07930");
+  assert.equal(valueOf(rows, "--color-primary"), "#ee8a3a");
+  assert.equal(valueOf(rows, "--color-brand"), "#ee8a3a");
+  assert.equal(valueOf(rows, "--color-input-border-focused"), "#ee8a3a");
 });
 
 test("functional colors are never overridden", () => {

@@ -37,7 +37,7 @@
  * Usage:
  *   node tools/verify-clean-install.mjs --port 9444 \
  *     --out-dir <repo>/docs/images --evidence <tmp>/cdp-evidence.json \
- *     --palette accent=#e07930 --palette background=#1c1207 --palette text=#e8d9c8
+ *     --palette accent=#ee8a3a --palette background=#1c1207 --palette text=#e8d9c8
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -186,7 +186,7 @@ function analyzePng(file) {
       const r = data[i]; const g = data[i + 1]; const b = data[i + 2];
       count += 1; sr += r; sg += g; sb += b;
       colors.add((r << 16) | (g << 8) | b);
-      if (near(r, g, b, 224, 121, 48, 24)) accent += 1;
+      if (near(r, g, b, 238, 138, 58, 24)) accent += 1;
       if (near(r, g, b, 160, 86, 35, 22) || near(r, g, b, 171, 94, 37, 22)) band += 1;
       if (near(r, g, b, 28, 18, 7, 14)) deep += 1;
       if (r < 12 && g < 12 && b < 12) nearBlack += 1;
@@ -451,9 +451,9 @@ function buildAssertions(obs, expected) {
   const norm = (s) => String(s).replace(/\s+/g, '').toLowerCase();
 
   add('theme.style-element', 'present', obs.styleElPresent, obs.styleElPresent === true);
-  add('theme.css-has-primary-token', 'injected css carries --color-primary:#e07930',
-    'style text ' + obs.styleElTextLen + ' chars, hasPrimaryToken=' + has(obs.styleElText, '--color-primary:#e07930'),
-    obs.styleElPresent === true && has(obs.styleElText, '--color-primary:#e07930'));
+  add('theme.css-has-primary-token', 'injected css carries --color-primary:#ee8a3a',
+    'style text ' + obs.styleElTextLen + ' chars, hasPrimaryToken=' + has(obs.styleElText, '--color-primary:#ee8a3a'),
+    obs.styleElPresent === true && has(obs.styleElText, '--color-primary:#ee8a3a'));
   add('theme.computed-color-primary', expected.accent, obs.varPrimary, norm(obs.varPrimary) === norm(expected.accent));
   add('theme.computed-color-foreground', expected.text, obs.varForeground, norm(obs.varForeground) === norm(expected.text));
   add('theme.computed-tarkov-accent', expected.accent, obs.varTarkovAccent, norm(obs.varTarkovAccent) === norm(expected.accent));
@@ -463,7 +463,7 @@ function buildAssertions(obs, expected) {
   add('page.html-classes-dark', 'dark in html class list', obs.htmlClasses, /\bdark\b/.test(String(obs.htmlClasses)));
 
   add('band.greeting-present', 'p[data-v4-draft-greeting="true"] present', obs.greetingPresent, obs.greetingPresent === true);
-  add('band.background-rgba', 'background contains rgba(224, 121, 48,', obs.greetingBackground,
+  add('band.background-rgba', 'background contains rgba(238, 138, 58,', obs.greetingBackground,
     has(obs.greetingBackground, expected.bandRgb) || has(obs.greetingBgColor, expected.bandRgb));
   const fontVar = parseFloat(String(obs.greetingFontVar || '30').replace('px', '')) || 30;
   // Chromium reports computed lengths without trailing zeros ("43.5px", not
@@ -474,7 +474,7 @@ function buildAssertions(obs, expected) {
   add('band.badge-width', expBadgeW + 'px (1.45 x greeting font var ' + fontVar + 'px)', obs.badgeWidth, px(obs.badgeWidth) === expBadgeW);
   add('band.badge-height', expBadgeH + 'px (1.25 x greeting font var)', obs.badgeHeight, px(obs.badgeHeight) === expBadgeH);
   add('band.badge-bg', 'rgb(28, 18, 7)', obs.badgeBg, norm(obs.badgeBg) === 'rgb(28,18,7)');
-  add('band.badge-color', 'rgb(224, 121, 48)', obs.badgeColor, norm(obs.badgeColor) === 'rgb(224,121,48)');
+  add('band.badge-color', 'rgb(238, 138, 58)', obs.badgeColor, norm(obs.badgeColor) === 'rgb(238,138,58)');
   add('band.badge-hexagon-clip', expected.badgeClip, obs.badgeClip, norm(obs.badgeClip) === norm(expected.badgeClip));
   add('band.line1-content', 'contains "Beta"', obs.line1Content, has(obs.line1Content, 'Beta'));
   add('band.line2-content', 'non-empty', obs.line2Content, typeof obs.line2Content === 'string' && obs.line2Content.length > 2);
@@ -709,12 +709,12 @@ async function main() {
     confirmMeasurement: clipResolution.confirmObs
   };
   const expected = {
-    accent: args.palette.accent || '#e07930',
+    accent: args.palette.accent || '#ee8a3a',
     background: args.palette.background || '#1c1207',
     text: args.palette.text || '#e8d9c8',
     panel: 'rgba(26, 18, 10, 0.62)',
     card: 'rgba(42, 29, 16, 0.72)',
-    bandRgb: 'rgba(224, 121, 48,',
+    bandRgb: 'rgba(238, 138, 58,',
     badgeClip: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
   };
   result.expected = expected;
@@ -749,7 +749,7 @@ async function main() {
     });
     result.assertions.push({
       id: 'screenshot.homepage-tarkov-colors-painted',
-      expected: 'sampled pixels near the Tarkov accent #e07930 and near the painted band rgb(160,86,35)',
+      expected: 'sampled pixels near the Tarkov accent #ee8a3a and near the painted band rgb(160,86,35)',
       observed: { accentPixels: homeAnalysis.accentPixels, bandPixels: homeAnalysis.bandPixels, deepSurfacePixels: homeAnalysis.deepSurfacePixels },
       pass: (homeAnalysis.accentPixels + homeAnalysis.bandPixels) > 200 && homeAnalysis.deepSurfacePixels > 200
     });
@@ -775,7 +775,7 @@ async function main() {
       });
       result.assertions.push({
         id: 'screenshot.panel-tarkov-colors-painted',
-        expected: 'sampled pixels near the Tarkov accent #e07930',
+        expected: 'sampled pixels near the Tarkov accent #ee8a3a',
         observed: { accentPixels: panelAnalysis.accentPixels, deepSurfacePixels: panelAnalysis.deepSurfacePixels },
         pass: panelAnalysis.accentPixels > 50
       });

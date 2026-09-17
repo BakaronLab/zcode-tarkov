@@ -30,6 +30,18 @@ export interface AutostartSpec {
    * config than the launcher expects.
    */
   dataDir?: string;
+  /**
+   * Optional ZCODE_TARKOV_DATA_DIR for the autostarted process.
+   *
+   * v0.2 moved user media and settings to a root of this project's own. When a
+   * user relocates it — the documented reason to set the variable at all — the
+   * launcher inherits the value from the user's environment, but a service
+   * started at sign-in does not: it is started by the OS, not by a shell that
+   * has the variable. Without this, a relocated library would be found by a
+   * shortcut launch and missed after a reboot, which looks exactly like the
+   * music having been deleted.
+   */
+  userDataDir?: string;
 }
 
 export interface AutostartStatus {
@@ -111,6 +123,11 @@ function windowsScript(spec: AutostartSpec): string {
       `CreateObject("WScript.Shell").Environment("PROCESS")("ZCODE_BEAUTIFY_DATA_DIR") = ${vbsLiteral(spec.dataDir)}`
     );
   }
+  if (spec.userDataDir) {
+    lines.push(
+      `CreateObject("WScript.Shell").Environment("PROCESS")("ZCODE_TARKOV_DATA_DIR") = ${vbsLiteral(spec.userDataDir)}`
+    );
+  }
   lines.push(`CreateObject("WScript.Shell").Run ${vbsLiteral(command)}, 0, False`, ``);
   return lines.join("\r\n");
 }
@@ -121,11 +138,14 @@ function xmlText(value: string): string {
 }
 
 function macosScript(spec: AutostartSpec): string {
-  const envBlock = spec.dataDir
+  const envKeys = [
+    spec.dataDir ? `    <key>ZCODE_BEAUTIFY_DATA_DIR</key>\n    <string>${xmlText(spec.dataDir)}</string>` : "",
+    spec.userDataDir ? `    <key>ZCODE_TARKOV_DATA_DIR</key>\n    <string>${xmlText(spec.userDataDir)}</string>` : "",
+  ].filter(Boolean);
+  const envBlock = envKeys.length
     ? `  <key>EnvironmentVariables</key>
   <dict>
-    <key>ZCODE_BEAUTIFY_DATA_DIR</key>
-    <string>${xmlText(spec.dataDir)}</string>
+${envKeys.join("\n")}
   </dict>
 `
     : "";
@@ -164,8 +184,12 @@ function linuxScript(spec: AutostartSpec): string {
     .map(desktopArg)
     .join(" ");
   // `env VAR=value` keeps the Exec line a single command while pinning the same
-  // data directory the installer and the launcher use.
-  const dataEnv = spec.dataDir ? `env ${desktopArg(`ZCODE_BEAUTIFY_DATA_DIR=${spec.dataDir}`)} ` : "";
+  // data directories the installer and the launcher use.
+  const envAssignments = [
+    spec.dataDir ? `ZCODE_BEAUTIFY_DATA_DIR=${spec.dataDir}` : "",
+    spec.userDataDir ? `ZCODE_TARKOV_DATA_DIR=${spec.userDataDir}` : "",
+  ].filter(Boolean);
+  const dataEnv = envAssignments.length ? `env ${envAssignments.map(desktopArg).join(" ")} ` : "";
   return `[Desktop Entry]
 Type=Application
 Name=ZCode Beautify

@@ -13,6 +13,10 @@ import os from "node:os";
 import path from "node:path";
 import { listTargets } from "./cdp.js";
 import { withColorMode } from "./colorMode.js";
+import { prefsFile } from "./dataRoot.js";
+import { getPrefs, setLegacyConfigPath, setPrefs } from "../prefs/store.js";
+import type { AppearancePrefs, BannerMode } from "../prefs/types.js";
+import { BANNER_MODES } from "../prefs/types.js";
 
 export interface StoredConfig extends Partial<Omit<import("./inject.js").BeautifyConfig, "port">> {
   port?: number;
@@ -48,12 +52,47 @@ export function dataDir(): string {
   return own;
 }
 
-export function configFile(): string {
+/**
+ * The v0.1 appearance file.
+ *
+ * v0.2 stopped writing this: settings moved to `prefs.json` in the user data
+ * root, which a ZCode update cannot replace. The old file is still *read*, once,
+ * to migrate its contents, and it is left on disk untouched afterwards so a
+ * user can roll back to a v0.1 build without losing their appearance.
+ */
+export function legacyConfigFile(): string {
   return path.join(dataDir(), "config.json");
 }
 
+/** The v0.2 settings file (`prefs.json`). */
+export function settingsFile(): string {
+  return prefsFile();
+}
+
+/** True once the legacy path has been registered with the store. */
+let legacyRegistered = false;
+
+/** Points the prefs store at the v0.1 file exactly once per process. */
+function registerLegacyPath(): void {
+  if (legacyRegistered) return;
+  legacyRegistered = true;
+  setLegacyConfigPath(legacyConfigFile());
+}
+
 /**
- * Reads and parses a JSON file, returning undefined instead of throwing.
+ * Prepares the settings store before anything can serve a request.
+ *
+ * Exported so a long-running process (`serve`) can pay the migration cost at
+ * start-up rather than inside the first HTTP request, where a slow disk would
+ * look like a slow panel.
+ */
+export function initSettings(): void {
+  registerLegacyPath();
+  getPrefs();
+}
+
+/**
+ * Reads a JSON file, returning undefined instead of throwing.
  *
  * A leading UTF-8 BOM is stripped first: `JSON.parse` rejects it, and Windows
  * editors (Notepad in particular) write one by default, so a hand-edited config
@@ -68,18 +107,89 @@ export function readJsonFile<T>(file: string): T | undefined {
   }
 }
 
+/** Maps the stored appearance section onto the flat config the rest of the tree uses. */
+function appearanceToConfig(appearance: AppearancePrefs): StoredConfig {
+  return {
+    wallpaperPath: appearance.wallpaperPath,
+    blur: appearance.blur,
+    dim: appearance.dim,
+    fit: appearance.fit,
+    colorMode: appearance.colorMode,
+    // Kept in sync on read as well as on write: a v0.1 consumer reading an
+    // in-memory config still resolves an equivalent appearance from the boolean.
+    monet: appearance.colorMode === "monet",
+    wallpaperVisible: appearance.wallpaperVisible,
+    banner: { enabled: appearance.banner.mode !== "off", ...appearance.banner },
+    // The palette and the greeting are what the payload builder paints with, so
+    // they have to travel with every read — not only through the v0.2 prefs
+    // route. Leaving them out here would render the shipped colours no matter
+    // what the user chose.
+    background: appearance.background,
+    accent: appearance.accent,
+    greeting: appearance.greeting,
+  };
+}
+
+/**
+ * Folds a flat config back into the appearance section.
+ *
+ * `base` supplies anything the caller did not mention, so a partial write (the
+ * panel sending only `blur`) cannot reset the rest of the appearance. The
+ * reverse mapping of the banner's `enabled` boolean is what lets a v0.1 caller
+ * — the old panel, the CLI's `--no-banner` equivalent — keep working: it becomes
+ * `mode: "off"`, which is exactly what it meant.
+ */
+function configToAppearance(config: StoredConfig, base: AppearancePrefs): AppearancePrefs {
+  const banner = config.banner ?? { ...base.banner, enabled: base.banner.mode !== "off" };
+  // Same precedence as `resolveBannerMode`, and for the same reason: a v0.1
+  // caller that sets `enabled: false` must be able to turn the band off even
+  // though the object also carries whatever `mode` was already stored. Reading
+  // `mode` first would let a stored "full" silently override the only field that
+  // caller set.
+  const mode: BannerMode =
+    banner.enabled === false
+      ? "off"
+      : banner.mode && (BANNER_MODES as readonly string[]).includes(banner.mode)
+        ? banner.mode
+        : base.banner.mode;
+  return {
+    colorMode: config.colorMode ?? base.colorMode,
+    wallpaperVisible: config.wallpaperVisible ?? base.wallpaperVisible,
+    blur: config.blur ?? base.blur,
+    dim: config.dim ?? base.dim,
+    fit: config.fit ?? base.fit,
+    // Not `?? base`: clearing the wallpaper is a real operation (`/api/reset`),
+    // and an absent key is how the caller says so.
+    wallpaperPath: config.wallpaperPath,
+    banner: {
+      mode,
+      text1: banner.text1 ?? base.banner.text1,
+      text2: banner.text2 ?? base.banner.text2,
+      height: banner.height ?? base.banner.height,
+      opacity: banner.opacity ?? base.banner.opacity,
+    },
+    // Carried through from the stored appearance: the v0.1 `/api/config` route
+    // has no concept of these, and a config write (blur, dim, wallpaper) must
+    // not reset a palette or greeting the user chose in the v0.2 panel.
+    background: base.background,
+    accent: base.accent,
+    greeting: base.greeting,
+  };
+}
+
 export function loadConfig(): StoredConfig {
+  registerLegacyPath();
   // Normalizing on read is what makes pre-0.1 configs (only `monet: true`)
-  // work unchanged: every consumer downstream sees a `colorMode`.
-  const stored = readJsonFile<StoredConfig>(configFile());
-  return stored ? withColorMode(stored) : {};
+  // and v0.1 configs (a flat `config.json`) work unchanged: the store migrates
+  // the latter into `prefs.json` on first load, and every consumer downstream
+  // sees a fully-populated appearance either way.
+  return appearanceToConfig(getPrefs().appearance);
 }
 
 export function saveConfig(config: StoredConfig): void {
-  fs.mkdirSync(dataDir(), { recursive: true });
-  // Persist both the new mode and the legacy flag so an older build of the
-  // plugin reading the same file still resolves to an equivalent appearance.
-  fs.writeFileSync(configFile(), JSON.stringify(withColorMode(config), null, 2));
+  registerLegacyPath();
+  const prefs = getPrefs();
+  setPrefs({ ...prefs, appearance: configToAppearance(config, prefs.appearance) });
 }
 
 const ZCODE_EXE_CANDIDATES =

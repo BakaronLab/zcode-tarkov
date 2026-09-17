@@ -4,6 +4,147 @@
 history of the upstream project this repository was forked from,
 [zcode-beautify](https://github.com/Logocceai/zcode-beautify) (MIT).
 
+## v0.2.0
+
+v0.1 was a Tarkov *theme*. v0.2 is a Tarkov *interface layer*: the theme plus
+audio, a companion, and a randomized status line, with a settings centre to
+drive all of it. Feature parity is with
+[dsh-theme-tarkov](https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov) v0.2.0 at
+`be1123c1c158e58ba0aa1c311c22d793b09f9c0d` — the same product capabilities,
+rebuilt on ZCode's own runtime signals rather than DSH's Cordis host API.
+
+The one deliberate departure is content. DSH ships 361 Scav voice clips, an
+official Altyn helmet PNG and three game sound effects; none of that may be
+redistributed. v0.2 therefore ships **no bundled media at all** — the effects are
+synthesized with the Web Audio API, the pet is an original SVG, and the voice
+pool is empty until the user fills it. See THIRD_PARTY_NOTICES.md.
+
+### Added
+
+- **Event sound effects.** `start`, `approval`, `done`, `error` and `tool`,
+  each with its own switch and volume. The defaults are synthesized from
+  oscillators and one noise burst — nothing is downloaded and no audio file
+  ships — and any of them can be overridden by dropping `start.mp3`,
+  `approval.wav`, `done.ogg`, … into `data\sounds\`.
+- **An event state machine** (`src/client/signals/machine.ts`) that turns a noisy
+  renderer into a small number of sounds: entry and exit debouncing, one sound
+  per event per turn, approval edge-triggered and re-armed only after the ask is
+  answered, and `error` outranking `done`. Re-rendering never re-fires.
+- **BGM.** A library read straight from `data\music\`, byte-range streaming so
+  seeking works, shuffle as a bag rather than an independent draw, repeat
+  all/one, per-track enable/disable, upload with progress, and an empty state
+  that names the folder to use.
+- **A single-leader rule for playback.** ZCode can have several renderers alive;
+  a `BroadcastChannel` plus a `localStorage` lease of 12 s elects one of them to
+  own the music, while every other renderer keeps a fully working dock whose
+  commands are forwarded. A stale leader cannot lock the room (the lease
+  expires) and a race cannot produce two (a claim is only believed after a
+  re-read).
+- **A BGM dock** in the bottom-right corner, beside the settings launcher rather
+  than on top of it, with a remembered collapsed state.
+- **A draggable pet** with an original inline-SVG helmet as its default
+  appearance, overridable from `data\pet\`. Pointer capture, a 5 px
+  click-versus-drag threshold, viewport clamping that accounts for the banner,
+  position persisted, and a right-click menu (mute voice, hide, reset position,
+  open settings).
+- **Pet voice.** Clicking the pet plays a random clip from `data\voice\`, with
+  no immediate repeat, a configurable chance, decoded buffers in a 24 MB
+  byte-bounded LRU, and no preloading.
+- **Randomized running-status text** drawn from `data\status\texts.zh.txt` /
+  `texts.en.txt`, falling back to a bundled pool of original phrases. The
+  takeover is presentational only — the native text stays in the DOM, so
+  `aria-live`, the elapsed timer and the task state are untouched, and restoring
+  is removing one attribute.
+- **A settings centre** replacing the v0.1 theme panel: Appearance, Audio, Pet,
+  Status and System, as a real keyboard-navigable tab list, with an offline
+  state that dims the controls instead of showing values it never read.
+- **A palette you can recolour.** The Tarkov theme's base surface colour and its
+  accent are both editable from **Settings → Appearance**, with the rest of the
+  ramp — panels, raised surfaces, popovers, the deep input tone — derived from
+  the background so a chosen colour stays coherent instead of leaving warm-brown
+  panels under something they no longer match. Every ink (body text, muted text,
+  the emphasis tones, text on a filled accent, text on the band) is chosen by
+  **measured contrast** against the surface it sits on rather than by a
+  light/dark threshold, so a mid-tone background gets the readable of the two
+  inks instead of the one a threshold happened to select — and the injected
+  dock, settings centre and pet take the accent from the theme's own tokens, so
+  a recolour reaches them too and cannot leak into Monet or Native mode.
+  The shipped colours are returned **untouched** while they are unchanged: the
+  resolver hands back the constant palette rather than re-deriving equal-looking
+  values, so an install that customises nothing renders exactly what it rendered
+  before this feature existed. (The accent itself did change in v0.2, from
+  `#e07930` to `#ee8a3a` — see "Changed" below.)
+- **Editable welcome-screen text.** The beta notice drawn over ZCode's empty-chat
+  screen is now the user's own copy: two lines plus an on/off switch, in
+  **Settings → Appearance**. Turning it off omits the rules entirely rather than
+  hiding the band, so ZCode's own greeting comes back with nothing to unwind.
+- **A versioned preferences schema** at `%LOCALAPPDATA%\zcode-tarkov\data\prefs.json`,
+  with per-field clamping, a closed key set, atomic writes, and quarantine of an
+  unparseable file. A v0.1 flat `config.json` is migrated field by field on first
+  load and left on disk untouched.
+- **A user data root this project owns.** Settings and media moved out of
+  ZCode's plugin data directory, which an app update may replace. Relocatable
+  with `ZCODE_TARKOV_DATA_DIR`.
+- **`--PurgeUserData` on the uninstaller.** Uninstalling removes the program, the
+  shortcuts, the service, the autostart entry and the plugin registration and
+  **keeps every byte of user media and settings** unless that switch is given.
+  `install.ps1` and `repair.ps1` create the data root and only ever create
+  missing directories.
+- **`dist/client.js`**, the injected client, bundled by esbuild from real
+  TypeScript in `src/client/` rather than assembled from template strings, so it
+  is type-checked and its pure parts are unit-tested.
+- **Tests** for preferences, path safety, range parsing, the media library, the
+  host API over real HTTP, the event machine, the status pool, the LRU, the
+  leader lease and the synthesized sequences — 167 and counting, including the
+  negative cases (traversal, unsatisfiable ranges, oversized uploads, a racing
+  leader pair, a malformed lease).
+
+### Changed
+
+- **The Tarkov accent is brighter.** `#e07930` → `#ee8a3a`, with the same hue.
+  On the deep surface ink `#1c1207` that is 7.3:1 instead of 6.1:1, so the band
+  is brighter *and* its black text is more legible. It is not an "official EFT
+  orange" — no such published palette exists — and the value now lives in one
+  module (`src/themes/palette.ts`) instead of four independent literals.
+- **The top banner has three modes.** `off` removes the band *and* releases the
+  space it reserved, `compact` is a 28 px single-line strip, `full` is the v0.1
+  band. Off pins the compensation variable to `0px` rather than leaving it
+  unset, because an unset property makes every `calc()` that reads it invalid
+  instead of zero.
+- **Service identity is `zcode-tarkov`.** `/api/health` reports the new name and
+  both the new and legacy names are accepted when detecting an already-running
+  service, so a v0.1 CLI and a v0.2 service can still find each other.
+- Appearance settings now live in `prefs.json`; `/api/config` continues to serve
+  the same shape, and the legacy `monet` boolean is still kept in step on read.
+
+### Fixed
+
+- The v0.1 panel and the v0.2 surfaces are torn down and rebuilt on every
+  injection, so a stale panel, dock or pet can no longer accumulate across
+  renderer reloads.
+- **`uninstall.ps1 -PurgeUserData` removes only this project's own files.** It
+  deletes `music\`, `sounds\`, `voice\`, `pet\`, `status\` and `prefs.json`, and
+  removes the root itself only when nothing else is left in it. The media root is
+  relocatable through `ZCODE_TARKOV_DATA_DIR`, and the documented reason to
+  relocate it is to keep media on a drive that already holds a library — so a
+  recursive delete of the root could have taken files this project never created.
+  Anything it did not create is now reported by name and left alone.
+- **Background music stops instead of skipping forever** when tracks cannot be
+  decoded. The consecutive-failure counter was reset on the way to the next
+  track, which made its cap unreachable and turned a folder of undecodable files
+  into an endless load-error-skip loop that still reported itself as playing.
+- **Media responses send `Access-Control-Allow-Origin`.** The renderer is a
+  `file://` document and the audio element requests its track in CORS mode, so a
+  response without that header is rejected — which would have meant no music at
+  all on a build that enforces it.
+- The settings centre's tab strip responds to clicks. It shipped with a keyboard
+  handler and no click handler, so the tabs were inert under the mouse.
+- A legacy caller sending `banner.enabled: false` to the v0.1 `/api/config` route
+  disables the band again, and `off` from either field now wins over a co-present
+  mode, in both the payload builder and the settings store.
+- The pet's **default** corner clears ZCode's bottom-left account row instead of
+  sitting on top of it. A position the user drags it to is unaffected.
+
 ## v0.1.0
 
 Frozen and verified 2026-09-16.

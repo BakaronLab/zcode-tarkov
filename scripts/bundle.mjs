@@ -24,8 +24,14 @@ await build({
 });
 
 // Remove the tsc intermediates the bundles were built from, so dist/ holds
-// exactly the two shippable files (they regenerate on the next build).
-const keep = new Set([path.resolve("dist/cli.js"), path.resolve("dist/mcp/server.js")]);
+// exactly the shippable files (they regenerate on the next build).
+const keep = new Set([
+  path.resolve("dist/cli.js"),
+  path.resolve("dist/mcp/server.js"),
+  // Built by scripts/bundle-client.mjs. The service reads it at run time and
+  // injects it into the renderer, so it ships alongside the other two.
+  path.resolve("dist/client.js"),
+]);
 function clean(dir) {
   if (!fs.existsSync(dir)) return;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -38,4 +44,4 @@ function clean(dir) {
 }
 clean("dist");
 
-console.log("bundle written to dist/cli.js and dist/mcp/server.js");
+console.log("bundle written to dist/cli.js, dist/mcp/server.js and dist/client.js");

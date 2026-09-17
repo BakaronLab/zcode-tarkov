@@ -151,6 +151,12 @@ $missingLinksDir = Join-Path $T 'no-such-links'
 $foreignDir = Join-Path $T 'foreign'
 $foreignLinksDir = Join-Path $T 'foreign-links'
 $dataDir = Join-Path $T 'data'
+# The v0.2 user data root. The installers resolve it from ZCODE_TARKOV_DATA_DIR
+# when it is set, so the child processes below are pointed at a scratch tree:
+# without this the install/repair steps would create the real
+# %LOCALAPPDATA%\zcode-tarkov\data as a side effect of running the test suite.
+$userDataDir = Join-Path $T 'userdata'
+$purgeUserDataDir = Join-Path $T 'userdata-purge'
 $appdataDir = Join-Path $T 'appdata'
 $homeDir = Join-Path $T 'home'
 $logDir = Join-Path $T 'logs'
@@ -162,6 +168,8 @@ $guardTargets = [ordered]@{
     installDir  = $installDir
     linksDir    = $linksDir
     dataDir     = $dataDir
+    userDataDir = $userDataDir
+    purgeUserData = $purgeUserDataDir
     appdataDir  = $appdataDir
     homeDir     = $homeDir
     foreignDir  = $foreignDir
@@ -171,6 +179,11 @@ $blocked = @(
     [System.IO.Path]::GetFullPath((Join-Path $env:USERPROFILE 'Desktop')),
     [System.IO.Path]::GetFullPath((Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu')),
     [System.IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'Programs\zcode-tarkov')),
+    # The real user media root. Every scratch path above must be outside it: the
+    # whole point of -PurgeUserData is that it removes a directory the user may
+    # have filled with their own music, so the harness must never aim it at the
+    # real one.
+    [System.IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'zcode-tarkov')),
     [System.IO.Path]::GetFullPath((Join-Path $env:USERPROFILE '.zcode'))
 )
 $guardMessages = @()
@@ -229,6 +242,11 @@ $childEnv = @{
     APPDATA = $appdataDir
     USERPROFILE = $homeDir
     ZCODE_BEAUTIFY_DATA_DIR = $null
+    # Pins the v0.2 data root into the scratch tree. install.ps1, repair.ps1 and
+    # uninstall.ps1 all resolve it from this variable when it is present, which
+    # is what keeps a test run from creating or deleting anything under the real
+    # %LOCALAPPDATA%.
+    ZCODE_TARKOV_DATA_DIR = $userDataDir
     ZCODE_WINDOWS_APP_INSTALL_DIR = $null
 }
 $autostartEntry = Join-Path $appdataDir 'Microsoft\Windows\Start Menu\Programs\Startup\zcode-beautify.vbs'
@@ -298,6 +316,31 @@ if ($null -ne $settings1) {
     Assert-Lifecycle 'install-clean-recorded-shortcut' $false 'settings.json is unreadable'
 }
 Assert-Lifecycle 'install-clean-no-autostart' (-not (Test-Path -LiteralPath $autostartEntry)) ('-NoService must not write ' + $autostartEntry)
+
+# The v0.2 user data root. install.ps1 must create it (and its media
+# subdirectories) from scratch, and must record where it put it.
+$mediaKinds = @('music', 'sounds', 'voice', 'pet', 'status')
+$missingDirs = @()
+foreach ($kind in $mediaKinds) {
+    if (-not (Test-Path -LiteralPath (Join-Path $userDataDir $kind) -PathType Container)) { $missingDirs += $kind }
+}
+Assert-Lifecycle 'install-creates-user-data-root' ($missingDirs.Count -eq 0) ('missing media directories: ' + ($missingDirs -join ', '))
+# The installer's own report carries the resolved root; settings.json deliberately
+# does not, because the launcher and the service both resolve the same platform
+# default and a second copy could only disagree with it. What matters here is that
+# the installer *says* where it put the user's data.
+Assert-Lifecycle 'install-reports-user-data-root' ($install1.stdout -match [regex]::Escape($userDataDir)) ('the install report must name ' + $userDataDir)
+
+# Seed user media, so the preservation assertions below have something to lose.
+$mediaMarker = Join-Path $userDataDir 'music\harness-marker.mp3'
+[System.IO.File]::WriteAllText($mediaMarker, 'harness-media' + "`r`n", (New-Object System.Text.ASCIIEncoding))
+$prefsMarker = Join-Path $userDataDir 'prefs.json'
+[System.IO.File]::WriteAllText($prefsMarker, '{"harness":true}' + "`r`n", (New-Object System.Text.ASCIIEncoding))
+# A second, pristine root used only by the purge case, so the preservation case
+# above still has its media to prove it kept.
+New-Item -ItemType Directory -Path (Join-Path $purgeUserDataDir 'music') -Force | Out-Null
+$purgeMarker = Join-Path $purgeUserDataDir 'music\purge-marker.mp3'
+[System.IO.File]::WriteAllText($purgeMarker, 'purge-media' + "`r`n", (New-Object System.Text.ASCIIEncoding))
 
 # ---------------------------------------------------------- 2. idempotency ---
 Write-Host ''
@@ -391,6 +434,66 @@ Assert-Lifecycle 'uninstall-real-shortcut-gone' (-not (Test-Path -LiteralPath $r
 Assert-Lifecycle 'uninstall-real-merged-shortcut-gone' (-not (Test-Path -LiteralPath $newLink)) ('still present: ' + $newLink)
 Assert-Lifecycle 'uninstall-real-data-dir-kept' ((Test-Path -LiteralPath (Join-Path $dataDir 'config.json') -PathType Leaf) -and ((Read-TextFile (Join-Path $dataDir 'config.json')) -eq $dataMarkerBefore)) 'the data directory must be kept without -RemoveData'
 Assert-Lifecycle 'uninstall-real-no-autostart' (-not (Test-Path -LiteralPath $autostartEntry)) 'no autostart entry may exist in the redirected APPDATA'
+# The whole point of the v0.2 uninstaller: it removes the program and leaves the
+# user's media and settings exactly as they were. A user with gigabytes of their
+# own music must be able to uninstall without losing it.
+Assert-Lifecycle 'uninstall-preserves-media' ((Test-Path -LiteralPath $mediaMarker -PathType Leaf) -and ((Read-TextFile $mediaMarker) -match 'harness-media')) 'user media must survive an uninstall'
+Assert-Lifecycle 'uninstall-preserves-prefs' ((Test-Path -LiteralPath $prefsMarker -PathType Leaf) -and ((Read-TextFile $prefsMarker) -match 'harness')) 'prefs.json must survive an uninstall'
+$keptDirs = @()
+foreach ($kind in $mediaKinds) {
+    if (-not (Test-Path -LiteralPath (Join-Path $userDataDir $kind) -PathType Container)) { $keptDirs += $kind }
+}
+Assert-Lifecycle 'uninstall-preserves-media-dirs' ($keptDirs.Count -eq 0) ('removed media directories: ' + ($keptDirs -join ', '))
+Assert-Lifecycle 'uninstall-reports-preserved' ($unReal.stdout -match 'user data|userDataDir|preserv') 'the uninstaller must say what it kept and where'
+
+# ------------------------------- 6b. uninstall -PurgeUserData deletes media --
+Write-Host ''
+Write-Host '=== 6b. uninstall -PurgeUserData removes the data root ==='
+# A separate root for this case, reached through its own environment, so that
+# "purge removed the root it was aimed at" and "purge did not touch any other
+# root" are two independent observations rather than one.
+$purgeEnv = $childEnv.Clone()
+$purgeEnv['ZCODE_TARKOV_DATA_DIR'] = $purgeUserDataDir
+$unPurge = Invoke-Redirected -Arguments (@('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File') + $uninstallBase + @('-KeepOfficialShortcuts', '-PurgeUserData')) -Name 'uninstall-purge' -Env $purgeEnv
+Write-Host ('[uninstall-purge] exit code: ' + $unPurge.exitCode)
+Write-Host $unPurge.stdout
+Assert-Lifecycle 'uninstall-purge-exit0' ($unPurge.exitCode -eq 0) ('exit ' + $unPurge.exitCode)
+Assert-Lifecycle 'uninstall-purge-root-gone' (-not (Test-Path -LiteralPath $purgeUserDataDir)) ('-PurgeUserData must remove an emptied data root; still present: ' + $purgeUserDataDir)
+Assert-Lifecycle 'uninstall-purge-media-gone' (-not (Test-Path -LiteralPath $purgeMarker)) '-PurgeUserData must remove the media inside it too'
+# And it must be precisely scoped: the other root is untouched.
+Assert-Lifecycle 'uninstall-purge-left-other-root' (Test-Path -LiteralPath $mediaMarker -PathType Leaf) 'purging one root must not touch another'
+
+# ------------------------------ 6c. -PurgeUserData never eats foreign files --
+Write-Host ''
+Write-Host '=== 6c. -PurgeUserData removes only this project''s own files ==='
+# The documented reason to relocate the media root is to put it on a drive that
+# already holds a library (ZCODE_TARKOV_DATA_DIR), so a purge must not be able
+# to take anything this project did not create. This case gives the root both
+# our directories and a foreign one, and asserts the foreign one survives with
+# the root intact.
+$sharedUserDataDir = Join-Path $T 'userdata-shared'
+New-Item -ItemType Directory -Path (Join-Path $sharedUserDataDir 'music') -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $sharedUserDataDir 'sounds') -Force | Out-Null
+$sharedMarker = Join-Path $sharedUserDataDir 'music\shared-marker.mp3'
+[System.IO.File]::WriteAllText($sharedMarker, 'shared-media' + "`r`n", (New-Object System.Text.ASCIIEncoding))
+$sharedPrefs = Join-Path $sharedUserDataDir 'prefs.json'
+[System.IO.File]::WriteAllText($sharedPrefs, '{"shared":true}' + "`r`n", (New-Object System.Text.ASCIIEncoding))
+$foreignKeep = Join-Path $sharedUserDataDir 'my-own-albums'
+New-Item -ItemType Directory -Path $foreignKeep -Force | Out-Null
+$foreignMarker = Join-Path $foreignKeep 'irreplaceable.flac'
+[System.IO.File]::WriteAllText($foreignMarker, 'not-ours' + "`r`n", (New-Object System.Text.ASCIIEncoding))
+
+$sharedEnv = $childEnv.Clone()
+$sharedEnv['ZCODE_TARKOV_DATA_DIR'] = $sharedUserDataDir
+$unShared = Invoke-Redirected -Arguments (@('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File') + $uninstallBase + @('-KeepOfficialShortcuts', '-PurgeUserData')) -Name 'uninstall-purge-shared' -Env $sharedEnv
+Write-Host ('[uninstall-purge-shared] exit code: ' + $unShared.exitCode)
+Write-Host $unShared.stdout
+Assert-Lifecycle 'purge-shared-exit0' ($unShared.exitCode -eq 0) ('exit ' + $unShared.exitCode)
+Assert-Lifecycle 'purge-shared-removed-our-media' (-not (Test-Path -LiteralPath $sharedMarker)) 'our own media directory must be purged'
+Assert-Lifecycle 'purge-shared-removed-prefs' (-not (Test-Path -LiteralPath $sharedPrefs)) 'our own prefs.json must be purged'
+Assert-Lifecycle 'purge-shared-kept-foreign-file' ((Test-Path -LiteralPath $foreignMarker -PathType Leaf) -and ((Read-TextFile $foreignMarker) -match 'not-ours')) 'a file this project did not create must survive -PurgeUserData'
+Assert-Lifecycle 'purge-shared-kept-root' (Test-Path -LiteralPath $sharedUserDataDir -PathType Container) 'the root must survive while it still holds foreign entries'
+Assert-Lifecycle 'purge-shared-reports-what-it-kept' ($unShared.stdout -match 'did not create') 'the output must name what it left behind'
 
 # ------------------------------------------------ 7. second uninstall --------
 Write-Host ''

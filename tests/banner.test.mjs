@@ -6,12 +6,16 @@ import {
   BANNER_ID,
   BANNER_STYLE_ID,
   BANNER_STATE_KEY,
+  COMPACT_BANNER_HEIGHT,
   DEFAULT_BANNER,
   DEFAULT_BANNER_TEXT,
+  bannerHeight,
   buildBannerCss,
   buildBannerScript,
   buildBannerTeardownScript,
+  resolveBannerMode,
 } from "../.test-build/core/banner.js";
+import { TARKOV_ACCENT } from "../.test-build/themes/palette.js";
 import { buildBootstrapScript } from "../.test-build/core/cdp.js";
 import { DEFAULT_CONFIG } from "../.test-build/core/inject.js";
 
@@ -42,7 +46,7 @@ test("text is supplied as a JSON literal, so quotes cannot break the injected sc
 test("banner CSS carries the Tarkov band design", () => {
   const css = buildBannerCss(DEFAULT_BANNER);
   assert.match(css, new RegExp(`#${BANNER_ID}`));
-  assert.match(css, /224, 121, 48/, "translucent orange band");
+  assert.match(css, /238, 138, 58/, "translucent orange band, at the v0.2 accent");
   assert.match(css, /clip-path:\s*polygon\(25% 0%,\s*75% 0%/, "hexagonal badge");
   assert.match(css, /-webkit-app-region: drag/, "the strip stays draggable");
 });
@@ -116,10 +120,10 @@ test("banner layout rules stay scoped so Native and Monet geometry is untouched"
   for (const b of blocks) {
     if (/#zcode-tarkov-banner/.test(b.selector)) continue;
     if (!/--zcode-tarkov-banner-height|margin-top|height\s*:/.test(b.body)) continue;
-    assert.ok(
-      b.selector.startsWith('html[data-zct-banner="1"]'),
-      `layout rule must be scoped under the attribute, got: ${b.selector}`
-    );
+    const scoped =
+      b.selector.startsWith('html[data-zct-banner="1"]') ||
+      b.selector === 'html:not([data-zct-banner="1"])';
+    assert.ok(scoped, `layout rule must be scoped to the banner attribute, got: ${b.selector}`);
   }
   assert.equal(/^body \{ padding-top/m.test(css), false);
 });
@@ -148,7 +152,9 @@ test("install script anchors on #root and inserts before it as a body child", ()
 test("text writes are guarded so the observer cannot feed back into itself", () => {
   const script = buildBannerScript(DEFAULT_BANNER);
   assert.match(script, /if \(l1 && l1\.textContent !== T1\) l1\.textContent = T1;/);
-  assert.match(script, /if \(l2 && l2\.textContent !== T2\) l2\.textContent = T2;/);
+  // The second line is only written when the mode has one: a compact band has no
+  // line2 element at all, and the guard must not resurrect it.
+  assert.match(script, /if \(l2 && T2 && l2\.textContent !== T2\) l2\.textContent = T2;/);
   // The observer callback is debounced rather than re-entrant.
   assert.match(script, /if \(scheduled\) return;/);
 });
@@ -208,4 +214,79 @@ test("the banner survives the theme early-return that skips identical CSS", () =
 
 test("banner defaults stay in sync with the shipped config default", () => {
   assert.deepEqual(DEFAULT_CONFIG.banner, DEFAULT_BANNER);
+});
+
+// --- v0.2 banner modes -------------------------------------------------------
+
+test("bannerHeight reserves nothing when the mode is off", () => {
+  assert.equal(bannerHeight({ ...DEFAULT_BANNER, mode: "off" }), 0);
+  assert.equal(bannerHeight({ ...DEFAULT_BANNER, mode: "compact" }), COMPACT_BANNER_HEIGHT);
+  assert.equal(bannerHeight({ ...DEFAULT_BANNER, mode: "full", height: 64 }), 64);
+});
+
+test("off pins the compensation to zero rather than leaving it unset", () => {
+  const css = buildBannerCss({ ...DEFAULT_BANNER, mode: "off" });
+  // An unset custom property makes every calc() that reads it invalid at
+  // computed-value time, which is how a hidden band leaves a stale gap.
+  assert.match(css, /html:not\(\[data-zct-banner="1"\]\) \{ --zcode-tarkov-banner-height: 0px; \}/);
+  // And nothing reserves space: the reservation rules only match with the
+  // attribute, which the off mode never sets.
+  assert.equal(/html\[data-zct-banner="1"\] #root/.test(css), true, "the rule exists");
+  assert.equal(
+    css.includes('html:not([data-zct-banner="1"]) #root'),
+    false,
+    "there must be no second reservation for the off state"
+  );
+});
+
+test("compact is a thin single-line strip", () => {
+  const css = buildBannerCss({ ...DEFAULT_BANNER, mode: "compact" });
+  assert.match(css, /html\[data-zct-banner="1"\] \{ --zcode-tarkov-banner-height: 28px; \}/);
+  assert.match(css, /#zcode-tarkov-banner \{[\s\S]*?height: 28px;/);
+});
+
+test("compact does not create the second line at all", () => {
+  const script = buildBannerScript({ ...DEFAULT_BANNER, mode: "compact" });
+  // The text is blanked before it reaches the DOM, so the branch that builds the
+  // element is never taken.
+  assert.match(script, /var T2 = "";/);
+  assert.equal(script.includes(DEFAULT_BANNER_TEXT.line2), false);
+});
+
+test("a teardown clears the compensation instead of pinning it", () => {
+  const script = buildBannerTeardownScript();
+  // Zeroing through an inline custom property would outrank the author rule that
+  // raises it again, so the band would come back painting over the app's top
+  // strip instead of above it. The stylesheet's own complement rule
+  // (`html:not([data-zct-banner="1"])`) is what holds the value at zero, and the
+  // teardown's job is to make sure no inline value is left in the way.
+  assert.match(script, /removeProperty\('--zcode-tarkov-banner-height'\)/);
+  assert.equal(
+    /setProperty\('--zcode-tarkov-banner-height'/.test(script),
+    false,
+    "the teardown must not pin an inline value"
+  );
+});
+
+test("the install script clears a stale inline compensation", () => {
+  const script = buildBannerScript(DEFAULT_BANNER);
+  // An inline value left by an earlier build would keep the reservation at zero
+  // while the band is showing.
+  assert.match(script, /style\.getPropertyValue\('--zcode-tarkov-banner-height'\)/);
+  assert.match(script, /style\.removeProperty\('--zcode-tarkov-banner-height'\)/);
+});
+
+test("resolveBannerMode accepts a legacy enabled boolean and prefers mode", () => {
+  assert.equal(resolveBannerMode({ mode: "compact", enabled: true }), "compact");
+  assert.equal(resolveBannerMode({ enabled: false }), "off");
+  assert.equal(resolveBannerMode({ enabled: true }), "full");
+  assert.equal(resolveBannerMode({}), "full");
+  // An unknown mode from a future build must not silently disable the band.
+  assert.equal(resolveBannerMode({ mode: "sideways", enabled: true }), "full");
+});
+
+test("the accent is the centralized v0.2 token, not a literal", () => {
+  const css = buildBannerCss(DEFAULT_BANNER);
+  assert.equal(css.includes(TARKOV_ACCENT), true);
+  assert.equal(css.includes("224, 121, 48"), false, "the v0.1 accent must be gone");
 });

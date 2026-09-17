@@ -14,9 +14,47 @@
  * with no leftover state.
  */
 
+import { DEFAULT_PALETTE, type PaletteColors } from "../themes/palette.js";
+
 export const PANEL_ROOT_ID = "zcode-beautify-panel-root";
 
-export function buildPanelScript(apiPort: number, token: string): string {
+/**
+ * The alpha-composited accents for the panel's Tarkov skin.
+ *
+ * Resolved here rather than inside the emitted stylesheet: the whole panel
+ * script is one template literal, and a nested backtick inside its text closes
+ * the outer one, so every value has to be computed at this level and
+ * interpolated in. Each is a full `rgba(...)` because the emitted CSS takes no
+ * further part in the arithmetic.
+ *
+ * The accent is a parameter rather than the shipped constant. This panel is
+ * injected alongside the v0.2 client, and leaving it on `#ee8a3a` would paint
+ * orange chrome around a UI the user had recoloured.
+ */
+function panelAccentCss(rgb: string): {
+  border: string;
+  muted: string;
+  ctlBg: string;
+  ctlBorder: string;
+  ctlHover: string;
+} {
+  const at = (alpha: number) => `rgba(${rgb},${alpha})`;
+  return {
+    border: at(0.45),
+    muted: at(0.28),
+    ctlBg: at(0.14),
+    ctlBorder: at(0.35),
+    ctlHover: at(0.26),
+  };
+}
+
+export function buildPanelScript(
+  apiPort: number,
+  token: string,
+  palette: PaletteColors = DEFAULT_PALETTE
+): string {
+  const accentHex = palette.accent;
+  const accentCss = panelAccentCss(palette.accentRgb);
   const api = `http://127.0.0.1:${apiPort}`;
   return `(function(){
   var API = ${JSON.stringify(api)};
@@ -48,16 +86,16 @@ export function buildPanelScript(apiPort: number, token: string): string {
     // --- Tarkov skin: deep brown, warm orange, squarer corners ------------
     '#zcode-beautify-panel-root[data-zb-theme="tarkov"] {',
       ' --zb-bg: rgba(26,18,10,.94);',
-      ' --zb-border: rgba(224,121,48,.45);',
+      ' --zb-border: ${accentCss.border};',
       ' --zb-radius: 4px;',
       ' --zb-radius-sm: 3px;',
       ' --zb-radius-pill: 3px;',
       ' --zb-text: #e8d9c8;',
-      ' --zb-muted: rgba(224,121,48,.28);',
-      ' --zb-ctl-bg: rgba(224,121,48,.14);',
-      ' --zb-ctl-border: rgba(224,121,48,.35);',
-      ' --zb-ctl-hover: rgba(224,121,48,.26);',
-      ' --zb-accent: #e07930;',
+      ' --zb-muted: ${accentCss.muted};',
+      ' --zb-ctl-bg: ${accentCss.ctlBg};',
+      ' --zb-ctl-border: ${accentCss.ctlBorder};',
+      ' --zb-ctl-hover: ${accentCss.ctlHover};',
+      ' --zb-accent: ${accentHex};',
       ' --zb-shadow: 0 8px 28px rgba(0,0,0,.6); }',
 
     '#zcode-beautify-panel-root, #zcode-beautify-panel-root * { box-sizing: border-box; font-family: var(--zb-font); }',

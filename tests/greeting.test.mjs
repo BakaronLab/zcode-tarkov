@@ -114,7 +114,7 @@ test("every greeting rule requires ZCode's two-span structure", () => {
 
 test("the notice is the reference warning band, not a dark plate", () => {
   const band = blockFor(BAND_SEL);
-  assert.match(band, /background:\s*rgba\(224, 121, 48, var\(--zct-banner-opacity, [0-9.]+\)\)/);
+  assert.match(band, /background:\s*rgba\(238, 138, 58, var\(--zct-banner-opacity, [0-9.]+\)\)/);
   // The previous iteration's self-designed treatment is gone for good.
   assert.equal(/linear-gradient/.test(band), false, "no gradient plate");
   // The only border-ish declaration left is the reference's corner radius:
@@ -139,7 +139,7 @@ test("the band keeps the reference's translucent, adjustable strength", () => {
 test("the band's hue is the Tarkov accent, so it reads orange", () => {
   const band = blockFor(BAND_SEL);
   const [r, g, b] = /rgba\((\d+),\s*(\d+),\s*(\d+)/.exec(band).slice(1).map(Number);
-  assert.deepEqual([r, g, b], [224, 121, 48], "the band must be rgba(224,121,48,…)");
+  assert.deepEqual([r, g, b], [238, 138, 58], "the band must be rgba(238,138,58,…), the v0.2 accent");
   assert.equal(`#${r.toString(16)}${g.toString(16)}${b.toString(16)}`, TARKOV_PALETTE.accent);
 });
 
@@ -197,7 +197,7 @@ test("the warning badge is the reference hexagon", () => {
     /clip-path:\s*polygon\(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%\)/
   );
   assert.match(badge, /background:\s*#1c1207/);
-  assert.match(badge, /color:\s*#e07930/);
+  assert.match(badge, /color:\s*#ee8a3a/);
   assert.match(badge, /flex:\s*none/, "the badge must not be squeezed by long copy");
   assert.match(badge, /font-weight:\s*800/);
   // No image asset is used for the badge: no game art, no SVG data URI.
@@ -371,7 +371,7 @@ test("the band is composed from palette values only", () => {
   // Comments carry prose that quotes colours (e.g. the measured renders), so the
   // declarations are what gets checked.
   const notice = css.slice(css.indexOf("empty-chat beta notice")).replace(/\/\*[\s\S]*?\*\//g, "");
-  const allowed = new Set(["224,121,48", "28,18,7", "17,17,17"]);
+  const allowed = new Set(["238,138,58", "28,18,7", "17,17,17"]);
   for (const m of notice.matchAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)/g)) {
     const key = `${m[1]},${m[2]},${m[3]}`;
     assert.ok(allowed.has(key), `unexpected colour ${key} in the beta notice`);

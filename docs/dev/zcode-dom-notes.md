@@ -271,10 +271,10 @@ with a scratch `ZCODE_BEAUTIFY_DATA_DIR`. 67 assertions, all passing.
 
 | Check | Result |
 |---|---|
-| `--color-primary` | `#e07930` |
+| `--color-primary` | `#ee8a3a` |
 | `--color-foreground` | `#e8d9c8` |
-| `--color-input-border-focused` | `#e07930` |
-| `--tarkov-accent` | `#e07930` |
+| `--color-input-border-focused` | `#ee8a3a` |
+| `--tarkov-accent` | `#ee8a3a` |
 | `--color-success` / `--color-danger` | unchanged from native |
 | component skin present in the injected CSS | yes |
 
