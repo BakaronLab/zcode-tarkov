@@ -1,0 +1,825 @@
+{
+  "tool": "measure-layout.mjs",
+  "version": 1,
+  "label": "after",
+  "mode": "tarkov",
+  "timestamp": "2026-09-17T06:26:35.413Z",
+  "port": 9478,
+  "requestedViewport": {
+    "w": 960,
+    "h": 720
+  },
+  "steps": [
+    {
+      "step": "apply-mode",
+      "cli": "F:/WSL/workspace/zcode-tarkov/dist/cli.js",
+      "mode": "tarkov",
+      "exitCode": 0,
+      "stdout": "Theme mode \"tarkov\" applied to 1 window(s).",
+      "stderr": ""
+    },
+    {
+      "step": "mode-settled",
+      "wanted": "tarkov",
+      "observed": {
+        "attr": "1",
+        "banner": true
+      }
+    },
+    {
+      "step": "resize",
+      "method": "SetWindowPos",
+      "real": true,
+      "emulated": false,
+      "matched": true,
+      "attempts": [
+        {
+          "method": "SetWindowPos",
+          "matched": true,
+          "error": null,
+          "note": null
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "banner.present",
+      "expected": "exactly one banner in Tarkov mode",
+      "observed": true,
+      "pass": true
+    },
+    {
+      "id": "banner.inside-viewport",
+      "expected": "top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        0,
+        56,
+        720
+      ],
+      "pass": true
+    },
+    {
+      "id": "banner.attribute-set",
+      "expected": "html[data-zct-banner=\"1\"]",
+      "observed": "1",
+      "pass": true
+    },
+    {
+      "id": "banner.height-variable",
+      "expected": "--zcode-tarkov-banner-height resolves to the band height",
+      "observed": [
+        "56px",
+        56
+      ],
+      "pass": true
+    },
+    {
+      "id": "app-shell.below-banner",
+      "expected": "app shell top >= banner bottom (no coverage)",
+      "observed": [
+        56,
+        56
+      ],
+      "pass": true
+    },
+    {
+      "id": "root.bottom-at-viewport",
+      "expected": "|#root.bottom - innerHeight| <= 0.5",
+      "observed": [
+        720,
+        720
+      ],
+      "pass": true
+    },
+    {
+      "id": "composer.fully-visible",
+      "expected": "composer top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        400.93,
+        546.07,
+        720
+      ],
+      "pass": true
+    },
+    {
+      "id": "sidebar.fully-visible",
+      "expected": "sidebar top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        56,
+        720,
+        720
+      ],
+      "pass": true
+    },
+    {
+      "id": "account.fully-visible",
+      "expected": "account label top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        677.5,
+        698.5,
+        720
+      ],
+      "pass": true
+    },
+    {
+      "id": "no-clipped-elements",
+      "expected": "no painted element reaches outside the viewport",
+      "observed": {
+        "paintedOutside": 0,
+        "rawRectHits": 6,
+        "sample": []
+      },
+      "pass": true
+    },
+    {
+      "id": "no-vertical-overflow",
+      "expected": "html.scrollHeight <= html.clientHeight + 1",
+      "observed": [
+        720,
+        720
+      ],
+      "pass": true
+    }
+  ],
+  "comparisons": [],
+  "pageTarget": {
+    "id": "70B317451DF713937722B810640E626F",
+    "title": "ZCode",
+    "url": "file:///C:/Program%20Files/ZCode/resources/app.asar/out/renderer/index.html?restoreSession=true&supportsSettings=true&initialWorkspacePath=C%3A%5CUsers%5C%3CUSER%3E%5C.zcode%5Cworkspace%5Cdefault&initialWorkspacePurpose=conversation&zcodeLaunchMarks=%7B%22createdAt%22%3A1789622726582.995%2C%22mainStart%22%3A1789622727101%2C%22appReady%22%3A1789622727186%2C%22loadUrl%22%3A1789622728712%7D"
+  },
+  "targetsSeen": [
+    {
+      "type": "page",
+      "title": "ZCode"
+    },
+    {
+      "type": "worker",
+      "title": ""
+    },
+    {
+      "type": "worker",
+      "title": ""
+    },
+    {
+      "type": "worker",
+      "title": ""
+    },
+    {
+      "type": "worker",
+      "title": ""
+    }
+  ],
+  "browserPid": 27388,
+  "resize": {
+    "method": "SetWindowPos",
+    "real": true,
+    "pid": 27388,
+    "window": {
+      "found": true,
+      "pid": 27388,
+      "hwnd": 1052616,
+      "title": "ZCode",
+      "iconic": false,
+      "window": [
+        1760,
+        106,
+        2519,
+        1574
+      ],
+      "client": [
+        0,
+        0,
+        2519,
+        1574
+      ]
+    },
+    "raisedWindow": true,
+    "rendererVisibleAfterRaise": true,
+    "before": {
+      "w": 1440,
+      "h": 900,
+      "rw": 1440.0001220703125,
+      "rh": 900.0000610351562,
+      "dpr": 1.75,
+      "ow": 1441,
+      "oh": 901
+    },
+    "attempts": [
+      {
+        "targetW": 1680,
+        "targetH": 1260,
+        "measured": {
+          "w": 961,
+          "h": 721,
+          "rw": 961.1428833007812,
+          "rh": 721.1428833007812,
+          "dpr": 1.75,
+          "ow": 961,
+          "oh": 721
+        },
+        "applied": true
+      },
+      {
+        "targetW": 1678,
+        "targetH": 1258,
+        "measured": {
+          "w": 959,
+          "h": 719,
+          "rw": 959.4285888671875,
+          "rh": 719.4285888671875,
+          "dpr": 1.75,
+          "ow": 960,
+          "oh": 720
+        },
+        "applied": true
+      },
+      {
+        "targetW": 1679,
+        "targetH": 1259,
+        "measured": {
+          "w": 960,
+          "h": 720,
+          "rw": 960.0000610351562,
+          "rh": 720.0000610351562,
+          "dpr": 1.75,
+          "ow": 961,
+          "oh": 721
+        },
+        "applied": true
+      }
+    ],
+    "after": {
+      "w": 960,
+      "h": 720,
+      "rw": 960.0000610351562,
+      "rh": 720.0000610351562,
+      "dpr": 1.75,
+      "ow": 961,
+      "oh": 721
+    },
+    "clientChanged": true,
+    "matched": true,
+    "residualCss": {
+      "w": 0,
+      "h": 0
+    }
+  },
+  "resizeAttempts": [
+    {
+      "method": "SetWindowPos",
+      "real": true,
+      "pid": 27388,
+      "window": {
+        "found": true,
+        "pid": 27388,
+        "hwnd": 1052616,
+        "title": "ZCode",
+        "iconic": false,
+        "window": [
+          1760,
+          106,
+          2519,
+          1574
+        ],
+        "client": [
+          0,
+          0,
+          2519,
+          1574
+        ]
+      },
+      "raisedWindow": true,
+      "rendererVisibleAfterRaise": true,
+      "before": {
+        "w": 1440,
+        "h": 900,
+        "rw": 1440.0001220703125,
+        "rh": 900.0000610351562,
+        "dpr": 1.75,
+        "ow": 1441,
+        "oh": 901
+      },
+      "attempts": [
+        {
+          "targetW": 1680,
+          "targetH": 1260,
+          "measured": {
+            "w": 961,
+            "h": 721,
+            "rw": 961.1428833007812,
+            "rh": 721.1428833007812,
+            "dpr": 1.75,
+            "ow": 961,
+            "oh": 721
+          },
+          "applied": true
+        },
+        {
+          "targetW": 1678,
+          "targetH": 1258,
+          "measured": {
+            "w": 959,
+            "h": 719,
+            "rw": 959.4285888671875,
+            "rh": 719.4285888671875,
+            "dpr": 1.75,
+            "ow": 960,
+            "oh": 720
+          },
+          "applied": true
+        },
+        {
+          "targetW": 1679,
+          "targetH": 1259,
+          "measured": {
+            "w": 960,
+            "h": 720,
+            "rw": 960.0000610351562,
+            "rh": 720.0000610351562,
+            "dpr": 1.75,
+            "ow": 961,
+            "oh": 721
+          },
+          "applied": true
+        }
+      ],
+      "after": {
+        "w": 960,
+        "h": 720,
+        "rw": 960.0000610351562,
+        "rh": 720.0000610351562,
+        "dpr": 1.75,
+        "ow": 961,
+        "oh": 721
+      },
+      "clientChanged": true,
+      "matched": true,
+      "residualCss": {
+        "w": 0,
+        "h": 0
+      }
+    }
+  ],
+  "emulationActive": false,
+  "observations": {
+    "viewport": {
+      "innerWidth": 960,
+      "innerHeight": 720,
+      "devicePixelRatio": 1.75,
+      "outerWidth": 961,
+      "outerHeight": 721,
+      "screen": {
+        "w": 2195,
+        "h": 1235,
+        "availW": 2195,
+        "availH": 1187
+      }
+    },
+    "url": "file:///C:/Program%20Files/ZCode/resources/app.asar/out/renderer/index.html?restoreSession=true&supportsSettings=true&initialWorkspacePath=C%3A%5CUsers%5C%3CUSER%3E%5C.zcode%5Cworkspace%5Cdefault&initialWorkspacePurpose=conversation&zcodeLaunchMarks=%7B%22createdAt%22%3A1789622726582.995%2C%22mainStart%22%3A1789622727101%2C%22appReady%22%3A1789622727186%2C%22loadUrl%22%3A1789622728712%7D",
+    "title": "ZCode",
+    "htmlClasses": "dark theme-zai-dark platform-windows-desktop",
+    "bodyClasses": "zcode-startup-ready",
+    "bannerAttribute": "1",
+    "bannerHeightVar": "56px",
+    "html": {
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 960,
+        "h": 720,
+        "top": 0,
+        "bottom": 720,
+        "left": 0,
+        "right": 960
+      },
+      "clientWidth": 960,
+      "clientHeight": 720,
+      "scrollWidth": 960,
+      "scrollHeight": 720,
+      "offsetHeight": 720,
+      "styles": {
+        "height": "720px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "visible",
+        "overflow-x": "visible",
+        "overflow-y": "visible",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      }
+    },
+    "body": {
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 960,
+        "h": 720,
+        "top": 0,
+        "bottom": 720,
+        "left": 0,
+        "right": 960
+      },
+      "clientWidth": 960,
+      "clientHeight": 720,
+      "scrollWidth": 960,
+      "scrollHeight": 720,
+      "offsetHeight": 720,
+      "styles": {
+        "height": "720px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "flow-root",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      }
+    },
+    "root": {
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 960,
+        "h": 664,
+        "top": 56,
+        "bottom": 720,
+        "left": 0,
+        "right": 960
+      },
+      "clientHeight": 664,
+      "scrollHeight": 664,
+      "styles": {
+        "height": "664px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "56px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      },
+      "offsetParent": "body"
+    },
+    "banner": {
+      "present": true,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 960,
+        "h": 56,
+        "top": 0,
+        "bottom": 56,
+        "left": 0,
+        "right": 960
+      },
+      "styles": {
+        "height": "56px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "fixed",
+        "top": "0px",
+        "bottom": "664px",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "flex",
+        "flex": "0 1 auto",
+        "z-index": "2147483000"
+      },
+      "isBodyFirstChild": true,
+      "childCount": 2
+    },
+    "appShell": {
+      "selector": "div#root > div",
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 960,
+        "h": 664,
+        "top": 56,
+        "bottom": 720,
+        "left": 0,
+        "right": 960
+      },
+      "styles": {
+        "height": "664px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "visible",
+        "overflow-x": "visible",
+        "overflow-y": "visible",
+        "box-sizing": "border-box",
+        "position": "relative",
+        "top": "0px",
+        "bottom": "0px",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      },
+      "isRoot": false
+    },
+    "appShellCount": 50,
+    "sidebar": {
+      "selector": "div#root > div > div > div > div > div > div#sidebar",
+      "chain": [
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div#sidebar"
+      ],
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 264,
+        "h": 664,
+        "top": 56,
+        "bottom": 720,
+        "left": 0,
+        "right": 264
+      },
+      "styles": {
+        "height": "664px",
+        "min-height": "auto",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 0 auto",
+        "z-index": "auto"
+      },
+      "insideRoot": true
+    },
+    "sidebarById": {
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 264,
+        "h": 664,
+        "top": 56,
+        "bottom": 720,
+        "left": 0,
+        "right": 264
+      },
+      "styles": {
+        "height": "664px",
+        "min-height": "auto",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 0 auto",
+        "z-index": "auto"
+      },
+      "sameAsSidebar": true
+    },
+    "account": {
+      "text": "连接使用",
+      "selector": "div > div#sidebar > aside > aside > div > div > footer > div > button#radix-_r_12_[data-slot=\"dropdown-menu-trigger\"][aria-label=\"连接使用\"] > div > div > span",
+      "rect": {
+        "x": 56,
+        "y": 677.5,
+        "w": 56,
+        "h": 21,
+        "top": 677.5,
+        "bottom": 698.5,
+        "left": 56,
+        "right": 112
+      },
+      "styles": {
+        "height": "21px",
+        "min-height": "auto",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      },
+      "ancestors": [
+        {
+          "selector": "div",
+          "rect": {
+            "x": 56,
+            "y": 677.5,
+            "w": 104,
+            "h": 21,
+            "top": 677.5,
+            "bottom": 698.5,
+            "left": 56,
+            "right": 160
+          }
+        },
+        {
+          "selector": "div",
+          "rect": {
+            "x": 56,
+            "y": 677.5,
+            "w": 104,
+            "h": 21,
+            "top": 677.5,
+            "bottom": 698.5,
+            "left": 56,
+            "right": 160
+          }
+        },
+        {
+          "selector": "button#radix-_r_12_[data-slot=\"dropdown-menu-trigger\"][aria-label=\"连接使用\"]",
+          "rect": {
+            "x": 16,
+            "y": 672,
+            "w": 154,
+            "h": 32,
+            "top": 672,
+            "bottom": 704,
+            "left": 16,
+            "right": 170
+          }
+        },
+        {
+          "selector": "div",
+          "rect": {
+            "x": 16,
+            "y": 672,
+            "w": 232,
+            "h": 32,
+            "top": 672,
+            "bottom": 704,
+            "left": 16,
+            "right": 248
+          }
+        }
+      ],
+      "insideRoot": true
+    },
+    "editor": {
+      "selector": "div",
+      "rect": {
+        "x": 294.14,
+        "y": 453.5,
+        "w": 621.86,
+        "h": 40,
+        "top": 453.5,
+        "bottom": 493.5,
+        "left": 294.14,
+        "right": 916
+      },
+      "styles": {
+        "height": "40px",
+        "min-height": "40px",
+        "max-height": "160px",
+        "overflow": "auto",
+        "overflow-x": "auto",
+        "overflow-y": "auto",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      }
+    },
+    "composer": {
+      "selector": "main > div > div > div > div > div > div > div > div > div > div > div",
+      "rect": {
+        "x": 281.57,
+        "y": 400.93,
+        "w": 647,
+        "h": 145.14,
+        "top": 400.93,
+        "bottom": 546.07,
+        "left": 281.57,
+        "right": 928.57
+      },
+      "styles": {
+        "height": "145.143px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "visible",
+        "overflow-x": "visible",
+        "overflow-y": "visible",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 0 auto",
+        "z-index": "20"
+      },
+      "foundBy": "class-match",
+      "chain": [
+        "div",
+        "div",
+        "div",
+        "div",
+        "form",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div"
+      ],
+      "insideRoot": true
+    },
+    "clippedTotal": 0,
+    "clippedRawTotal": 6,
+    "clipped": [],
+    "overflow": {
+      "windowInnerHeight": 720,
+      "windowInnerWidth": 960,
+      "scrollingElementTag": "html",
+      "scrollingElementScrollHeight": 720,
+      "scrollingElementClientHeight": 720,
+      "htmlOverflows": false,
+      "bodyOverflows": false,
+      "rootOverflows": false,
+      "documentScrollTop": 0
+    }
+  },
+  "screenshot": {
+    "file": "F:/WSL/workspace/zcode-tarkov/docs/images/layout-after-960.png",
+    "bytes": 245489
+  },
+  "windowRestoredAfter": true,
+  "summary": {
+    "checks": 11,
+    "checksPassed": 11,
+    "comparisons": 0,
+    "comparisonsPassed": 0,
+    "clipped": 0
+  }
+}

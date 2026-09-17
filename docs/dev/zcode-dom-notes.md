@@ -536,3 +536,179 @@ and `Page.captureScreenshot` then hangs rather than erroring, and this model
 cannot accept image input — so the render was verified by reading computed styles
 and sampling pixels through CDP clip rectangles, and the screenshots are kept for
 human review.
+
+---
+
+## 8. Banner band reservation and the settings-panel status line
+
+This section records the layout work on the Tarkov top banner, the settings-panel
+status line, and the panel's injection timing. All numbers were measured over CDP
+on isolated scratch instances of ZCode 3.11.2 (never the running user instance);
+raw evidence lives in `docs/images/layout/` (`before-*`, `after-*`, `cycle-*`,
+`control-simulated-prefix-960x720.json`) and in
+`docs/images/clean-install-evidence.json`.
+
+### 8.1 The geometry chain the banner has to live in
+
+ZCode's renderer ships
+
+```html
+<html style="height: 100%"> <body style="height: 100%"> <div id="root" style="height: 100%">
+```
+
+plus the renderer stylesheet's `#root { height: 100dvh; overflow: hidden }` and
+the app shells that carry `.h-dvh`. `html`, `body` and `#root` are all exactly
+the viewport tall, and nothing above them scrolls: `html.scrollHeight ==
+html.clientHeight`, `#root` is `overflow: hidden`. There is therefore **no
+scroll container that could absorb an extra band**. Anything that adds height to
+the document (or moves `#root` down without shortening it) pushes app content out
+of the window permanently — the clipped content cannot be scrolled into view.
+
+### 8.2 Why the old `body { padding-top: 56px }` reservation clipped the app
+
+The first banner implementation reserved the band with
+`body { padding-top: 56px }`. Because `body` is `height: 100%` with
+`box-sizing: border-box` (ZCode sets `box-sizing` globally), the padding eats
+into the body box, but `#root` still carries `height: 100dvh` — i.e. the full
+viewport height *below* the 56 px band. Measured on a real window resize:
+
+| measurement (Tarkov, 1366×768 request, client 1367.43×769.14) | value |
+|---|---|
+| viewport (`innerHeight`) | 769.14 |
+| `#root` rect | `[0, 56, 1367.43, 769.14]`, bottom **825.14** |
+| overflow of `#root` below the window | **56.14 px** |
+| elements painted outside the viewport | **49** |
+| sidebar `aside` | `[0, 56, 264, 769.14]`, bottom 825.14 |
+| account label (bottom-left) | top 782.64 — fully below the fold |
+| composer | pushed 56 px down with the shell |
+
+The A/B control is `control-simulated-prefix-960x720.json`: the same build with
+*only* the old reservation mechanism present, at 961×721. It reproduces the
+owner's reported symptom exactly — ZCode's own `footer` reading
+`连接使用移动端远程控制` at `[0, 721.14, 264, 56]`, painted **56.14 px below the
+viewport**, together with the sidebar, the composer column and the account area.
+That footer overflow is the visible symptom of the reservation, not a ZCode
+defect.
+
+### 8.3 The fix and the invariant it preserves
+
+`src/core/banner.ts` no longer touches `body`:
+
+- `html[data-zct-banner="1"]` exposes `--zcode-tarkov-banner-height: <band>px`;
+- `body` becomes `display: flow-root` (it carries no offset);
+- `#root { margin-top: var(--zcode-tarkov-banner-height); height: calc(100dvh - var(--zcode-tarkov-banner-height)) }`;
+- `.h-dvh` app shells get the same `calc(100dvh - var(--...))` height.
+
+The invariant: **band height + app root height == viewport height, and `#root`'s
+bottom edge equals `innerHeight`**. Measured after the fix:
+
+| Tarkov, 1366×768 | before | after |
+|---|---|---|
+| `#root` bottom | 825.14 (viewport 769.14) | 768 (viewport 768) |
+| painted outside the viewport | 49 | 0 |
+| sidebar bottom | 825.14 | 768 |
+| account label | top 782.64, off-screen | `[56, 725.5, 56, 21]`, inside |
+| composer | 56 px low | fully inside |
+| `html.scrollHeight` vs `clientHeight` | n/a | 768 vs 768 |
+
+The same result holds at 1440×900 and 960×720, in Tarkov, Native and Monet; the
+Native/Monet geometry is byte-identical to the pre-banner baselines (recorded by
+`tools/measure-layout.mjs --compare`, all rect comparisons within 0.5 px), and
+the Tarkov → Native → Monet → Tarkov cycle leaves exactly one banner in Tarkov,
+none in Native/Monet, with identical `#root`/sidebar/composer/account geometry
+across the cycle.
+
+### 8.4 The settings-panel status line (pre-existing defect, fixed)
+
+The panel is a `position: fixed; inset: auto` root that contains `#zb-fab` and
+`#zb-panel` — both `position: fixed` — and `#zb-status`, the transient status
+line written by `status(msg)`. The status element was the **only in-flow child**
+of that root, so the root shrink-wrapped to it (24×14 px) and, because a fixed
+box with `inset: auto` takes its static position, landed at the end of
+`document.body` — exactly at the document bottom, i.e. exactly at the window
+edge. Measured:
+
+| measurement | value |
+|---|---|
+| Tarkov, harness instance, `innerHeight` 821 | `#zcode-beautify-panel-root` and `#zb-status` both `[0, 821.14, 24, 14]`, painted bottom **835.14** → **14.14 px below the viewport** |
+| Native, scratch instance, 1366×768 | the same two elements `[0, 768, 24, 14]` → painted bottom **782**, **14 px below** |
+| every `status(msg)` message | written into an element that was never on screen |
+
+The fix is confined to `src/panel/panelScript.ts`: `#zb-status` is now a
+viewport-pinned toast next to the FAB — `position: fixed; right: 62px;
+bottom: 24px` — wearing the panel surface (`background: var(--zb-bg)`,
+`border: 1px solid var(--zb-border)`, `border-radius: var(--zb-radius-sm)`,
+`color: var(--zb-text)`, `pointer-events: none`), with
+`#zb-status:empty { display: none }` so an idle status paints nothing. The root
+now has **no in-flow children at all** (all three are fixed) and measures 0×0 at
+the document end. Measured with a message set: `[1181.82, 719.5, 123.6, 25.6]`
+(Tarkov, 1367×769) and `[801.34, 670.36, 96.7, 25.6]` (960×720) — bottom
+745.14 / 696, both fully inside the viewport, 62 px from the right edge as
+declared.
+
+### 8.5 A second injection defect found while verifying: document-start throws
+
+The service registers the panel script with
+`Page.addScriptToEvaluateOnNewDocument`. At document-start Chromium has not
+created the document tree yet; measured through a document-start probe on
+ZCode 3.11.2:
+
+| moment | readyState | `document.documentElement` | `head` | `body` |
+|---|---|---|---|---|
+| document-start | `loading` | null | null | null |
+| DOMContentLoaded | `interactive` | present | present | present |
+
+The old script appended its `<style>` to
+`document.head || document.documentElement` and the root to `document.body`, so
+it threw `TypeError: Cannot read properties of null (reading 'appendChild')`
+and the panel was **missing from every document created after the service
+attached** — a renderer reload left the page without a panel (verified: after
+`Page.reload`, `#zcode-beautify-panel-root` and `#zcode-beautify-panel-style`
+were both absent). The fix wraps the whole build in `install()`: it runs
+immediately when `document.body` exists and otherwise on `DOMContentLoaded`;
+after the fix a reload keeps both the panel root and its stylesheet (verified).
+The same document-start exception still fires for ZCode's *theme bootstrap*
+script (recorded as an out-of-scope finding).
+
+### 8.6 What the harness pins now
+
+`tools/verify-clean-install.ps1` / `.mjs` carry 12 `layout.*` CDP assertions:
+`layout.observation-present`, `layout.banner-count`, `layout.attribute-set`,
+`layout.banner-band-height`, `layout.banner-inside-viewport`,
+`layout.app-shell-below-banner`, `layout.root-bottom-at-viewport`,
+`layout.composer-fully-visible`, `layout.sidebar-fully-visible`,
+`layout.account-fully-visible`, `layout.no-clipped-elements`,
+`layout.no-vertical-overflow`. The clipped-element rule intersects each
+element's painted box with its clipping ancestors and treats `html`/`body` as
+the window edge, so an app shell pushed below the fold is caught while an
+element merely scrolled out of an inner list is not.
+
+One honest caveat: the rule also counts elements that are *only* moved out of
+the window by an animated transform. ZCode's own update toast
+(`div.fixed bottom-4 left-4 z-[9999] ... translate-y-12`, text
+`v3.12.3 已下载，重启即可安装`, no `data-slot`) parks itself 48 px below its
+resting place, i.e. 32 px below the window edge, and made
+`layout.no-clipped-elements` fail on three consecutive harness runs with
+bit-identical geometry while every candidate-owned element — banner, app shell,
+`#root`, composer, sidebar, account label and both panel elements — was inside
+the viewport. The toast's geometry is identical in Native mode and its classes
+come from ZCode's own renderer, so it is an app-owned transient element and a
+measurement-timing hazard on this machine (a v3.12.3 update was downloaded and
+waiting for a restart), not a defect of this repository.
+
+### 8.7 Scratch-instance note: `--user-data-dir` is mandatory
+
+`ZCODE_DESKTOP_USER_DATA_DIR` is applied by ZCode's own bundle *after* Chromium
+has already taken the single-instance lock from the default user-data directory.
+An isolated instance therefore needs an explicit
+
+```
+C:\Program Files\ZCode\ZCode.exe --remote-debugging-port=9455 --user-data-dir=<scratch profile>
+```
+
+with `APPDATA`, `USERPROFILE`, `ZCODE_DESKTOP_USER_DATA_DIR`,
+`ZCODE_DESKTOP_SESSION_DATA_DIR` and `ZCODE_BEAUTIFY_DATA_DIR` redirected into
+the same scratch tree. Without `--user-data-dir`, a second process can notify —
+or take over — the user's real instance instead of running beside it (measured
+on ZCode 3.11.2; the harness uses the same launch). Always close such an
+instance through its own CDP `Browser.close`, and never by image name.

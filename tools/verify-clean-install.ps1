@@ -454,10 +454,17 @@ if (Test-PortOpen -Port $CdpPort) {
 
 $directLaunchUsed = $false
 if (-not $launcherStartedZcode) {
+    # The Chromium singleton lock is established from the browser process's user
+    # data directory before ZCODE_DESKTOP_USER_DATA_DIR is applied, so without
+    # an explicit --user-data-dir the scratch process can be treated as a second
+    # instance of the user's running ZCode: it notifies the real instance and
+    # exits with RESULT_CODE_NORMAL_EXIT_PROCESS_NOTIFIED (0xFFFF7003), or worse,
+    # takes over the real profile's lock. The switch keeps this instance fully
+    # independent (measured on ZCode 3.11.2).
     Write-Host '[harness] reproducing the launch directly: Start-Process ZCode.exe --remote-debugging-port=' + $CdpPort
-    $direct = Start-Redirected -FilePath $zcodeExe -Arguments @('--remote-debugging-port=' + $CdpPort) -Env $launchEnv
+    $direct = Start-Redirected -FilePath $zcodeExe -Arguments @('--remote-debugging-port=' + $CdpPort, ('--user-data-dir=' + $profileDir)) -Env $launchEnv
     $directLaunchUsed = $true
-    Note ('direct ZCode.exe start: pid ' + $direct.Id)
+    Note ('direct ZCode.exe start: pid ' + $direct.Id + ' (--user-data-dir=' + $profileDir + ')')
 }
 $cdpReady = Wait-ForPageTarget -Port $CdpPort -TimeoutSec 60
 $cdpVersionRaw = $cdpReady.version
@@ -625,6 +632,7 @@ $evidence = [ordered]@{
     screenshots = $(if ($cdp) { $cdp.screenshots } else { @() })
     screenshotAnalysis = $(if ($cdp) { $cdp.screenshotAnalysis } else { @() })
     cdpSummary = $(if ($cdp) { $cdp.summary } else { $null })
+    windowRaise = $(if ($cdp) { $cdp.windowRaise } else { $null })
     notTested = @($script:notTested)
     realProfile = [ordered]@{
         unchanged = ($diffs.Count -eq 0)

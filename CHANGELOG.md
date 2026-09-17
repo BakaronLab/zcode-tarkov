@@ -93,6 +93,36 @@ without reimplementing any of it.
 - `recovery` now honours `--api-port`: a non-default API port is written into
   the autostart entry instead of the historical default, so the sign-in service
   and the launcher agree on one port.
+- **The Tarkov banner no longer clips the app.** It reserved its 56 px band
+  with `body { padding-top }` while `#root` kept `height: 100dvh`, so the app
+  shell hung 56.14 px below the window — measured on a real window resize, 49
+  painted elements outside the viewport, the sidebar bottom, the composer and
+  the bottom-left account area (`连接使用…`) among them, with no scroll
+  container able to reach them (`html.scrollHeight == clientHeight`). The band
+  is now exposed as `--zcode-tarkov-banner-height` on
+  `html[data-zct-banner="1"]`, `#root` carries `margin-top: var(...)` plus
+  `height: calc(100dvh - var(...))` (the `.h-dvh` app shells the same height),
+  and `#root`'s bottom edge equals `innerHeight` with 0 painted elements outside
+  at 1366×768, 1440×900 and 960×720 in Tarkov, Native and Monet. The A/B
+  control (`docs/images/layout/control-simulated-prefix-960x720.json`)
+  reproduces the old 56.14 px footer overflow.
+- **The settings panel's status line is visible again.** `#zb-status` was the
+  only in-flow child of the `position: fixed; inset: auto` panel root, so the
+  root shrink-wrapped to 24×14 px and took its static position at the end of
+  `document.body`: every `status(msg)` message was painted 14 px below the
+  viewport (measured `bottom` 835.14 at `innerHeight` 821, and 782 at 768) in
+  Tarkov and Native alike, and had never been on screen. It is now a
+  viewport-pinned toast next to the FAB (`position: fixed; right: 62px;
+  bottom: 24px`) on the panel's own surface (`--zb-bg`, `--zb-border`,
+  `--zb-radius-sm`, `--zb-text`) and hidden while empty (`:empty`), so the root
+  contributes no in-flow box at all.
+- **The panel now survives a renderer reload.** The panel script is registered
+  for document-start, where `documentElement`, `head` and `body` are all still
+  null; the old unconditional `document.body.appendChild(root)` threw
+  (`TypeError: Cannot read properties of null`) and the panel was missing from
+  every document created after the service attached. The build now runs from
+  `install()` — immediately when a body exists, otherwise on
+  `DOMContentLoaded`.
 
 ### Hardening
 

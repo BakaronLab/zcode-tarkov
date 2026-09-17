@@ -1,0 +1,1170 @@
+{
+  "tool": "measure-layout.mjs",
+  "version": 1,
+  "label": "before",
+  "mode": "tarkov",
+  "timestamp": "2026-09-17T05:33:01.534Z",
+  "port": 9478,
+  "requestedViewport": {
+    "w": 1440,
+    "h": 900
+  },
+  "steps": [
+    {
+      "step": "apply-mode",
+      "cli": "F:/WSL/workspace/zcode-tarkov/dist/cli.js",
+      "mode": "tarkov",
+      "exitCode": 0,
+      "stdout": "Theme mode \"tarkov\" applied to 1 window(s).",
+      "stderr": ""
+    },
+    {
+      "step": "mode-settled",
+      "wanted": "tarkov",
+      "observed": {
+        "attr": "1",
+        "banner": true
+      }
+    },
+    {
+      "step": "resize",
+      "method": "SetWindowPos",
+      "real": true,
+      "matched": true
+    }
+  ],
+  "checks": [
+    {
+      "id": "banner.present",
+      "expected": "exactly one banner in Tarkov mode",
+      "observed": true,
+      "pass": true
+    },
+    {
+      "id": "banner.inside-viewport",
+      "expected": "top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        0,
+        56,
+        901
+      ],
+      "pass": true
+    },
+    {
+      "id": "banner.attribute-set",
+      "expected": "html[data-zct-banner=\"1\"]",
+      "observed": "1",
+      "pass": true
+    },
+    {
+      "id": "banner.height-variable",
+      "expected": "--zcode-tarkov-banner-height resolves to the band height",
+      "observed": [
+        "",
+        56
+      ],
+      "pass": false
+    },
+    {
+      "id": "app-shell.below-banner",
+      "expected": "app shell top >= banner bottom (no coverage)",
+      "observed": [
+        56,
+        56
+      ],
+      "pass": true
+    },
+    {
+      "id": "root.bottom-at-viewport",
+      "expected": "|#root.bottom - innerHeight| <= 0.5",
+      "observed": [
+        957.14,
+        901
+      ],
+      "pass": false
+    },
+    {
+      "id": "composer.fully-visible",
+      "expected": "composer top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        519.5,
+        664.64,
+        901
+      ],
+      "pass": true
+    },
+    {
+      "id": "sidebar.fully-visible",
+      "expected": "sidebar top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        56,
+        957.14,
+        901
+      ],
+      "pass": false
+    },
+    {
+      "id": "account.fully-visible",
+      "expected": "account label top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        914.64,
+        935.64,
+        901
+      ],
+      "pass": false
+    },
+    {
+      "id": "no-clipped-elements",
+      "expected": "clipped element list is empty",
+      "observed": "49 element(s) outside the viewport",
+      "pass": false
+    },
+    {
+      "id": "no-vertical-overflow",
+      "expected": "html.scrollHeight <= html.clientHeight + 1",
+      "observed": [
+        957,
+        901
+      ],
+      "pass": false
+    }
+  ],
+  "comparisons": [],
+  "pageTarget": {
+    "id": "70B317451DF713937722B810640E626F",
+    "title": "ZCode",
+    "url": "file:///C:/Program%20Files/ZCode/resources/app.asar/out/renderer/index.html?restoreSession=true&supportsSettings=true&initialWorkspacePath=C%3A%5CUsers%5C%3CUSER%3E%5C.zcode%5Cworkspace%5Cdefault&initialWorkspacePurpose=conversation&zcodeLaunchMarks=%7B%22createdAt%22%3A1789622726582.995%2C%22mainStart%22%3A1789622727101%2C%22appReady%22%3A1789622727186%2C%22loadUrl%22%3A1789622728712%7D"
+  },
+  "targetsSeen": [
+    {
+      "type": "page",
+      "title": "ZCode"
+    },
+    {
+      "type": "worker",
+      "title": ""
+    },
+    {
+      "type": "worker",
+      "title": ""
+    },
+    {
+      "type": "worker",
+      "title": ""
+    },
+    {
+      "type": "worker",
+      "title": ""
+    }
+  ],
+  "resize": {
+    "method": "SetWindowPos",
+    "real": true,
+    "window": {
+      "found": true,
+      "pid": 27388,
+      "hwnd": 1052616,
+      "iconic": false,
+      "window": [
+        726,
+        240,
+        2391,
+        1344
+      ],
+      "client": [
+        0,
+        0,
+        2391,
+        1344
+      ]
+    },
+    "before": {
+      "w": 1367,
+      "h": 769,
+      "dpr": 1.75,
+      "ow": 1368,
+      "oh": 769
+    },
+    "attempts": [
+      {
+        "targetW": 2520,
+        "targetH": 1575,
+        "measured": {
+          "w": 1441,
+          "h": 901,
+          "dpr": 1.75,
+          "ow": 1368,
+          "oh": 769
+        }
+      }
+    ],
+    "after": {
+      "w": 1441,
+      "h": 901,
+      "dpr": 1.75,
+      "ow": 1368,
+      "oh": 769
+    },
+    "clientChanged": true,
+    "matched": true
+  },
+  "observations": {
+    "viewport": {
+      "innerWidth": 1441,
+      "innerHeight": 901,
+      "devicePixelRatio": 1.75,
+      "outerWidth": 1368,
+      "outerHeight": 769,
+      "screen": {
+        "w": 2195,
+        "h": 1235,
+        "availW": 2195,
+        "availH": 1187
+      }
+    },
+    "url": "file:///C:/Program%20Files/ZCode/resources/app.asar/out/renderer/index.html?restoreSession=true&supportsSettings=true&initialWorkspacePath=C%3A%5CUsers%5C%3CUSER%3E%5C.zcode%5Cworkspace%5Cdefault&initialWorkspacePurpose=conversation&zcodeLaunchMarks=%7B%22createdAt%22%3A1789622726582.995%2C%22mainStart%22%3A1789622727101%2C%22appReady%22%3A1789622727186%2C%22loadUrl%22%3A1789622728712%7D",
+    "title": "ZCode",
+    "htmlClasses": "dark theme-zai-dark platform-windows-desktop",
+    "bodyClasses": "zcode-startup-ready",
+    "bannerAttribute": "1",
+    "bannerHeightVar": "",
+    "html": {
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1441.14,
+        "h": 901.14,
+        "top": 0,
+        "bottom": 901.14,
+        "left": 0,
+        "right": 1441.14
+      },
+      "clientWidth": 1441,
+      "clientHeight": 901,
+      "scrollWidth": 1441,
+      "scrollHeight": 957,
+      "offsetHeight": 901,
+      "styles": {
+        "height": "901.143px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "visible",
+        "overflow-x": "visible",
+        "overflow-y": "visible",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      }
+    },
+    "body": {
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1441.14,
+        "h": 901.14,
+        "top": 0,
+        "bottom": 901.14,
+        "left": 0,
+        "right": 1441.14
+      },
+      "clientWidth": 1441,
+      "clientHeight": 901,
+      "scrollWidth": 1441,
+      "scrollHeight": 957,
+      "offsetHeight": 901,
+      "styles": {
+        "height": "901.143px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "56px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      }
+    },
+    "root": {
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 1441.14,
+        "h": 901.14,
+        "top": 56,
+        "bottom": 957.14,
+        "left": 0,
+        "right": 1441.14
+      },
+      "clientHeight": 901,
+      "scrollHeight": 901,
+      "styles": {
+        "height": "901.143px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      },
+      "offsetParent": "body"
+    },
+    "banner": {
+      "present": true,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1441.14,
+        "h": 56,
+        "top": 0,
+        "bottom": 56,
+        "left": 0,
+        "right": 1441.14
+      },
+      "styles": {
+        "height": "56px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "fixed",
+        "top": "0px",
+        "bottom": "845.143px",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "flex",
+        "flex": "0 1 auto",
+        "z-index": "2147483000"
+      },
+      "isBodyFirstChild": true,
+      "childCount": 2
+    },
+    "appShell": {
+      "selector": "div#root > div",
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 1441.14,
+        "h": 901.14,
+        "top": 56,
+        "bottom": 957.14,
+        "left": 0,
+        "right": 1441.14
+      },
+      "styles": {
+        "height": "901.143px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "visible",
+        "overflow-x": "visible",
+        "overflow-y": "visible",
+        "box-sizing": "border-box",
+        "position": "relative",
+        "top": "0px",
+        "bottom": "0px",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      },
+      "isRoot": false
+    },
+    "appShellCount": 50,
+    "sidebar": {
+      "selector": "div#root > div > div > div > div > div > div#sidebar",
+      "chain": [
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div#sidebar"
+      ],
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 264,
+        "h": 901.14,
+        "top": 56,
+        "bottom": 957.14,
+        "left": 0,
+        "right": 264
+      },
+      "styles": {
+        "height": "901.143px",
+        "min-height": "auto",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 0 auto",
+        "z-index": "auto"
+      },
+      "insideRoot": true
+    },
+    "sidebarById": {
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 264,
+        "h": 901.14,
+        "top": 56,
+        "bottom": 957.14,
+        "left": 0,
+        "right": 264
+      },
+      "styles": {
+        "height": "901.143px",
+        "min-height": "auto",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 0 auto",
+        "z-index": "auto"
+      },
+      "sameAsSidebar": true
+    },
+    "account": {
+      "text": "连接使用",
+      "selector": "div > div#sidebar > aside > aside > div > div > footer > div > button#radix-_r_12_[data-slot=\"dropdown-menu-trigger\"][aria-label=\"连接使用\"] > div > div > span",
+      "rect": {
+        "x": 56,
+        "y": 914.64,
+        "w": 56,
+        "h": 21,
+        "top": 914.64,
+        "bottom": 935.64,
+        "left": 56,
+        "right": 112
+      },
+      "styles": {
+        "height": "21px",
+        "min-height": "auto",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      },
+      "ancestors": [
+        {
+          "selector": "div",
+          "rect": {
+            "x": 56,
+            "y": 914.64,
+            "w": 104,
+            "h": 21,
+            "top": 914.64,
+            "bottom": 935.64,
+            "left": 56,
+            "right": 160
+          }
+        },
+        {
+          "selector": "div",
+          "rect": {
+            "x": 56,
+            "y": 914.64,
+            "w": 104,
+            "h": 21,
+            "top": 914.64,
+            "bottom": 935.64,
+            "left": 56,
+            "right": 160
+          }
+        },
+        {
+          "selector": "button#radix-_r_12_[data-slot=\"dropdown-menu-trigger\"][aria-label=\"连接使用\"]",
+          "rect": {
+            "x": 16,
+            "y": 909.14,
+            "w": 154,
+            "h": 32,
+            "top": 909.14,
+            "bottom": 941.14,
+            "left": 16,
+            "right": 170
+          }
+        },
+        {
+          "selector": "div",
+          "rect": {
+            "x": 16,
+            "y": 909.14,
+            "w": 232,
+            "h": 32,
+            "top": 909.14,
+            "bottom": 941.14,
+            "left": 16,
+            "right": 248
+          }
+        }
+      ],
+      "insideRoot": true
+    },
+    "editor": {
+      "selector": "div",
+      "rect": {
+        "x": 522.21,
+        "y": 572.07,
+        "w": 646.86,
+        "h": 40,
+        "top": 572.07,
+        "bottom": 612.07,
+        "left": 522.21,
+        "right": 1169.07
+      },
+      "styles": {
+        "height": "40px",
+        "min-height": "40px",
+        "max-height": "160px",
+        "overflow": "auto",
+        "overflow-x": "auto",
+        "overflow-y": "auto",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      }
+    },
+    "composer": {
+      "selector": "main > div > div > div > div > div > div > div > div > div > div > div",
+      "rect": {
+        "x": 509.64,
+        "y": 519.5,
+        "w": 672,
+        "h": 145.14,
+        "top": 519.5,
+        "bottom": 664.64,
+        "left": 509.64,
+        "right": 1181.64
+      },
+      "styles": {
+        "height": "145.143px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "visible",
+        "overflow-x": "visible",
+        "overflow-y": "visible",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 0 auto",
+        "z-index": "20"
+      },
+      "foundBy": "class-match",
+      "chain": [
+        "div",
+        "div",
+        "div",
+        "div",
+        "form",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div"
+      ],
+      "insideRoot": true
+    },
+    "clippedTotal": 49,
+    "clipped": [
+      {
+        "depth": 13,
+        "tag": "footer",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "连接使用移动端远程控制",
+        "rect": {
+          "x": 0,
+          "y": 901.14,
+          "w": 264,
+          "h": 56,
+          "top": 901.14,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 264
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -901.14
+      },
+      {
+        "depth": 12,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "新建任务Ctrl+N搜索Ctrl+K自动化插件市场分组项目项目\n@propert",
+        "rect": {
+          "x": 0,
+          "y": 104,
+          "w": 264,
+          "h": 853.14,
+          "top": 104,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 264
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -104
+      },
+      {
+        "depth": 12,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "",
+        "rect": {
+          "x": 264,
+          "y": 104,
+          "w": 264,
+          "h": 853.14,
+          "top": 104,
+          "bottom": 957.14,
+          "left": 264,
+          "right": 528
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -104
+      },
+      {
+        "depth": 11,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "新建任务Ctrl+N搜索Ctrl+K自动化插件市场分组项目项目\n@propert",
+        "rect": {
+          "x": 0,
+          "y": 104,
+          "w": 264,
+          "h": 853.14,
+          "top": 104,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 264
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -104
+      },
+      {
+        "depth": 10,
+        "tag": "aside",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "新建任务Ctrl+N搜索Ctrl+K自动化插件市场分组项目项目\n@propert",
+        "rect": {
+          "x": 0,
+          "y": 56,
+          "w": 264,
+          "h": 901.14,
+          "top": 56,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 264
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -56
+      },
+      {
+        "depth": 9,
+        "tag": "aside",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "新建任务Ctrl+N搜索Ctrl+K自动化插件市场分组项目项目\n@propert",
+        "rect": {
+          "x": 0,
+          "y": 56,
+          "w": 264,
+          "h": 901.14,
+          "top": 56,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 264
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -56
+      },
+      {
+        "depth": 9,
+        "tag": "section",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265,
+          "y": 56,
+          "w": 1176.14,
+          "h": 901.14,
+          "top": 56,
+          "bottom": 957.14,
+          "left": 265,
+          "right": 1441.14
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -56
+      },
+      {
+        "depth": 8,
+        "tag": "div",
+        "id": "sidebar",
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "新建任务Ctrl+N搜索Ctrl+K自动化插件市场分组项目项目\n@propert",
+        "rect": {
+          "x": 0,
+          "y": 56,
+          "w": 264,
+          "h": 901.14,
+          "top": 56,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 264
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -56
+      },
+      {
+        "depth": 8,
+        "tag": "div",
+        "id": "content",
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265,
+          "y": 56,
+          "w": 1176.14,
+          "h": 901.14,
+          "top": 56,
+          "bottom": 957.14,
+          "left": 265,
+          "right": 1441.14
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -56
+      },
+      {
+        "depth": 7,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "新建任务Ctrl+N搜索Ctrl+K自动化插件市场分组项目项目\n@propert",
+        "rect": {
+          "x": 0,
+          "y": 56,
+          "w": 1441.14,
+          "h": 901.14,
+          "top": 56,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 1441.14
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -56
+      },
+      {
+        "depth": 6,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "新建任务Ctrl+N搜索Ctrl+K自动化插件市场分组项目项目\n@propert",
+        "rect": {
+          "x": 0,
+          "y": 56,
+          "w": 1441.14,
+          "h": 901.14,
+          "top": 56,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 1441.14
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -56
+      },
+      {
+        "depth": 5,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "新建任务Ctrl+N搜索Ctrl+K自动化插件市场分组项目项目\n@propert",
+        "rect": {
+          "x": 0,
+          "y": 56,
+          "w": 1441.14,
+          "h": 901.14,
+          "top": 56,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 1441.14
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -56
+      },
+      {
+        "depth": 4,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "命令面板搜索并执行当前工作区可用的命令。新建任务Ctrl+N搜索Ctrl+K自动",
+        "rect": {
+          "x": 0,
+          "y": 56,
+          "w": 1441.14,
+          "h": 901.14,
+          "top": 56,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 1441.14
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -56
+      },
+      {
+        "depth": 3,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "命令面板搜索并执行当前工作区可用的命令。新建任务Ctrl+N搜索Ctrl+K自动",
+        "rect": {
+          "x": 0,
+          "y": 56,
+          "w": 1441.14,
+          "h": 901.14,
+          "top": 56,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 1441.14
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -56
+      },
+      {
+        "depth": 2,
+        "tag": "div",
+        "id": "root",
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "命令面板搜索并执行当前工作区可用的命令。新建任务Ctrl+N搜索Ctrl+K自动",
+        "rect": {
+          "x": 0,
+          "y": 56,
+          "w": 1441.14,
+          "h": 901.14,
+          "top": 56,
+          "bottom": 957.14,
+          "left": 0,
+          "right": 1441.14
+        },
+        "overflowBelow": 56.14,
+        "overflowAbove": -56
+      },
+      {
+        "depth": 23,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265.57,
+          "y": 104.57,
+          "w": 1160.14,
+          "h": 852,
+          "top": 104.57,
+          "bottom": 956.57,
+          "left": 265.57,
+          "right": 1425.71
+        },
+        "overflowBelow": 55.57,
+        "overflowAbove": -104.57
+      },
+      {
+        "depth": 22,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265.57,
+          "y": 104.57,
+          "w": 1175,
+          "h": 852,
+          "top": 104.57,
+          "bottom": 956.57,
+          "left": 265.57,
+          "right": 1440.57
+        },
+        "overflowBelow": 55.57,
+        "overflowAbove": -104.57
+      },
+      {
+        "depth": 21,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265.57,
+          "y": 104.57,
+          "w": 1175,
+          "h": 852,
+          "top": 104.57,
+          "bottom": 956.57,
+          "left": 265.57,
+          "right": 1440.57
+        },
+        "overflowBelow": 55.57,
+        "overflowAbove": -104.57
+      },
+      {
+        "depth": 20,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265.57,
+          "y": 104.57,
+          "w": 1175,
+          "h": 852,
+          "top": 104.57,
+          "bottom": 956.57,
+          "left": 265.57,
+          "right": 1440.57
+        },
+        "overflowBelow": 55.57,
+        "overflowAbove": -104.57
+      },
+      {
+        "depth": 19,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265.57,
+          "y": 104.57,
+          "w": 1175,
+          "h": 852,
+          "top": 104.57,
+          "bottom": 956.57,
+          "left": 265.57,
+          "right": 1440.57
+        },
+        "overflowBelow": 55.57,
+        "overflowAbove": -104.57
+      },
+      {
+        "depth": 18,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265.57,
+          "y": 104.57,
+          "w": 1175,
+          "h": 852,
+          "top": 104.57,
+          "bottom": 956.57,
+          "left": 265.57,
+          "right": 1440.57
+        },
+        "overflowBelow": 55.57,
+        "overflowAbove": -104.57
+      },
+      {
+        "depth": 17,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265.57,
+          "y": 104.57,
+          "w": 1175,
+          "h": 852,
+          "top": 104.57,
+          "bottom": 956.57,
+          "left": 265.57,
+          "right": 1440.57
+        },
+        "overflowBelow": 55.57,
+        "overflowAbove": -104.57
+      },
+      {
+        "depth": 16,
+        "tag": "main",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265.57,
+          "y": 104.57,
+          "w": 1175,
+          "h": 852,
+          "top": 104.57,
+          "bottom": 956.57,
+          "left": 265.57,
+          "right": 1440.57
+        },
+        "overflowBelow": 55.57,
+        "overflowAbove": -104.57
+      },
+      {
+        "depth": 15,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265.57,
+          "y": 104.57,
+          "w": 1175,
+          "h": 852,
+          "top": 104.57,
+          "bottom": 956.57,
+          "left": 265.57,
+          "right": 1440.57
+        },
+        "overflowBelow": 55.57,
+        "overflowAbove": -104.57
+      },
+      {
+        "depth": 14,
+        "tag": "div",
+        "id": "conversation",
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "中午好呀，要不要先休息一下中午好呀，要不要先休息一下选择项目向 ZCode 提问",
+        "rect": {
+          "x": 265.57,
+          "y": 104.57,
+          "w": 1175,
+          "h": 852,
+          "top": 104.57,
+          "bottom": 956.57,
+          "left": 265.57,
+          "right": 1440.57
+        },
+        "overflowBelow": 55.57,
+        "overflowAbove": -104.57
+      }
+    ],
+    "overflow": {
+      "windowInnerHeight": 901,
+      "windowInnerWidth": 1441,
+      "scrollingElementTag": "html",
+      "scrollingElementScrollHeight": 957,
+      "scrollingElementClientHeight": 901,
+      "htmlOverflows": true,
+      "bodyOverflows": true,
+      "rootOverflows": false,
+      "documentScrollTop": 0
+    }
+  },
+  "screenshot": {
+    "file": "F:/WSL/workspace/zcode-tarkov/docs/images/layout-before-1440.png",
+    "bytes": 265655
+  },
+  "summary": {
+    "checks": 11,
+    "checksPassed": 5,
+    "comparisons": 0,
+    "comparisonsPassed": 0,
+    "clipped": 49
+  }
+}

@@ -17,6 +17,23 @@
  * Requirements: Node >= 22 with a global WebSocket and global fetch (Node 24
  * here). No dependencies, nothing is installed.
  *
+ * The layout.no-clipped-elements assertion is not decided here: the decision
+ * (an entry of this project fails immediately, an app-side entry is re-measured
+ * after the settle and fails only when still painted outside) is imported from
+ * tools/measure-layout.mjs (resolveClippedCheck + its MEASURE expression), so
+ * the harness and the measurement tool cannot disagree. The first and the
+ * confirming measurement, the entries and the classification are kept in the
+ * evidence JSON, and a note records when a transient was excused.
+ *
+ * Measurement conditions: before the layout observations are taken, the scratch
+ * instance this harness launched is raised to the top of the z-order without
+ * activation, through the same helper the sweep uses (tools/measure-layout.mjs
+ * psWindow 'raise'). An unraised/occluded Chromium window does not advance CSS
+ * animations, so an app-side slide-in (ZCode's update toast) can sit frozen
+ * below the viewport and look like a persistent clip. The raise and the
+ * before/after painted-outside measurements are recorded in the evidence JSON
+ * as windowRaise; a failed raise is recorded and does not fail the run alone.
+ *
  * Usage:
  *   node tools/verify-clean-install.mjs --port 9444 \
  *     --out-dir <repo>/docs/images --evidence <tmp>/cdp-evidence.json \
@@ -26,6 +43,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import zlib from 'node:zlib';
+import { resolveClippedCheck, clippedCounts, CLIP_CONFIRM_SETTLE_MS, MEASURE, browserPid, psWindow } from './measure-layout.mjs';
 
 function parseArgs(argv) {
   const out = { port: 9444, mode: 'verify', outDir: '', evidence: '', palette: {}, timeoutMs: 45000 };
@@ -195,6 +213,88 @@ async function evaluate(send, expression) {
   return res.result ? res.result.value : undefined;
 }
 
+// ---------------------------------------------------- scratch window raise ---
+// The layout observations below are only comparable to the sweep's when the
+// window is in the same state: an unraised (occluded/background) Chromium
+// window does not advance CSS animations - a minimized window stops producing
+// frames entirely (docs/dev/zcode-dom-notes.md) - so an app-side slide-in (the
+// update toast) can sit frozen below the viewport for as long as the window is
+// left alone. The sweep raises its scratch window before measuring; this
+// harness raises the scratch instance it launched with the same helper
+// (psWindow 'raise' = user32 SetWindowPos to HWND_TOPMOST with
+// SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW | SWP_NOACTIVATE: un-occluded,
+// without stealing focus). The window is resolved from the browser pid the CDP
+// endpoint of this port reports (SystemInfo.getProcessInfo), so only the
+// instance that owns this endpoint - the one this harness started - can be
+// touched. A failed raise is recorded and does not fail the run on its own.
+const RAISE_CALL = 'tools/measure-layout.mjs psWindow(pid, "raise") -> user32!SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW | SWP_NOACTIVATE)';
+const RAISE_VISIBLE_BUDGET_MS = 10000;
+const RAISE_FRAME_ADVANCE_MS = 500;
+
+// The app-side painted-outside set as evidence (this is not a decision). The
+// exported clippedCounts classification and the same MEASURE expression the
+// resolver uses keep the before/after observations directly comparable.
+function paintedOutsideSet(obs) {
+  const counts = clippedCounts(obs);
+  return {
+    paintedOutside: counts.total,
+    rawRectHits: counts.rawTotal,
+    ours: counts.oursTotal,
+    app: counts.appTotal,
+    appEntries: counts.app.slice(0, 10)
+  };
+}
+
+async function raiseScratchWindow(send, base) {
+  const evidence = {
+    step: 'raise-scratch-window',
+    attempted: true,
+    target: 'the scratch instance launched by this harness (browser pid from CDP SystemInfo.getProcessInfo on the harness CDP port)',
+    call: RAISE_CALL,
+    note: 'An unraised/occluded Chromium window does not advance CSS animations (a minimized window stops producing frames entirely; docs/dev/zcode-dom-notes.md), so an app-side toast can sit frozen below the fold and look like a persistent clip. The sweep (tools/measure-layout.mjs) raises its scratch window before measuring; this raise aligns the harness measurement conditions with the sweep. A failed raise is recorded here and does not fail the run on its own.',
+    succeeded: false,
+    paintedOutsideBefore: null,
+    paintedOutsideAfter: null
+  };
+  const measure = async () => {
+    try { return paintedOutsideSet(await evaluate(send, MEASURE)); }
+    catch (err) { return { error: String((err && err.message) ? err.message : err) }; }
+  };
+  evidence.paintedOutsideBefore = await measure();
+  try {
+    const pid = await browserPid(base);
+    evidence.pid = pid;
+    if (!pid) {
+      evidence.error = 'no browser pid reported by CDP SystemInfo.getProcessInfo; the scratch window cannot be located';
+    } else {
+      const raised = await psWindow(pid, 'raise');
+      evidence.raiseResult = raised;
+      evidence.succeeded = !!(raised && raised.found && raised.raised === true);
+      if (!evidence.succeeded) {
+        evidence.error = (raised && raised.error) ? String(raised.error) : 'SetWindowPos(HWND_TOPMOST) did not report success';
+      }
+      const visDeadline = Date.now() + RAISE_VISIBLE_BUDGET_MS;
+      let state = null;
+      while (Date.now() < visDeadline) {
+        try { state = await evaluate(send, '({vis: document.visibilityState, focused: document.hasFocus()})'); }
+        catch (err) { state = { error: String((err && err.message) ? err.message : err) }; }
+        if (state && state.vis === 'visible') break;
+        await sleep(300);
+      }
+      evidence.rendererAfterRaise = state;
+      evidence.rendererVisibleAfterRaise = !!(state && state.vis === 'visible');
+    }
+  } catch (err) {
+    evidence.error = String((err && err.message) ? err.message : err);
+  }
+  // Let the un-occluded renderer advance a few frames before the "after"
+  // measurement and before the observation that feeds the assertions.
+  await sleep(RAISE_FRAME_ADVANCE_MS);
+  evidence.frameAdvanceMs = RAISE_FRAME_ADVANCE_MS;
+  evidence.paintedOutsideAfter = await measure();
+  return evidence;
+}
+
 const ASSERT_EXPR = `(function(){
   var out = {};
   var styleEl = document.getElementById('zcode-beautify-style');
@@ -265,6 +365,82 @@ const ASSERT_EXPR = `(function(){
   out.dialogCount = document.querySelectorAll('[role="dialog"], [role="alertdialog"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"]').length;
   out.hasFocus = document.hasFocus();
   out.bodyChildCount = document.body ? document.body.childElementCount : null;
+
+  // ---- layout observation for the banner band reservation invariant ----
+  // Band height + app root height must add up to the viewport; nothing may sit
+  // below the window edge. Same locators as tools/measure-layout.mjs (the
+  // sidebar is the leftmost full-height column, the composer is found by
+  // climbing from the editing surface), so the harness and the measurement
+  // tool cannot disagree about what they measured.
+  var rct = function (el) { if (!el) return null; var r = el.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height, top: r.top, bottom: r.bottom, left: r.left, right: r.right }; };
+  var vis = function (el) { var c = getComputedStyle(el); return c.display !== 'none' && c.visibility !== 'hidden' && parseFloat(c.opacity) !== 0; };
+  var visibleEls = document.querySelectorAll('body *');
+  var L = {
+    innerWidth: window.innerWidth,
+    innerHeight: window.innerHeight,
+    devicePixelRatio: window.devicePixelRatio,
+    bannerCount: document.querySelectorAll('#zcode-tarkov-banner').length,
+    bannerVar: getComputedStyle(document.documentElement).getPropertyValue('--zcode-tarkov-banner-height').trim(),
+    bannerAttr: document.documentElement.getAttribute('data-zct-banner'),
+    banner: null, appShell: null, sidebar: null, composer: null, editor: null, account: null,
+    html: { rect: rct(document.documentElement), scrollHeight: document.documentElement.scrollHeight, clientHeight: document.documentElement.clientHeight },
+    body: { rect: rct(document.body), paddingTop: getComputedStyle(document.body).paddingTop, display: getComputedStyle(document.body).display },
+    root: { rect: rct(document.getElementById('root')), height: getComputedStyle(document.getElementById('root')).height, marginTop: getComputedStyle(document.getElementById('root')).marginTop }
+  };
+  var bannerEl = document.getElementById('zcode-tarkov-banner');
+  if (bannerEl) L.banner = { rect: rct(bannerEl), isBodyFirstChild: document.body.firstElementChild === bannerEl };
+  var rootEl = document.getElementById('root');
+  var shell = null, shellArea = 0;
+  for (var li = 0; li < visibleEls.length; li++) {
+    var le = visibleEls[li];
+    if (!rootEl || !rootEl.contains(le) || !vis(le)) continue;
+    var lr = le.getBoundingClientRect();
+    if (lr.width < 200 || lr.height < 100) continue;
+    if (lr.width * lr.height > shellArea) { shellArea = lr.width * lr.height; shell = le; }
+  }
+  if (shell) L.appShell = { rect: rct(shell) };
+  var cur = rootEl, hops = 0;
+  while (cur && cur.children && hops < 12) {
+    var best = null, bestLeft = Infinity, bestWidth = -1;
+    for (var lj = 0; lj < cur.children.length; lj++) {
+      var kid = cur.children[lj];
+      if (kid.id === 'zcode-tarkov-banner' || !vis(kid)) continue;
+      var kcs = getComputedStyle(kid);
+      if (kcs.position === 'fixed' || kcs.position === 'absolute') continue;
+      var kr = kid.getBoundingClientRect();
+      if (kr.height < L.innerHeight * 0.75 || kr.width < 40 || kr.left > 16) continue;
+      if (kr.left < bestLeft - 1 || (Math.abs(kr.left - bestLeft) <= 1 && kr.width > bestWidth)) { best = kid; bestLeft = kr.left; bestWidth = kr.width; }
+    }
+    if (!best) break;
+    if (bestWidth <= L.innerWidth * 0.6) { L.sidebar = { rect: rct(best) }; break; }
+    cur = best; hops += 1;
+  }
+  var editor = document.querySelector('div[role="textbox"], textarea, [contenteditable="true"]');
+  if (editor) {
+    var walk = editor, composer = null;
+    for (var lu = 0; lu < 10 && walk && walk !== document.body; lu++) {
+      var lcls = typeof walk.className === 'string' ? walk.className : '';
+      if (/composer/i.test(lcls)) composer = walk;
+      walk = walk.parentElement;
+    }
+    L.editor = { rect: rct(editor) };
+    if (composer) L.composer = { rect: rct(composer) };
+  }
+  var ACCOUNT_TEXT = [String.fromCharCode(0x8fde, 0x63a5, 0x4f7f, 0x7528), 'Connect to use', 'Sign in'];
+  for (var lk = 0; lk < visibleEls.length; lk++) {
+    var cand = visibleEls[lk];
+    if (cand.childElementCount > 0 || !vis(cand)) continue;
+    var ltext = (cand.textContent || '').trim();
+    for (var lm = 0; lm < ACCOUNT_TEXT.length; lm++) {
+      if (ltext === ACCOUNT_TEXT[lm] || (ltext.length < 40 && ltext.indexOf(ACCOUNT_TEXT[lm]) >= 0)) { L.account = { rect: rct(cand), text: ltext }; break; }
+    }
+    if (L.account) break;
+  }
+  // Clipped elements are NOT gathered here: the decision (and therefore the
+  // ownership classification) belongs to tools/measure-layout.mjs, which owns
+  // the MEASURE expression and resolveClippedCheck. This block keeps only the
+  // layout locators the other assertions need.
+  out.layout = L;
   return out;
 })()`;
 
@@ -310,6 +486,79 @@ function buildAssertions(obs, expected) {
   add('panel.theme-select-present', '#zb-theme select present', obs.themeSelectPresent, obs.themeSelectPresent === true);
   add('screenshot.no-dialog-open', 'no modal dialog element in the tree at capture time', obs.dialogCount, obs.dialogCount === 0);
   add('screenshot.renderer-focused', 'document.hasFocus() (informational: the capture is a renderer surface, occlusion does not blank it)', obs.hasFocus, obs.hasFocus === true);
+  return list;
+}
+
+// Re-labels the resolver's check as this harness's layout assertion. The id and
+// the expected string are the harness contract and stay exactly as they were;
+// the meaning is the resolver's refined one: an entry of this project fails
+// immediately, an app-side entry fails only when still painted outside after
+// the settle. The resolver's detail (entries, first and confirming
+// measurements, classification) plus a human-readable note stay on the
+// assertion, so the evidence shows when a transient was excused.
+function harnessClipAssertion(resolverCheck) {
+  const assertion = {
+    id: 'layout.no-clipped-elements',
+    expected: 'no painted element reaches outside the viewport',
+    observed: resolverCheck.observed,
+    pass: resolverCheck.pass === true
+  };
+  const detail = resolverCheck.detail;
+  if (detail) assertion.detail = detail;
+  if (detail && detail.oursPaintedOutside) {
+    assertion.note = 'FAILED immediately: ' + detail.oursPaintedOutside.total + ' painted-outside entry(ies) belong to this project (banner/panel/#zb-*/wallpaper) and are never excused; no settle was attempted. Entries are in detail.oursPaintedOutside.';
+  } else if (detail && detail.persistentPaintedOutside) {
+    assertion.note = 'FAILED as persistent: ' + detail.persistentPaintedOutside.confirm.paintedOutside + ' app-side entry(ies) were still painted outside after the ' + detail.persistentPaintedOutside.settleMs + ' ms settle (' + detail.persistentPaintedOutside.reason + '). First and confirming measurements are in detail.persistentPaintedOutside.';
+  } else if (detail && detail.transientPaintedOutside) {
+    assertion.note = 'transient excused: ' + detail.transientPaintedOutside.first.paintedOutside + ' app-side entry(ies) were painted outside at the first measurement and had cleared after the ' + detail.transientPaintedOutside.settleMs + ' ms settle (classification=' + detail.transientPaintedOutside.classification + '); no entry of this project was involved. The entries and both measurements are recorded in detail.transientPaintedOutside and in clipDecision.';
+  }
+  return assertion;
+}
+
+// Layout assertions for the banner band reservation. This harness only runs in
+// Tarkov mode, so the band must be present and the invariant must hold:
+// band height + app root height == viewport height, nothing below the window.
+// The no-clipped-elements assertion is passed in as the resolver's check.
+function buildLayoutAssertions(obs, options) {
+  const list = [];
+  const add = (id, expectedVal, observedVal, pass) => list.push({ id: id, expected: expectedVal, observed: observedVal, pass: pass === true });
+  const L = obs.layout;
+  if (!L) {
+    add('layout.observation-present', 'the layout observation block ran', 'missing', false);
+    return list;
+  }
+  const H = L.innerHeight;
+  const near = (a, b, tol) => Math.abs(a - b) <= (tol === undefined ? 0.5 : tol);
+  add('layout.banner-count', 'exactly one #zcode-tarkov-banner element', L.bannerCount, L.bannerCount === 1);
+  add('layout.attribute-set', 'html[data-zct-banner="1"]', L.bannerAttr, L.bannerAttr === '1');
+  add('layout.banner-band-height',
+    '--zcode-tarkov-banner-height resolves and equals the painted band height',
+    { property: L.bannerVar, bandHeight: L.banner ? L.banner.rect.h : null },
+    /px$/.test(L.bannerVar) && !!L.banner && near(parseFloat(L.bannerVar), L.banner.rect.h));
+  add('layout.banner-inside-viewport', 'band top >= 0 and bottom <= innerHeight + 0.5',
+    L.banner ? [L.banner.rect.top, L.banner.rect.bottom, H] : 'no banner',
+    !!L.banner && L.banner.rect.top >= 0 && L.banner.rect.bottom <= H + 0.5);
+  add('layout.app-shell-below-banner', 'app shell top >= band bottom (band reserves, never covers)',
+    [L.appShell ? L.appShell.rect.top : null, L.banner ? L.banner.rect.bottom : null],
+    !!L.appShell && !!L.banner && L.appShell.rect.top >= L.banner.rect.bottom - 0.5);
+  add('layout.root-bottom-at-viewport', '|#root.bottom - innerHeight| <= 0.5',
+    [L.root.rect ? L.root.rect.bottom : null, H],
+    !!L.root.rect && near(L.root.rect.bottom, H));
+  add('layout.composer-fully-visible', 'composer top >= 0 and bottom <= innerHeight + 0.5',
+    L.composer ? [L.composer.rect.top, L.composer.rect.bottom, H] : 'not found',
+    !!L.composer && L.composer.rect.top >= 0 && L.composer.rect.bottom <= H + 0.5);
+  add('layout.sidebar-fully-visible', 'sidebar top >= 0 and bottom <= innerHeight + 0.5',
+    L.sidebar ? [L.sidebar.rect.top, L.sidebar.rect.bottom, H] : 'not found',
+    !!L.sidebar && L.sidebar.rect.top >= 0 && L.sidebar.rect.bottom <= H + 0.5);
+  add('layout.account-fully-visible', 'account label top >= 0 and bottom <= innerHeight + 0.5',
+    L.account ? [L.account.text, L.account.rect.top, L.account.rect.bottom, H] : 'not found',
+    !!L.account && L.account.rect.top >= 0 && L.account.rect.bottom <= H + 0.5);
+  const clipCheck = options && options.clipCheck;
+  if (clipCheck) list.push(harnessClipAssertion(clipCheck));
+  else add('layout.no-clipped-elements', 'no painted element reaches outside the viewport', 'the clipped-decision resolver did not run', false);
+  add('layout.no-vertical-overflow', 'html.scrollHeight <= html.clientHeight + 1',
+    [L.html.scrollHeight, L.html.clientHeight],
+    L.html.scrollHeight <= L.html.clientHeight + 1);
   return list;
 }
 
@@ -402,8 +651,63 @@ async function main() {
   }
   result.steps.push({ step: 'wait-for-renderer-mounted', ok: ready, waitedMs: args.timeoutMs });
 
+  // The panel is injected by the resident service asynchronously (and, since
+  // the panel-script fix, built on DOMContentLoaded while the document can
+  // still be loading), so it is not guaranteed to exist the instant the
+  // renderer looks ready. Wait for it, bounded and recorded; the presence
+  // assertions themselves are unchanged and still fail when it never appears.
+  const panelWaitStart = Date.now();
+  const panelWaitBudgetMs = 10000;
+  const panelWaitPollMs = 250;
+  let panelWaitRoot = false;
+  let panelWaitSelect = false;
+  while (Date.now() - panelWaitStart < panelWaitBudgetMs) {
+    let state = null;
+    try {
+      state = await evaluate(send, "(function(){ return { root: !!document.getElementById('zcode-beautify-panel-root'), select: !!document.getElementById('zb-theme') }; })()");
+    } catch (err) { state = null; /* page still settling */ }
+    panelWaitRoot = !!(state && state.root);
+    panelWaitSelect = !!(state && state.select);
+    if (panelWaitRoot && panelWaitSelect) break;
+    await sleep(panelWaitPollMs);
+  }
+  const panelWait = {
+    budgetMs: panelWaitBudgetMs,
+    pollMs: panelWaitPollMs,
+    waitedMs: Date.now() - panelWaitStart,
+    root: panelWaitRoot,
+    select: panelWaitSelect,
+    appeared: panelWaitRoot && panelWaitSelect,
+    timedOut: !(panelWaitRoot && panelWaitSelect)
+  };
+  result.panelWait = panelWait;
+  result.steps.push({ step: 'wait-for-panel-injection', ok: panelWait.appeared, timedOut: panelWait.timedOut, waitedMs: panelWait.waitedMs, budgetMs: panelWaitBudgetMs, root: panelWaitRoot, select: panelWaitSelect });
+  if (panelWait.timedOut) {
+    console.error('[panel-wait] timed out after ' + panelWait.waitedMs + 'ms (budget ' + panelWaitBudgetMs + 'ms): #zcode-beautify-panel-root=' + panelWaitRoot + ' #zb-theme=' + panelWaitSelect);
+  }
+
+  // Measurement conditions aligned with the sweep: raise the scratch window this
+  // harness launched before the layout observations are taken. Recorded in the
+  // evidence JSON, including the app-side painted-outside set before and after
+  // the raise; a failed raise does not fail the run on its own.
+  result.windowRaise = await raiseScratchWindow(send, base);
+
   const obs = await evaluate(send, ASSERT_EXPR);
   result.observations = obs;
+  // The clipped-element decision is owned by tools/measure-layout.mjs: the
+  // first observation comes from its MEASURE expression (the same ownership
+  // classification the resolver applies), the resolver re-measures after its
+  // settle when only app-side entries are involved, and its check is
+  // re-labelled for this harness below. Anything of ours is never excused.
+  const clipFirst = await evaluate(send, MEASURE);
+  const clipResolution = await resolveClippedCheck(send, clipFirst, { settleMs: CLIP_CONFIRM_SETTLE_MS });
+  result.clipDecision = {
+    resolver: 'tools/measure-layout.mjs resolveClippedCheck',
+    settleMs: CLIP_CONFIRM_SETTLE_MS,
+    check: clipResolution.check,
+    firstMeasurement: clipFirst,
+    confirmMeasurement: clipResolution.confirmObs
+  };
   const expected = {
     accent: args.palette.accent || '#e07930',
     background: args.palette.background || '#1c1207',
@@ -414,7 +718,16 @@ async function main() {
     badgeClip: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
   };
   result.expected = expected;
-  result.assertions = buildAssertions(obs, expected);
+  result.assertions = buildAssertions(obs, expected).concat(buildLayoutAssertions(obs, { clipCheck: clipResolution.check }));
+  if (panelWait.timedOut) {
+    // The assertions keep their own expected/observed/pass semantics; the note
+    // only records that their observation happened after a timed-out wait.
+    for (const a of result.assertions) {
+      if (a.id === 'panel.root-present' || a.id === 'panel.theme-select-present') {
+        a.note = 'panel wait timed out after ' + panelWait.waitedMs + ' ms (budget ' + panelWaitBudgetMs + ' ms); ' + a.id + ' was evaluated after the wait';
+      }
+    }
+  }
 
   if (!args.outDir) throw new Error('--out-dir is required in verify mode');
   fs.mkdirSync(args.outDir, { recursive: true });

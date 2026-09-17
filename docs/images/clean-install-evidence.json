@@ -1,10 +1,10 @@
 {
-    "timestamp":  "2026-09-16T08:58:29.7709924Z",
+    "timestamp":  "2026-09-17T10:27:12.4590871Z",
     "journey":  "v0.1.0 clean install -\u003e launcher -\u003e Tarkov theme -\u003e close -\u003e uninstall -\u003e idempotency",
     "harness":  {
                     "driver":  "F:\\WSL\\workspace\\zcode-tarkov\\tools\\verify-clean-install.ps1",
                     "cdp":  "F:\\WSL\\workspace\\zcode-tarkov\\tools\\verify-clean-install.mjs",
-                    "scratchRoot":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800"
+                    "scratchRoot":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634"
                 },
     "zcodeBuild":  {
                        "browser":  "Chrome/146.0.7680.80",
@@ -14,67 +14,67 @@
     "install":  {
                     "report":  [
                                    "[ok]   platform           - Windows",
-                                   "[ok]   install dir        - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app",
+                                   "[ok]   install dir        - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app",
                                    "[ok]   node               - C:\\Program Files\\nodejs\\node.exe v24.19.0",
                                    "[ok]   zcode              - C:\\Program Files\\ZCode\\ZCode.exe (resolved by env)",
                                    "[ok]   payload            - 10 required file(s) present below F:\\WSL\\workspace\\zcode-tarkov",
                                    "[ok]   version            - 0.1.0",
-                                   "[ok]   payload copy       - 15 file(s) copied into C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app",
-                                   "[ok]   shortcut           - created C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\links\\ZCode Tarkov.lnk",
-                                   "[ok]   settings.json      - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\settings.json (product 0.1.0, cdp 9444, api 9333)",
-                                   "[ok]   autostart          - registered C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs",
-                                   "[ok]   service            - started (pid 25544) on api port 9333",
+                                   "[ok]   payload copy       - 15 file(s) copied into C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app",
+                                   "[ok]   shortcut           - created C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\links\\ZCode Tarkov.lnk",
+                                   "[ok]   settings.json      - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\settings.json (product 0.1.0, cdp 9444, api 9333)",
+                                   "[ok]   autostart          - registered C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs",
+                                   "[ok]   service            - started (pid 19888) on api port 9333",
                                    "",
-                                   "Result: installed zcode-tarkov 0.1.0 into C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app (warnings: 0).",
+                                   "Result: installed zcode-tarkov 0.1.0 into C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app (warnings: 0).",
                                    "",
                                    "Next steps:",
                                    "  1. Start ZCode from the \"ZCode Tarkov\" shortcut (Desktop / Start Menu).",
-                                   "  2. If ZCode is moved or the install breaks: powershell -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\repair.ps1\"",
-                                   "  3. To remove it again: powershell -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\uninstall.ps1\"",
+                                   "  2. If ZCode is moved or the install breaks: powershell -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\repair.ps1\"",
+                                   "  3. To remove it again: powershell -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\uninstall.ps1\"",
                                    ""
                                ],
                     "exitCode":  0,
                     "settings":  {
                                      "product":  "zcode-tarkov",
                                      "version":  "0.1.0",
-                                     "installDir":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app",
+                                     "installDir":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app",
                                      "nodePath":  "C:\\Program Files\\nodejs\\node.exe",
-                                     "cliPath":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\dist\\cli.js",
+                                     "cliPath":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\dist\\cli.js",
                                      "cdpPort":  9444,
                                      "apiPort":  9333,
-                                     "dataDir":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data",
+                                     "dataDir":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data",
                                      "zcodeExe":  "C:\\Program Files\\ZCode\\ZCode.exe",
                                      "zcodeInstallDir":  "C:\\Program Files\\ZCode",
                                      "zcodeResolvedBy":  "env",
                                      "launcherKind":  "vbs",
                                      "shortcuts":  [
-                                                       "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\links\\ZCode Tarkov.lnk"
+                                                       "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\links\\ZCode Tarkov.lnk"
                                                    ],
-                                     "installedAt":  "2026-09-16T08:58:03Z",
-                                     "updatedAt":  "2026-09-16T08:58:03Z"
+                                     "installedAt":  "2026-09-17T10:26:37Z",
+                                     "updatedAt":  "2026-09-17T10:26:37Z"
                                  },
-                    "settingsRaw":  "{\r\n  \"product\": \"zcode-tarkov\",\r\n  \"version\": \"0.1.0\",\r\n  \"installDir\": \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260916-085800\\\\app\",\r\n  \"nodePath\": \"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\r\n  \"cliPath\": \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260916-085800\\\\app\\\\dist\\\\cli.js\",\r\n  \"cdpPort\": 9444,\r\n  \"apiPort\": 9333,\r\n  \"dataDir\": \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260916-085800\\\\data\",\r\n  \"zcodeExe\": \"C:\\\\Program Files\\\\ZCode\\\\ZCode.exe\",\r\n  \"zcodeInstallDir\": \"C:\\\\Program Files\\\\ZCode\",\r\n  \"zcodeResolvedBy\": \"env\",\r\n  \"launcherKind\": \"vbs\",\r\n  \"shortcuts\": [\r\n    \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260916-085800\\\\links\\\\ZCode Tarkov.lnk\"\r\n  ],\r\n  \"installedAt\": \"2026-09-16T08:58:03Z\",\r\n  \"updatedAt\": \"2026-09-16T08:58:03Z\"\r\n}\r\n",
+                    "settingsRaw":  "{\r\n  \"product\": \"zcode-tarkov\",\r\n  \"version\": \"0.1.0\",\r\n  \"installDir\": \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260917-102634\\\\app\",\r\n  \"nodePath\": \"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\r\n  \"cliPath\": \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260917-102634\\\\app\\\\dist\\\\cli.js\",\r\n  \"cdpPort\": 9444,\r\n  \"apiPort\": 9333,\r\n  \"dataDir\": \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260917-102634\\\\data\",\r\n  \"zcodeExe\": \"C:\\\\Program Files\\\\ZCode\\\\ZCode.exe\",\r\n  \"zcodeInstallDir\": \"C:\\\\Program Files\\\\ZCode\",\r\n  \"zcodeResolvedBy\": \"env\",\r\n  \"launcherKind\": \"vbs\",\r\n  \"shortcuts\": [\r\n    \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260917-102634\\\\links\\\\ZCode Tarkov.lnk\"\r\n  ],\r\n  \"installedAt\": \"2026-09-17T10:26:37Z\",\r\n  \"updatedAt\": \"2026-09-17T10:26:37Z\"\r\n}\r\n",
                     "shortcut":  {
-                                     "path":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\links\\ZCode Tarkov.lnk",
+                                     "path":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\links\\ZCode Tarkov.lnk",
                                      "exists":  true,
-                                     "sha256":  "B2BEF5F5BBB31A47076C8259785C878221A1EDFAB820057AAFAA8A3156ACF4D6",
+                                     "sha256":  "5B7446C5B3B02A3AE5A2F42C961E139217E5C6400714934635BEACF357368B86",
                                      "length":  2253,
-                                     "lastWriteUtc":  "2026-09-16T08:58:03.2261293Z"
+                                     "lastWriteUtc":  "2026-09-17T10:26:37.1568131Z"
                                  },
                     "autostartEntry":  {
-                                           "path":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs",
+                                           "path":  "C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs",
                                            "exists":  true,
-                                           "sha256":  "B27D96E18EE47A85A5C8E814EA99E39A233E3D8F2753B4BA756B8D0E482D5ADD",
+                                           "sha256":  "E63A93F40BEA78D9CC59DA464BE1526D0CB2D33F495D766D332D2D1A7A326131",
                                            "length":  592,
-                                           "lastWriteUtc":  "2026-09-16T08:58:03.3938671Z"
+                                           "lastWriteUtc":  "2026-09-17T10:26:37.3168103Z"
                                        },
                     "nodeProcesses":  [
                                           {
-                                              "pid":  25544,
-                                              "commandLine":  "\"C:\\Program Files\\nodejs\\node.exe\" C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\dist\\cli.js serve --port 9444 --api-port 9333"
+                                              "pid":  19888,
+                                              "commandLine":  "\"C:\\Program Files\\nodejs\\node.exe\" C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\dist\\cli.js serve --port 9444 --api-port 9333"
                                           }
                                       ],
-                    "serviceHealth":  "{\"ok\":true,\"service\":\"zcode-beautify\",\"pid\":25544}"
+                    "serviceHealth":  "{\"ok\":true,\"service\":\"zcode-beautify\",\"pid\":19888}"
                 },
     "launcher":  {
                      "exitCode":  3,
@@ -85,7 +85,7 @@
                                 ],
                      "blockedBy":  "launcher exited 3 and port 9444 is closed",
                      "directLaunchUsed":  true,
-                     "launcherLog":  "2026-09-16T08:58:07Z exit=3 zcode=\"C:\\Program Files\\ZCode\\ZCode.exe\" cdp=9444:closed api=9333:not-checked pid=- note=running-without-cdp\r\n"
+                     "launcherLog":  "2026-09-17T10:26:41Z exit=3 zcode=\"C:\\Program Files\\ZCode\\ZCode.exe\" cdp=9444:closed api=9333:not-checked pid=- note=running-without-cdp\r\n"
                  },
     "theme":  {
                   "exitCode":  0,
@@ -216,7 +216,7 @@
                        {
                            "id":  "band.real-greeting-text-preserved",
                            "expected":  "non-empty original greeting text inside the span",
-                           "observed":  "下午好呀，接下来交给我吧",
+                           "observed":  "晚上好呀，今天辛苦啦",
                            "pass":  true
                        },
                        {
@@ -244,17 +244,430 @@
                            "pass":  true
                        },
                        {
+                           "id":  "layout.banner-count",
+                           "expected":  "exactly one #zcode-tarkov-banner element",
+                           "observed":  1,
+                           "pass":  true
+                       },
+                       {
+                           "id":  "layout.attribute-set",
+                           "expected":  "html[data-zct-banner=\"1\"]",
+                           "observed":  "1",
+                           "pass":  true
+                       },
+                       {
+                           "id":  "layout.banner-band-height",
+                           "expected":  "--zcode-tarkov-banner-height resolves and equals the painted band height",
+                           "observed":  {
+                                            "property":  "56px",
+                                            "bandHeight":  56.000003814697266
+                                        },
+                           "pass":  true
+                       },
+                       {
+                           "id":  "layout.banner-inside-viewport",
+                           "expected":  "band top \u003e= 0 and bottom \u003c= innerHeight + 0.5",
+                           "observed":  [
+                                            0,
+                                            56.000003814697266,
+                                            722
+                                        ],
+                           "pass":  true
+                       },
+                       {
+                           "id":  "layout.app-shell-below-banner",
+                           "expected":  "app shell top \u003e= band bottom (band reserves, never covers)",
+                           "observed":  [
+                                            56.000003814697266,
+                                            56.000003814697266
+                                        ],
+                           "pass":  true
+                       },
+                       {
+                           "id":  "layout.root-bottom-at-viewport",
+                           "expected":  "|#root.bottom - innerHeight| \u003c= 0.5",
+                           "observed":  [
+                                            722.2857704162598,
+                                            722
+                                        ],
+                           "pass":  true
+                       },
+                       {
+                           "id":  "layout.composer-fully-visible",
+                           "expected":  "composer top \u003e= 0 and bottom \u003c= innerHeight + 0.5",
+                           "observed":  [
+                                            402.0714416503906,
+                                            547.2143096923828,
+                                            722
+                                        ],
+                           "pass":  true
+                       },
+                       {
+                           "id":  "layout.sidebar-fully-visible",
+                           "expected":  "sidebar top \u003e= 0 and bottom \u003c= innerHeight + 0.5",
+                           "observed":  [
+                                            56.000003814697266,
+                                            722.2857704162598,
+                                            722
+                                        ],
+                           "pass":  true
+                       },
+                       {
+                           "id":  "layout.account-fully-visible",
+                           "expected":  "account label top \u003e= 0 and bottom \u003c= innerHeight + 0.5",
+                           "observed":  [
+                                            "连接使用",
+                                            679.7857666015625,
+                                            700.7857666015625,
+                                            722
+                                        ],
+                           "pass":  true
+                       },
+                       {
+                           "id":  "layout.no-clipped-elements",
+                           "expected":  "no painted element reaches outside the viewport",
+                           "observed":  {
+                                            "paintedOutside":  6,
+                                            "rawRectHits":  12,
+                                            "ours":  0,
+                                            "app":  6,
+                                            "sample":  [
+                                                           {
+                                                               "depth":  4,
+                                                               "tag":  "div",
+                                                               "id":  null,
+                                                               "dataSlot":  null,
+                                                               "ariaLabel":  null,
+                                                               "text":  "v3.12.3 已下载，重启即可安装",
+                                                               "owner":  "app",
+                                                               "ownerMatch":  null,
+                                                               "rect":  {
+                                                                            "x":  16,
+                                                                            "y":  716.14,
+                                                                            "w":  300,
+                                                                            "h":  38.14,
+                                                                            "top":  716.14,
+                                                                            "bottom":  754.29,
+                                                                            "left":  16,
+                                                                            "right":  316
+                                                                        },
+                                                               "painted":  {
+                                                                               "top":  716.14,
+                                                                               "bottom":  754.29
+                                                                           },
+                                                               "overflowBelow":  32.29,
+                                                               "overflowAbove":  -716.14
+                                                           },
+                                                           {
+                                                               "depth":  3,
+                                                               "tag":  "div",
+                                                               "id":  null,
+                                                               "dataSlot":  null,
+                                                               "ariaLabel":  null,
+                                                               "text":  "v3.12.3 已下载，重启即可安装",
+                                                               "owner":  "app",
+                                                               "ownerMatch":  null,
+                                                               "rect":  {
+                                                                            "x":  16,
+                                                                            "y":  716.14,
+                                                                            "w":  300,
+                                                                            "h":  38.14,
+                                                                            "top":  716.14,
+                                                                            "bottom":  754.29,
+                                                                            "left":  16,
+                                                                            "right":  316
+                                                                        },
+                                                               "painted":  {
+                                                                               "top":  716.14,
+                                                                               "bottom":  754.29
+                                                                           },
+                                                               "overflowBelow":  32.29,
+                                                               "overflowAbove":  -716.14
+                                                           },
+                                                           {
+                                                               "depth":  5,
+                                                               "tag":  "div",
+                                                               "id":  null,
+                                                               "dataSlot":  null,
+                                                               "ariaLabel":  null,
+                                                               "text":  "v3.12.3 已下载，重启即可安装",
+                                                               "owner":  "app",
+                                                               "ownerMatch":  null,
+                                                               "rect":  {
+                                                                            "x":  16.57,
+                                                                            "y":  716.71,
+                                                                            "w":  298.86,
+                                                                            "h":  37,
+                                                                            "top":  716.71,
+                                                                            "bottom":  753.71,
+                                                                            "left":  16.57,
+                                                                            "right":  315.43
+                                                                        },
+                                                               "painted":  {
+                                                                               "top":  716.71,
+                                                                               "bottom":  753.71
+                                                                           },
+                                                               "overflowBelow":  31.71,
+                                                               "overflowAbove":  -716.71
+                                                           },
+                                                           {
+                                                               "depth":  7,
+                                                               "tag":  "div",
+                                                               "id":  null,
+                                                               "dataSlot":  null,
+                                                               "ariaLabel":  null,
+                                                               "text":  "v3.12.3 已下载，重启即可安装",
+                                                               "owner":  "app",
+                                                               "ownerMatch":  null,
+                                                               "rect":  {
+                                                                            "x":  42.57,
+                                                                            "y":  724.71,
+                                                                            "w":  254.86,
+                                                                            "h":  21,
+                                                                            "top":  724.71,
+                                                                            "bottom":  745.71,
+                                                                            "left":  42.57,
+                                                                            "right":  297.43
+                                                                        },
+                                                               "painted":  {
+                                                                               "top":  724.71,
+                                                                               "bottom":  745.71
+                                                                           },
+                                                               "overflowBelow":  23.71,
+                                                               "overflowAbove":  -724.71
+                                                           },
+                                                           {
+                                                               "depth":  6,
+                                                               "tag":  "div",
+                                                               "id":  null,
+                                                               "dataSlot":  null,
+                                                               "ariaLabel":  null,
+                                                               "text":  "v3.12.3 已下载，重启即可安装",
+                                                               "owner":  "app",
+                                                               "ownerMatch":  null,
+                                                               "rect":  {
+                                                                            "x":  42.57,
+                                                                            "y":  724.71,
+                                                                            "w":  254.86,
+                                                                            "h":  21,
+                                                                            "top":  724.71,
+                                                                            "bottom":  745.71,
+                                                                            "left":  42.57,
+                                                                            "right":  297.43
+                                                                        },
+                                                               "painted":  {
+                                                                               "top":  724.71,
+                                                                               "bottom":  745.71
+                                                                           },
+                                                               "overflowBelow":  23.71,
+                                                               "overflowAbove":  -724.71
+                                                           }
+                                                       ]
+                                        },
+                           "pass":  true,
+                           "detail":  {
+                                          "transientPaintedOutside":  {
+                                                                          "classification":  "transient-app-side",
+                                                                          "settleMs":  10000,
+                                                                          "cleared":  true,
+                                                                          "first":  {
+                                                                                        "paintedOutside":  6,
+                                                                                        "rawRectHits":  12,
+                                                                                        "ours":  0,
+                                                                                        "app":  6,
+                                                                                        "entries":  [
+                                                                                                        {
+                                                                                                            "depth":  4,
+                                                                                                            "tag":  "div",
+                                                                                                            "id":  null,
+                                                                                                            "dataSlot":  null,
+                                                                                                            "ariaLabel":  null,
+                                                                                                            "text":  "v3.12.3 已下载，重启即可安装",
+                                                                                                            "owner":  "app",
+                                                                                                            "ownerMatch":  null,
+                                                                                                            "rect":  {
+                                                                                                                         "x":  16,
+                                                                                                                         "y":  716.14,
+                                                                                                                         "w":  300,
+                                                                                                                         "h":  38.14,
+                                                                                                                         "top":  716.14,
+                                                                                                                         "bottom":  754.29,
+                                                                                                                         "left":  16,
+                                                                                                                         "right":  316
+                                                                                                                     },
+                                                                                                            "painted":  {
+                                                                                                                            "top":  716.14,
+                                                                                                                            "bottom":  754.29
+                                                                                                                        },
+                                                                                                            "overflowBelow":  32.29,
+                                                                                                            "overflowAbove":  -716.14
+                                                                                                        },
+                                                                                                        {
+                                                                                                            "depth":  3,
+                                                                                                            "tag":  "div",
+                                                                                                            "id":  null,
+                                                                                                            "dataSlot":  null,
+                                                                                                            "ariaLabel":  null,
+                                                                                                            "text":  "v3.12.3 已下载，重启即可安装",
+                                                                                                            "owner":  "app",
+                                                                                                            "ownerMatch":  null,
+                                                                                                            "rect":  {
+                                                                                                                         "x":  16,
+                                                                                                                         "y":  716.14,
+                                                                                                                         "w":  300,
+                                                                                                                         "h":  38.14,
+                                                                                                                         "top":  716.14,
+                                                                                                                         "bottom":  754.29,
+                                                                                                                         "left":  16,
+                                                                                                                         "right":  316
+                                                                                                                     },
+                                                                                                            "painted":  {
+                                                                                                                            "top":  716.14,
+                                                                                                                            "bottom":  754.29
+                                                                                                                        },
+                                                                                                            "overflowBelow":  32.29,
+                                                                                                            "overflowAbove":  -716.14
+                                                                                                        },
+                                                                                                        {
+                                                                                                            "depth":  5,
+                                                                                                            "tag":  "div",
+                                                                                                            "id":  null,
+                                                                                                            "dataSlot":  null,
+                                                                                                            "ariaLabel":  null,
+                                                                                                            "text":  "v3.12.3 已下载，重启即可安装",
+                                                                                                            "owner":  "app",
+                                                                                                            "ownerMatch":  null,
+                                                                                                            "rect":  {
+                                                                                                                         "x":  16.57,
+                                                                                                                         "y":  716.71,
+                                                                                                                         "w":  298.86,
+                                                                                                                         "h":  37,
+                                                                                                                         "top":  716.71,
+                                                                                                                         "bottom":  753.71,
+                                                                                                                         "left":  16.57,
+                                                                                                                         "right":  315.43
+                                                                                                                     },
+                                                                                                            "painted":  {
+                                                                                                                            "top":  716.71,
+                                                                                                                            "bottom":  753.71
+                                                                                                                        },
+                                                                                                            "overflowBelow":  31.71,
+                                                                                                            "overflowAbove":  -716.71
+                                                                                                        },
+                                                                                                        {
+                                                                                                            "depth":  7,
+                                                                                                            "tag":  "div",
+                                                                                                            "id":  null,
+                                                                                                            "dataSlot":  null,
+                                                                                                            "ariaLabel":  null,
+                                                                                                            "text":  "v3.12.3 已下载，重启即可安装",
+                                                                                                            "owner":  "app",
+                                                                                                            "ownerMatch":  null,
+                                                                                                            "rect":  {
+                                                                                                                         "x":  42.57,
+                                                                                                                         "y":  724.71,
+                                                                                                                         "w":  254.86,
+                                                                                                                         "h":  21,
+                                                                                                                         "top":  724.71,
+                                                                                                                         "bottom":  745.71,
+                                                                                                                         "left":  42.57,
+                                                                                                                         "right":  297.43
+                                                                                                                     },
+                                                                                                            "painted":  {
+                                                                                                                            "top":  724.71,
+                                                                                                                            "bottom":  745.71
+                                                                                                                        },
+                                                                                                            "overflowBelow":  23.71,
+                                                                                                            "overflowAbove":  -724.71
+                                                                                                        },
+                                                                                                        {
+                                                                                                            "depth":  6,
+                                                                                                            "tag":  "div",
+                                                                                                            "id":  null,
+                                                                                                            "dataSlot":  null,
+                                                                                                            "ariaLabel":  null,
+                                                                                                            "text":  "v3.12.3 已下载，重启即可安装",
+                                                                                                            "owner":  "app",
+                                                                                                            "ownerMatch":  null,
+                                                                                                            "rect":  {
+                                                                                                                         "x":  42.57,
+                                                                                                                         "y":  724.71,
+                                                                                                                         "w":  254.86,
+                                                                                                                         "h":  21,
+                                                                                                                         "top":  724.71,
+                                                                                                                         "bottom":  745.71,
+                                                                                                                         "left":  42.57,
+                                                                                                                         "right":  297.43
+                                                                                                                     },
+                                                                                                            "painted":  {
+                                                                                                                            "top":  724.71,
+                                                                                                                            "bottom":  745.71
+                                                                                                                        },
+                                                                                                            "overflowBelow":  23.71,
+                                                                                                            "overflowAbove":  -724.71
+                                                                                                        },
+                                                                                                        {
+                                                                                                            "depth":  6,
+                                                                                                            "tag":  "span",
+                                                                                                            "id":  null,
+                                                                                                            "dataSlot":  null,
+                                                                                                            "ariaLabel":  null,
+                                                                                                            "text":  "",
+                                                                                                            "owner":  "app",
+                                                                                                            "ownerMatch":  null,
+                                                                                                            "rect":  {
+                                                                                                                         "x":  26.57,
+                                                                                                                         "y":  731.21,
+                                                                                                                         "w":  8,
+                                                                                                                         "h":  8,
+                                                                                                                         "top":  731.21,
+                                                                                                                         "bottom":  739.21,
+                                                                                                                         "left":  26.57,
+                                                                                                                         "right":  34.57
+                                                                                                                     },
+                                                                                                            "painted":  {
+                                                                                                                            "top":  731.21,
+                                                                                                                            "bottom":  739.21
+                                                                                                                        },
+                                                                                                            "overflowBelow":  17.21,
+                                                                                                            "overflowAbove":  -731.21
+                                                                                                        }
+                                                                                                    ]
+                                                                                    },
+                                                                          "confirm":  {
+                                                                                          "paintedOutside":  0,
+                                                                                          "rawRectHits":  6,
+                                                                                          "ours":  0,
+                                                                                          "app":  0,
+                                                                                          "entries":  [
+
+                                                                                                      ]
+                                                                                      }
+                                                                      }
+                                      },
+                           "note":  "transient excused: 6 app-side entry(ies) were painted outside at the first measurement and had cleared after the 10000 ms settle (classification=transient-app-side); no entry of this project was involved. The entries and both measurements are recorded in detail.transientPaintedOutside and in clipDecision."
+                       },
+                       {
+                           "id":  "layout.no-vertical-overflow",
+                           "expected":  "html.scrollHeight \u003c= html.clientHeight + 1",
+                           "observed":  [
+                                            722,
+                                            722
+                                        ],
+                           "pass":  true
+                       },
+                       {
                            "id":  "screenshot.homepage-not-blank",
                            "expected":  "distinct sampled colors \u003e 200 and mean channel \u003e 10 (a failed/occluded capture is uniform or black)",
                            "observed":  {
-                                            "distinctColors":  1480,
+                                            "distinctColors":  1600,
                                             "avgRgb":  [
-                                                           52,
-                                                           31,
-                                                           15
+                                                           63,
+                                                           38,
+                                                           19
                                                        ],
-                                            "nearBlackPixels":  52,
-                                            "sampled":  423472
+                                            "nearBlackPixels":  60,
+                                            "sampled":  237164
                                         },
                            "pass":  true
                        },
@@ -262,9 +675,9 @@
                            "id":  "screenshot.homepage-tarkov-colors-painted",
                            "expected":  "sampled pixels near the Tarkov accent #e07930 and near the painted band rgb(160,86,35)",
                            "observed":  {
-                                            "accentPixels":  24844,
-                                            "bandPixels":  21040,
-                                            "deepSurfacePixels":  353603
+                                            "accentPixels":  17838,
+                                            "bandPixels":  19966,
+                                            "deepSurfacePixels":  172811
                                         },
                            "pass":  true
                        },
@@ -272,13 +685,13 @@
                            "id":  "screenshot.panel-not-blank",
                            "expected":  "distinct sampled colors \u003e 200 and mean channel \u003e 10",
                            "observed":  {
-                                            "distinctColors":  1927,
+                                            "distinctColors":  2209,
                                             "avgRgb":  [
-                                                           52,
-                                                           32,
-                                                           16
+                                                           59,
+                                                           37,
+                                                           19
                                                        ],
-                                            "sampled":  423472
+                                            "sampled":  237164
                                         },
                            "pass":  true
                        },
@@ -286,8 +699,8 @@
                            "id":  "screenshot.panel-tarkov-colors-painted",
                            "expected":  "sampled pixels near the Tarkov accent #e07930",
                            "observed":  {
-                                            "accentPixels":  25121,
-                                            "deepSurfacePixels":  343591
+                                            "accentPixels":  18104,
+                                            "deepSurfacePixels":  170895
                                         },
                            "pass":  true
                        },
@@ -297,15 +710,15 @@
                            "observed":  {
                                             "panelHidden":  false,
                                             "panelRect":  [
-                                                              1082,
-                                                              373.8571472167969,
+                                                              680.2857666015625,
+                                                              184.71429443359375,
                                                               264,
                                                               477.5714416503906
                                                           ],
                                             "selectVisible":  true,
                                             "selectRect":  [
-                                                               1094.571533203125,
-                                                               443.0000305175781,
+                                                               692.857177734375,
+                                                               253.85714721679688,
                                                                238.85714721679688,
                                                                24.571430206298828
                                                            ],
@@ -318,59 +731,422 @@
                         {
                             "file":  "F:\\WSL\\workspace\\zcode-tarkov\\docs\\images\\homepage-tarkov.png",
                             "kind":  "homepage",
-                            "bytes":  246130,
-                            "width":  2387,
-                            "height":  1595
+                            "bytes":  254324,
+                            "width":  1684,
+                            "height":  1264
                         },
                         {
                             "file":  "F:\\WSL\\workspace\\zcode-tarkov\\docs\\images\\panel-theme-selector.png",
                             "kind":  "panel",
-                            "bytes":  314734,
-                            "width":  2387,
-                            "height":  1595
+                            "bytes":  295810,
+                            "width":  1684,
+                            "height":  1264
                         }
                     ],
     "screenshotAnalysis":  [
                                {
                                    "file":  "F:\\WSL\\workspace\\zcode-tarkov\\docs\\images\\homepage-tarkov.png",
-                                   "width":  2387,
-                                   "height":  1595,
-                                   "sampled":  423472,
+                                   "width":  1684,
+                                   "height":  1264,
+                                   "sampled":  237164,
                                    "sampleStep":  3,
-                                   "distinctColors":  1480,
+                                   "distinctColors":  1600,
                                    "avgRgb":  [
-                                                  52,
-                                                  31,
-                                                  15
+                                                  63,
+                                                  38,
+                                                  19
                                               ],
-                                   "accentPixels":  24844,
-                                   "bandPixels":  21040,
-                                   "deepSurfacePixels":  353603,
-                                   "nearBlackPixels":  52
+                                   "accentPixels":  17838,
+                                   "bandPixels":  19966,
+                                   "deepSurfacePixels":  172811,
+                                   "nearBlackPixels":  60
                                },
                                {
                                    "file":  "F:\\WSL\\workspace\\zcode-tarkov\\docs\\images\\panel-theme-selector.png",
-                                   "width":  2387,
-                                   "height":  1595,
-                                   "sampled":  423472,
+                                   "width":  1684,
+                                   "height":  1264,
+                                   "sampled":  237164,
                                    "sampleStep":  3,
-                                   "distinctColors":  1927,
+                                   "distinctColors":  2209,
                                    "avgRgb":  [
-                                                  52,
-                                                  32,
-                                                  16
+                                                  59,
+                                                  37,
+                                                  19
                                               ],
-                                   "accentPixels":  25121,
-                                   "bandPixels":  19336,
-                                   "deepSurfacePixels":  343591,
-                                   "nearBlackPixels":  52
+                                   "accentPixels":  18104,
+                                   "bandPixels":  11700,
+                                   "deepSurfacePixels":  170895,
+                                   "nearBlackPixels":  60
                                }
                            ],
     "cdpSummary":  {
-                       "total":  30,
-                       "passed":  30,
+                       "total":  41,
+                       "passed":  41,
                        "failed":  0
                    },
+    "windowRaise":  {
+                        "step":  "raise-scratch-window",
+                        "attempted":  true,
+                        "target":  "the scratch instance launched by this harness (browser pid from CDP SystemInfo.getProcessInfo on the harness CDP port)",
+                        "call":  "tools/measure-layout.mjs psWindow(pid, \"raise\") -\u003e user32!SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW | SWP_NOACTIVATE)",
+                        "note":  "An unraised/occluded Chromium window does not advance CSS animations (a minimized window stops producing frames entirely; docs/dev/zcode-dom-notes.md), so an app-side toast can sit frozen below the fold and look like a persistent clip. The sweep (tools/measure-layout.mjs) raises its scratch window before measuring; this raise aligns the harness measurement conditions with the sweep. A failed raise is recorded here and does not fail the run on its own.",
+                        "succeeded":  true,
+                        "paintedOutsideBefore":  {
+                                                     "paintedOutside":  6,
+                                                     "rawRectHits":  23,
+                                                     "ours":  0,
+                                                     "app":  6,
+                                                     "appEntries":  [
+                                                                        {
+                                                                            "depth":  4,
+                                                                            "tag":  "div",
+                                                                            "id":  null,
+                                                                            "dataSlot":  null,
+                                                                            "ariaLabel":  null,
+                                                                            "text":  "v3.12.3 已下载，重启即可安装",
+                                                                            "owner":  "app",
+                                                                            "ownerMatch":  null,
+                                                                            "rect":  {
+                                                                                         "x":  16,
+                                                                                         "y":  716.14,
+                                                                                         "w":  300,
+                                                                                         "h":  38.14,
+                                                                                         "top":  716.14,
+                                                                                         "bottom":  754.29,
+                                                                                         "left":  16,
+                                                                                         "right":  316
+                                                                                     },
+                                                                            "painted":  {
+                                                                                            "top":  716.14,
+                                                                                            "bottom":  754.29
+                                                                                        },
+                                                                            "overflowBelow":  32.29,
+                                                                            "overflowAbove":  -716.14
+                                                                        },
+                                                                        {
+                                                                            "depth":  3,
+                                                                            "tag":  "div",
+                                                                            "id":  null,
+                                                                            "dataSlot":  null,
+                                                                            "ariaLabel":  null,
+                                                                            "text":  "v3.12.3 已下载，重启即可安装",
+                                                                            "owner":  "app",
+                                                                            "ownerMatch":  null,
+                                                                            "rect":  {
+                                                                                         "x":  16,
+                                                                                         "y":  716.14,
+                                                                                         "w":  300,
+                                                                                         "h":  38.14,
+                                                                                         "top":  716.14,
+                                                                                         "bottom":  754.29,
+                                                                                         "left":  16,
+                                                                                         "right":  316
+                                                                                     },
+                                                                            "painted":  {
+                                                                                            "top":  716.14,
+                                                                                            "bottom":  754.29
+                                                                                        },
+                                                                            "overflowBelow":  32.29,
+                                                                            "overflowAbove":  -716.14
+                                                                        },
+                                                                        {
+                                                                            "depth":  5,
+                                                                            "tag":  "div",
+                                                                            "id":  null,
+                                                                            "dataSlot":  null,
+                                                                            "ariaLabel":  null,
+                                                                            "text":  "v3.12.3 已下载，重启即可安装",
+                                                                            "owner":  "app",
+                                                                            "ownerMatch":  null,
+                                                                            "rect":  {
+                                                                                         "x":  16.57,
+                                                                                         "y":  716.71,
+                                                                                         "w":  298.86,
+                                                                                         "h":  37,
+                                                                                         "top":  716.71,
+                                                                                         "bottom":  753.71,
+                                                                                         "left":  16.57,
+                                                                                         "right":  315.43
+                                                                                     },
+                                                                            "painted":  {
+                                                                                            "top":  716.71,
+                                                                                            "bottom":  753.71
+                                                                                        },
+                                                                            "overflowBelow":  31.71,
+                                                                            "overflowAbove":  -716.71
+                                                                        },
+                                                                        {
+                                                                            "depth":  7,
+                                                                            "tag":  "div",
+                                                                            "id":  null,
+                                                                            "dataSlot":  null,
+                                                                            "ariaLabel":  null,
+                                                                            "text":  "v3.12.3 已下载，重启即可安装",
+                                                                            "owner":  "app",
+                                                                            "ownerMatch":  null,
+                                                                            "rect":  {
+                                                                                         "x":  42.57,
+                                                                                         "y":  724.71,
+                                                                                         "w":  254.86,
+                                                                                         "h":  21,
+                                                                                         "top":  724.71,
+                                                                                         "bottom":  745.71,
+                                                                                         "left":  42.57,
+                                                                                         "right":  297.43
+                                                                                     },
+                                                                            "painted":  {
+                                                                                            "top":  724.71,
+                                                                                            "bottom":  745.71
+                                                                                        },
+                                                                            "overflowBelow":  23.71,
+                                                                            "overflowAbove":  -724.71
+                                                                        },
+                                                                        {
+                                                                            "depth":  6,
+                                                                            "tag":  "div",
+                                                                            "id":  null,
+                                                                            "dataSlot":  null,
+                                                                            "ariaLabel":  null,
+                                                                            "text":  "v3.12.3 已下载，重启即可安装",
+                                                                            "owner":  "app",
+                                                                            "ownerMatch":  null,
+                                                                            "rect":  {
+                                                                                         "x":  42.57,
+                                                                                         "y":  724.71,
+                                                                                         "w":  254.86,
+                                                                                         "h":  21,
+                                                                                         "top":  724.71,
+                                                                                         "bottom":  745.71,
+                                                                                         "left":  42.57,
+                                                                                         "right":  297.43
+                                                                                     },
+                                                                            "painted":  {
+                                                                                            "top":  724.71,
+                                                                                            "bottom":  745.71
+                                                                                        },
+                                                                            "overflowBelow":  23.71,
+                                                                            "overflowAbove":  -724.71
+                                                                        },
+                                                                        {
+                                                                            "depth":  6,
+                                                                            "tag":  "span",
+                                                                            "id":  null,
+                                                                            "dataSlot":  null,
+                                                                            "ariaLabel":  null,
+                                                                            "text":  "",
+                                                                            "owner":  "app",
+                                                                            "ownerMatch":  null,
+                                                                            "rect":  {
+                                                                                         "x":  26.57,
+                                                                                         "y":  731.21,
+                                                                                         "w":  8,
+                                                                                         "h":  8,
+                                                                                         "top":  731.21,
+                                                                                         "bottom":  739.21,
+                                                                                         "left":  26.57,
+                                                                                         "right":  34.57
+                                                                                     },
+                                                                            "painted":  {
+                                                                                            "top":  731.21,
+                                                                                            "bottom":  739.21
+                                                                                        },
+                                                                            "overflowBelow":  17.21,
+                                                                            "overflowAbove":  -731.21
+                                                                        }
+                                                                    ]
+                                                 },
+                        "paintedOutsideAfter":  {
+                                                    "paintedOutside":  6,
+                                                    "rawRectHits":  12,
+                                                    "ours":  0,
+                                                    "app":  6,
+                                                    "appEntries":  [
+                                                                       {
+                                                                           "depth":  4,
+                                                                           "tag":  "div",
+                                                                           "id":  null,
+                                                                           "dataSlot":  null,
+                                                                           "ariaLabel":  null,
+                                                                           "text":  "v3.12.3 已下载，重启即可安装",
+                                                                           "owner":  "app",
+                                                                           "ownerMatch":  null,
+                                                                           "rect":  {
+                                                                                        "x":  16,
+                                                                                        "y":  716.14,
+                                                                                        "w":  300,
+                                                                                        "h":  38.14,
+                                                                                        "top":  716.14,
+                                                                                        "bottom":  754.29,
+                                                                                        "left":  16,
+                                                                                        "right":  316
+                                                                                    },
+                                                                           "painted":  {
+                                                                                           "top":  716.14,
+                                                                                           "bottom":  754.29
+                                                                                       },
+                                                                           "overflowBelow":  32.29,
+                                                                           "overflowAbove":  -716.14
+                                                                       },
+                                                                       {
+                                                                           "depth":  3,
+                                                                           "tag":  "div",
+                                                                           "id":  null,
+                                                                           "dataSlot":  null,
+                                                                           "ariaLabel":  null,
+                                                                           "text":  "v3.12.3 已下载，重启即可安装",
+                                                                           "owner":  "app",
+                                                                           "ownerMatch":  null,
+                                                                           "rect":  {
+                                                                                        "x":  16,
+                                                                                        "y":  716.14,
+                                                                                        "w":  300,
+                                                                                        "h":  38.14,
+                                                                                        "top":  716.14,
+                                                                                        "bottom":  754.29,
+                                                                                        "left":  16,
+                                                                                        "right":  316
+                                                                                    },
+                                                                           "painted":  {
+                                                                                           "top":  716.14,
+                                                                                           "bottom":  754.29
+                                                                                       },
+                                                                           "overflowBelow":  32.29,
+                                                                           "overflowAbove":  -716.14
+                                                                       },
+                                                                       {
+                                                                           "depth":  5,
+                                                                           "tag":  "div",
+                                                                           "id":  null,
+                                                                           "dataSlot":  null,
+                                                                           "ariaLabel":  null,
+                                                                           "text":  "v3.12.3 已下载，重启即可安装",
+                                                                           "owner":  "app",
+                                                                           "ownerMatch":  null,
+                                                                           "rect":  {
+                                                                                        "x":  16.57,
+                                                                                        "y":  716.71,
+                                                                                        "w":  298.86,
+                                                                                        "h":  37,
+                                                                                        "top":  716.71,
+                                                                                        "bottom":  753.71,
+                                                                                        "left":  16.57,
+                                                                                        "right":  315.43
+                                                                                    },
+                                                                           "painted":  {
+                                                                                           "top":  716.71,
+                                                                                           "bottom":  753.71
+                                                                                       },
+                                                                           "overflowBelow":  31.71,
+                                                                           "overflowAbove":  -716.71
+                                                                       },
+                                                                       {
+                                                                           "depth":  7,
+                                                                           "tag":  "div",
+                                                                           "id":  null,
+                                                                           "dataSlot":  null,
+                                                                           "ariaLabel":  null,
+                                                                           "text":  "v3.12.3 已下载，重启即可安装",
+                                                                           "owner":  "app",
+                                                                           "ownerMatch":  null,
+                                                                           "rect":  {
+                                                                                        "x":  42.57,
+                                                                                        "y":  724.71,
+                                                                                        "w":  254.86,
+                                                                                        "h":  21,
+                                                                                        "top":  724.71,
+                                                                                        "bottom":  745.71,
+                                                                                        "left":  42.57,
+                                                                                        "right":  297.43
+                                                                                    },
+                                                                           "painted":  {
+                                                                                           "top":  724.71,
+                                                                                           "bottom":  745.71
+                                                                                       },
+                                                                           "overflowBelow":  23.71,
+                                                                           "overflowAbove":  -724.71
+                                                                       },
+                                                                       {
+                                                                           "depth":  6,
+                                                                           "tag":  "div",
+                                                                           "id":  null,
+                                                                           "dataSlot":  null,
+                                                                           "ariaLabel":  null,
+                                                                           "text":  "v3.12.3 已下载，重启即可安装",
+                                                                           "owner":  "app",
+                                                                           "ownerMatch":  null,
+                                                                           "rect":  {
+                                                                                        "x":  42.57,
+                                                                                        "y":  724.71,
+                                                                                        "w":  254.86,
+                                                                                        "h":  21,
+                                                                                        "top":  724.71,
+                                                                                        "bottom":  745.71,
+                                                                                        "left":  42.57,
+                                                                                        "right":  297.43
+                                                                                    },
+                                                                           "painted":  {
+                                                                                           "top":  724.71,
+                                                                                           "bottom":  745.71
+                                                                                       },
+                                                                           "overflowBelow":  23.71,
+                                                                           "overflowAbove":  -724.71
+                                                                       },
+                                                                       {
+                                                                           "depth":  6,
+                                                                           "tag":  "span",
+                                                                           "id":  null,
+                                                                           "dataSlot":  null,
+                                                                           "ariaLabel":  null,
+                                                                           "text":  "",
+                                                                           "owner":  "app",
+                                                                           "ownerMatch":  null,
+                                                                           "rect":  {
+                                                                                        "x":  26.57,
+                                                                                        "y":  731.21,
+                                                                                        "w":  8,
+                                                                                        "h":  8,
+                                                                                        "top":  731.21,
+                                                                                        "bottom":  739.21,
+                                                                                        "left":  26.57,
+                                                                                        "right":  34.57
+                                                                                    },
+                                                                           "painted":  {
+                                                                                           "top":  731.21,
+                                                                                           "bottom":  739.21
+                                                                                       },
+                                                                           "overflowBelow":  17.21,
+                                                                           "overflowAbove":  -731.21
+                                                                       }
+                                                                   ]
+                                                },
+                        "pid":  8852,
+                        "raiseResult":  {
+                                            "found":  true,
+                                            "pid":  8852,
+                                            "hwnd":  196950,
+                                            "title":  "ZCode",
+                                            "iconic":  false,
+                                            "window":  [
+                                                           1079,
+                                                           407,
+                                                           1682,
+                                                           1262
+                                                       ],
+                                            "client":  [
+                                                           0,
+                                                           0,
+                                                           1682,
+                                                           1262
+                                                       ],
+                                            "raised":  true
+                                        },
+                        "rendererAfterRaise":  {
+                                                   "vis":  "visible",
+                                                   "focused":  true
+                                               },
+                        "rendererVisibleAfterRaise":  true,
+                        "frameAdvanceMs":  500
+                    },
     "notTested":  [
                       "launcher start path (launcher exited 3 and port 9444 is closed); reproduced with a direct ZCode.exe start. Launcher output: Refreshed the cached ZCode path in settings.json: C:\\Program Files\\ZCode\\ZCode.exe.\nZCode is already running without the debug port 9444, which is fixed at process start: quit ZCode completely (tray icon included) and start it again from the ZCode Tarkov shortcut. Nothing was changed."
                   ],
@@ -380,20 +1156,20 @@
 
                                   ],
                         "baseline":  {
-                                         "desktopLnkSha256":  "B9D68E6895C81FA17BCDFF3067F8793AF4B321616BA0DFF6248DAA1A70379464",
+                                         "desktopLnkSha256":  "9A1ED8BB1585719C32A7CCC7A8B343BAE611212FFACFEB48444F74CEC6B59A3C",
                                          "startMenuLnkSha256":  "E13DC609101A121E56EE910B39D89CDE07CFDB13A24697653EF65042AAED1950",
-                                         "startupVbsSha256":  "78C417313F25DD57780B72DF22EC7B323447B5ADE7C6639A121FD42862B858A4",
-                                         "service9223Pid":  33088,
-                                         "zcodePidCount":  14,
-                                         "localAppDataZctExists":  false
+                                         "startupVbsSha256":  "85520714C92DF60AB341BC56096A0F855D5CFF72DC59FD7E879D9379EA3377F9",
+                                         "service9223Pid":  32544,
+                                         "zcodePidCount":  13,
+                                         "localAppDataZctExists":  true
                                      },
                         "after":  {
-                                      "desktopLnkSha256":  "B9D68E6895C81FA17BCDFF3067F8793AF4B321616BA0DFF6248DAA1A70379464",
+                                      "desktopLnkSha256":  "9A1ED8BB1585719C32A7CCC7A8B343BAE611212FFACFEB48444F74CEC6B59A3C",
                                       "startMenuLnkSha256":  "E13DC609101A121E56EE910B39D89CDE07CFDB13A24697653EF65042AAED1950",
-                                      "startupVbsSha256":  "78C417313F25DD57780B72DF22EC7B323447B5ADE7C6639A121FD42862B858A4",
-                                      "service9223Pid":  33088,
-                                      "zcodePidCount":  14,
-                                      "localAppDataZctExists":  false
+                                      "startupVbsSha256":  "85520714C92DF60AB341BC56096A0F855D5CFF72DC59FD7E879D9379EA3377F9",
+                                      "service9223Pid":  32544,
+                                      "zcodePidCount":  13,
+                                      "localAppDataZctExists":  true
                                   }
                     },
     "uninstall":  {
@@ -402,30 +1178,30 @@
                                            "",
                                            "zcode-tarkov uninstall",
                                            "",
-                                           "[info]    settings           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\settings.json (version 0.1.0)",
+                                           "[info]    settings           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\settings.json (version 0.1.0)",
                                            "[info]    ports              - cdp 9444, api 9333 (from the command line, settings.json, or the defaults)",
-                                           "[removed] service            - dry run: would remove pid 25544 (api port 9333): \"C:\\Program Files\\nodejs\\node.exe\" C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\dist\\cli.js serve --port 9444 --api-port 9333",
-                                           "[absent]  leftover processes - no other node.exe runs C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\dist\\cli.js with a serve or watch token",
-                                           "[removed] autostart          - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs",
-                                           "[removed] shortcut           - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\links\\ZCode Tarkov.lnk (starts the zcode-tarkov launcher)",
-                                           "[absent]  shortcut           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\home\\Desktop\\ZCode Tarkov.lnk is not present",
-                                           "[absent]  shortcut           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\ZCode Tarkov.lnk is not present",
-                                           "[absent]  official flag      - shortcut C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\home\\Desktop\\ZCode.lnk is not present",
-                                           "[absent]  official flag      - shortcut C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\ZCode.lnk is not present",
+                                           "[removed] service            - dry run: would remove pid 19888 (api port 9333): \"C:\\Program Files\\nodejs\\node.exe\" C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\dist\\cli.js serve --port 9444 --api-port 9333",
+                                           "[absent]  leftover processes - no other node.exe runs C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\dist\\cli.js with a serve or watch token",
+                                           "[removed] autostart          - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs",
+                                           "[removed] shortcut           - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\links\\ZCode Tarkov.lnk (starts the zcode-tarkov launcher)",
+                                           "[absent]  shortcut           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\home\\Desktop\\ZCode Tarkov.lnk is not present",
+                                           "[absent]  shortcut           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\ZCode Tarkov.lnk is not present",
+                                           "[absent]  official flag      - shortcut C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\home\\Desktop\\ZCode.lnk is not present",
+                                           "[absent]  official flag      - shortcut C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\ZCode.lnk is not present",
                                            "[absent]  official handler   - HKCU:\\Software\\Classes\\zcode\\shell\\open\\command: no --remote-debugging-port token is present",
                                            "[absent]  official handler   - HKCU:\\Software\\Classes\\Directory\\shell\\ZCode.OpenInZCode\\command: no --remote-debugging-port token is present",
                                            "[absent]  official handler   - HKCU:\\Software\\Classes\\Drive\\shell\\ZCode.OpenInZCode\\command: no --remote-debugging-port token is present",
-                                           "[removed] install dir        - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app (16 file(s), recursing without following reparse points)",
-                                           "[kept]    data dir           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data\" -Recurse -Force",
+                                           "[removed] install dir        - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app (16 file(s), recursing without following reparse points)",
+                                           "[kept]    data dir           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data\" -Recurse -Force",
                                            "",
                                            "Removed:",
-                                           "  1. service - dry run: would remove pid 25544 (api port 9333): \"C:\\Program Files\\nodejs\\node.exe\" C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\dist\\cli.js serve --port 9444 --api-port 9333",
-                                           "  2. autostart - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs",
-                                           "  3. shortcut - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\links\\ZCode Tarkov.lnk (starts the zcode-tarkov launcher)",
-                                           "  4. install dir - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app (16 file(s), recursing without following reparse points)",
+                                           "  1. service - dry run: would remove pid 19888 (api port 9333): \"C:\\Program Files\\nodejs\\node.exe\" C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\dist\\cli.js serve --port 9444 --api-port 9333",
+                                           "  2. autostart - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs",
+                                           "  3. shortcut - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\links\\ZCode Tarkov.lnk (starts the zcode-tarkov launcher)",
+                                           "  4. install dir - dry run: would remove C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app (16 file(s), recursing without following reparse points)",
                                            "",
                                            "Kept (with the reason):",
-                                           "  1. data dir - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data\" -Recurse -Force",
+                                           "  1. data dir - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data\" -Recurse -Force",
                                            "",
                                            "Refused (needs attention): none",
                                            "",
@@ -434,12 +1210,12 @@
                                            "  2. ZCode\u0027s official shortcuts and its three HKCU handler values: at most the --remote-debugging-port token is removed, the entries themselves are never deleted",
                                            "  3. the marketplace plugin cache (%USERPROFILE%\\.zcode\\cli\\plugins): a plugin installed from the marketplace is removed in ZCode\u0027s own plugin UI, not by this script",
                                            "  4. every shortcut that is not ours: its file keeps its content (the rows above say which ones were skipped)",
-                                           "  5. the data directory C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data (kept unless -RemoveData is given)",
+                                           "  5. the data directory C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data (kept unless -RemoveData is given)",
                                            "",
                                            "Result: dry run, nothing was written. 4 item(s) would be removed, 1 kept, 0 refused.",
                                            "",
-                                           "Data directory (wallpaper and settings): C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data",
-                                           "  It was kept. To delete it too: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data\" -Recurse -Force",
+                                           "Data directory (wallpaper and settings): C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data",
+                                           "  It was kept. To delete it too: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data\" -Recurse -Force",
                                            ""
                                        ],
                       "exitCode":  0,
@@ -447,28 +1223,28 @@
                                      "",
                                      "zcode-tarkov uninstall",
                                      "",
-                                     "[info]    settings           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\settings.json (version 0.1.0)",
+                                     "[info]    settings           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\settings.json (version 0.1.0)",
                                      "[info]    ports              - cdp 9444, api 9333 (from the command line, settings.json, or the defaults)",
-                                     "[removed] service            - stopped pid 25544 (node.exe, \"C:\\Program Files\\nodejs\\node.exe\" C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\dist\\cli.js serve --port 9444 --api-port 9333)",
+                                     "[removed] service            - stopped pid 19888 (node.exe, \"C:\\Program Files\\nodejs\\node.exe\" C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\dist\\cli.js serve --port 9444 --api-port 9333)",
                                      "[info]    service            - api port 9333 is closed now",
-                                     "[absent]  leftover processes - no other node.exe runs C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\dist\\cli.js with a serve or watch token",
-                                     "[removed] autostart          - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs (content identifies it as the zcode-tarkov entry)",
-                                     "[removed] shortcut           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\links\\ZCode Tarkov.lnk (started C:\\Windows\\System32\\wscript.exe \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\launcher\\zcode-tarkov-launch.vbs\")",
-                                     "[absent]  shortcut           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\home\\Desktop\\ZCode Tarkov.lnk is not present",
-                                     "[absent]  shortcut           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\ZCode Tarkov.lnk is not present",
+                                     "[absent]  leftover processes - no other node.exe runs C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\dist\\cli.js with a serve or watch token",
+                                     "[removed] autostart          - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs (content identifies it as the zcode-tarkov entry)",
+                                     "[removed] shortcut           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\links\\ZCode Tarkov.lnk (started C:\\Windows\\System32\\wscript.exe \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\launcher\\zcode-tarkov-launch.vbs\")",
+                                     "[absent]  shortcut           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\home\\Desktop\\ZCode Tarkov.lnk is not present",
+                                     "[absent]  shortcut           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\ZCode Tarkov.lnk is not present",
                                      "[kept]    official entries   - skipped (-KeepOfficialShortcuts)",
-                                     "[removed] install dir        - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app (16 file(s) removed)",
-                                     "[kept]    data dir           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data\" -Recurse -Force",
+                                     "[removed] install dir        - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app (16 file(s) removed)",
+                                     "[kept]    data dir           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data\" -Recurse -Force",
                                      "",
                                      "Removed:",
-                                     "  1. service - stopped pid 25544 (node.exe, \"C:\\Program Files\\nodejs\\node.exe\" C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\dist\\cli.js serve --port 9444 --api-port 9333)",
-                                     "  2. autostart - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs (content identifies it as the zcode-tarkov entry)",
-                                     "  3. shortcut - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\links\\ZCode Tarkov.lnk (started C:\\Windows\\System32\\wscript.exe \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\launcher\\zcode-tarkov-launch.vbs\")",
-                                     "  4. install dir - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app (16 file(s) removed)",
+                                     "  1. service - stopped pid 19888 (node.exe, \"C:\\Program Files\\nodejs\\node.exe\" C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\dist\\cli.js serve --port 9444 --api-port 9333)",
+                                     "  2. autostart - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\appdata\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\zcode-beautify.vbs (content identifies it as the zcode-tarkov entry)",
+                                     "  3. shortcut - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\links\\ZCode Tarkov.lnk (started C:\\Windows\\System32\\wscript.exe \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\launcher\\zcode-tarkov-launch.vbs\")",
+                                     "  4. install dir - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app (16 file(s) removed)",
                                      "",
                                      "Kept (with the reason):",
                                      "  1. official entries - skipped (-KeepOfficialShortcuts)",
-                                     "  2. data dir - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data\" -Recurse -Force",
+                                     "  2. data dir - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data\" -Recurse -Force",
                                      "",
                                      "Refused (needs attention): none",
                                      "",
@@ -477,28 +1253,28 @@
                                      "  2. ZCode\u0027s official shortcuts and its three HKCU handler values: at most the --remote-debugging-port token is removed, the entries themselves are never deleted",
                                      "  3. the marketplace plugin cache (%USERPROFILE%\\.zcode\\cli\\plugins): a plugin installed from the marketplace is removed in ZCode\u0027s own plugin UI, not by this script",
                                      "  4. every shortcut that is not ours: its file keeps its content (the rows above say which ones were skipped)",
-                                     "  5. the data directory C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data (kept unless -RemoveData is given)",
+                                     "  5. the data directory C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data (kept unless -RemoveData is given)",
                                      "",
                                      "Result: uninstalled (4 item(s) removed, 2 kept, warnings: 0).",
                                      "",
-                                     "Data directory (wallpaper and settings): C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data",
-                                     "  It was kept. To delete it too: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data\" -Recurse -Force",
+                                     "Data directory (wallpaper and settings): C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data",
+                                     "  It was kept. To delete it too: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data\" -Recurse -Force",
                                      ""
                                  ],
                       "installedUninstallSha256":  "3D63F88C971ED80D353CD715C15D7A283C514CCBB6453CD9B246E7EC86CE745F",
                       "repoUninstallSha256":  "3D63F88C971ED80D353CD715C15D7A283C514CCBB6453CD9B246E7EC86CE745F",
                       "idempotentExitCode":  0,
-                      "idempotentJson":  "{\r\n    \"ok\":  true,\r\n    \"dryRun\":  false,\r\n    \"removed\":  [\r\n\r\n                ],\r\n    \"kept\":  [\r\n                 \"official entries - skipped (-KeepOfficialShortcuts)\",\r\n                 \"data dir - C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260916-085800\\\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \\\"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260916-085800\\\\data\\\" -Recurse -Force\"\r\n             ],\r\n    \"refused\":  [\r\n\r\n                ],\r\n    \"notTouched\":  [\r\n                       \"ZCode\\u0027s installation directory and ZCode\\u0027s own profile: this script only ever reads them\",\r\n                       \"ZCode\\u0027s official shortcuts and its three HKCU handler values: at most the --remote-debugging-port token is removed, the entries themselves are never deleted\",\r\n                       \"the marketplace plugin cache (%USERPROFILE%\\\\.zcode\\\\cli\\\\plugins): a plugin installed from the marketplace is removed in ZCode\\u0027s own plugin UI, not by this script\",\r\n                       \"every shortcut that is not ours: its file keeps its content (the rows above say which ones were skipped)\"\r\n                   ],\r\n    \"dataDir\":  \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260916-085800\\\\data\",\r\n    \"installDir\":  \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260916-085800\\\\app\",\r\n    \"warnings\":  [\r\n                     \"settings - C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260916-085800\\\\app\\\\settings.json is missing; continuing with the documented defaults and the sweeps\"\r\n                 ],\r\n    \"failures\":  [\r\n\r\n                 ]\r\n}",
+                      "idempotentJson":  "{\r\n    \"ok\":  true,\r\n    \"dryRun\":  false,\r\n    \"removed\":  [\r\n\r\n                ],\r\n    \"kept\":  [\r\n                 \"official entries - skipped (-KeepOfficialShortcuts)\",\r\n                 \"data dir - C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260917-102634\\\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \\\"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260917-102634\\\\data\\\" -Recurse -Force\"\r\n             ],\r\n    \"refused\":  [\r\n\r\n                ],\r\n    \"notTouched\":  [\r\n                       \"ZCode\\u0027s installation directory and ZCode\\u0027s own profile: this script only ever reads them\",\r\n                       \"ZCode\\u0027s official shortcuts and its three HKCU handler values: at most the --remote-debugging-port token is removed, the entries themselves are never deleted\",\r\n                       \"the marketplace plugin cache (%USERPROFILE%\\\\.zcode\\\\cli\\\\plugins): a plugin installed from the marketplace is removed in ZCode\\u0027s own plugin UI, not by this script\",\r\n                       \"every shortcut that is not ours: its file keeps its content (the rows above say which ones were skipped)\"\r\n                   ],\r\n    \"dataDir\":  \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260917-102634\\\\data\",\r\n    \"installDir\":  \"C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260917-102634\\\\app\",\r\n    \"warnings\":  [\r\n                     \"settings - C:\\\\Users\\\\<USER>\\\\AppData\\\\Local\\\\Temp\\\\zct-verify-20260917-102634\\\\app\\\\settings.json is missing; continuing with the documented defaults and the sweeps\"\r\n                 ],\r\n    \"failures\":  [\r\n\r\n                 ]\r\n}",
                       "keptOrInfoRows":  [
-                                             "[info]    settings           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\app\\settings.json (version 0.1.0)",
+                                             "[info]    settings           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\app\\settings.json (version 0.1.0)",
                                              "[info]    ports              - cdp 9444, api 9333 (from the command line, settings.json, or the defaults)",
                                              "[info]    service            - api port 9333 is closed now",
                                              "[kept]    official entries   - skipped (-KeepOfficialShortcuts)",
-                                             "[kept]    data dir           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260916-085800\\data\" -Recurse -Force"
+                                             "[kept]    data dir           - C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data is kept (it holds the wallpaper and the settings); delete it with: Remove-Item -LiteralPath \"C:\\Users\\<USER>\\AppData\\Local\\Temp\\zct-verify-20260917-102634\\data\" -Recurse -Force"
                                          ]
                   },
     "failures":  [
 
                  ],
-    "finalGitStatusPorcelain":  " M CHANGELOG.md\n M README.md\n M README.zh-CN.md\n M ROADMAP.md\n M THIRD_PARTY_NOTICES.md\n M dist/cli.js\n M dist/mcp/server.js\nRM docs/OWNER_PLAYTEST.md -\u003e docs/dev/OWNER_PLAYTEST.md\nRM docs/zcode-dom-notes.md -\u003e docs/dev/zcode-dom-notes.md\n M package-lock.json\n M package.json\n M scripts/package.mjs\n M skill-pack/README.md\n M skill-pack/SKILL.md\n M src/cli.ts\n M src/core/autostart.ts\n M src/core/cdp.ts\n M src/core/inject.ts\n M src/panel/panelScript.ts\n M src/themes/tarkov.ts\n?? docs/dev/README.md\n?? docs/dev/install-layout.md\n?? docs/images/\n?? install.ps1\n?? launcher/\n?? repair.ps1\n?? tests/autostart.test.mjs\n?? tests/manifest.test.mjs\n?? tools/\n?? uninstall.ps1"
+    "finalGitStatusPorcelain":  " M CHANGELOG.md\n M dist/cli.js\n M dist/mcp/server.js\n M docs/dev/zcode-dom-notes.md\n M docs/images/clean-install-evidence.json\n M docs/images/homepage-tarkov.png\n M docs/images/panel-theme-selector.png\n M src/core/banner.ts\n M src/panel/panelScript.ts\n M tests/banner.test.mjs\n M tests/panel.test.mjs\n M tools/verify-clean-install.mjs\n M tools/verify-clean-install.ps1\n?? docs/images/layout-after-1366.png\n?? docs/images/layout-after-1440.png\n?? docs/images/layout-after-960.png\n?? docs/images/layout-before-1366.png\n?? docs/images/layout-before-1440.png\n?? docs/images/layout-before-960.png\n?? docs/images/layout/\n?? tools/measure-layout.mjs"
 }

@@ -1,0 +1,1488 @@
+{
+  "tool": "measure-layout.mjs",
+  "version": 1,
+  "sweep": true,
+  "label": "sweep",
+  "mode": "tarkov",
+  "timestamp": "2026-09-17T10:32:08.473Z",
+  "port": 9471,
+  "requestedViewport": {
+    "w": 1366,
+    "h": 768
+  },
+  "measuredViewport": {
+    "w": 1366,
+    "h": 768
+  },
+  "resize": {
+    "method": "SetWindowPos",
+    "real": true,
+    "pid": 17220,
+    "window": {
+      "found": true,
+      "pid": 17220,
+      "hwnd": 263038,
+      "title": "ZCode",
+      "iconic": false,
+      "window": [
+        1079,
+        407,
+        1682,
+        1262
+      ],
+      "client": [
+        0,
+        0,
+        1682,
+        1262
+      ]
+    },
+    "raisedWindow": true,
+    "rendererVisibleAfterRaise": true,
+    "before": {
+      "w": 962,
+      "h": 722,
+      "rw": 962.2857666015625,
+      "rh": 722.2857666015625,
+      "dpr": 1.75,
+      "ow": 962,
+      "oh": 722
+    },
+    "attempts": [
+      {
+        "targetW": 2391,
+        "targetH": 1344,
+        "measured": {
+          "w": 1367,
+          "h": 769,
+          "rw": 1367.4285888671875,
+          "rh": 769.1428833007812,
+          "dpr": 1.75,
+          "ow": 1367,
+          "oh": 769
+        },
+        "applied": true,
+        "osClient": [
+          0,
+          0,
+          2391,
+          1344
+        ],
+        "osClientChanged": true
+      },
+      {
+        "targetW": 2388,
+        "targetH": 1342,
+        "measured": {
+          "w": 1365,
+          "h": 767,
+          "rw": 1365.1429443359375,
+          "rh": 767.4285888671875,
+          "dpr": 1.75,
+          "ow": 1366,
+          "oh": 768
+        },
+        "applied": true,
+        "osClient": [
+          0,
+          0,
+          2388,
+          1342
+        ],
+        "osClientChanged": true
+      },
+      {
+        "targetW": 2389,
+        "targetH": 1343,
+        "measured": {
+          "w": 1366,
+          "h": 768,
+          "rw": 1366.2857666015625,
+          "rh": 768.0000610351562,
+          "dpr": 1.75,
+          "ow": 1366,
+          "oh": 769
+        },
+        "applied": true,
+        "osClient": [
+          0,
+          0,
+          2389,
+          1343
+        ],
+        "osClientChanged": true
+      }
+    ],
+    "after": {
+      "w": 1366,
+      "h": 768,
+      "rw": 1366.2857666015625,
+      "rh": 768.0000610351562,
+      "dpr": 1.75,
+      "ow": 1366,
+      "oh": 769
+    },
+    "osClient": [
+      0,
+      0,
+      2389,
+      1343
+    ],
+    "osClientChanged": true,
+    "clientChanged": true,
+    "matched": true,
+    "residualCss": {
+      "w": 0.29,
+      "h": 0
+    }
+  },
+  "resizeAttempts": [
+    {
+      "method": "SetWindowPos",
+      "real": true,
+      "pid": 17220,
+      "window": {
+        "found": true,
+        "pid": 17220,
+        "hwnd": 263038,
+        "title": "ZCode",
+        "iconic": false,
+        "window": [
+          1079,
+          407,
+          1682,
+          1262
+        ],
+        "client": [
+          0,
+          0,
+          1682,
+          1262
+        ]
+      },
+      "raisedWindow": true,
+      "rendererVisibleAfterRaise": true,
+      "before": {
+        "w": 962,
+        "h": 722,
+        "rw": 962.2857666015625,
+        "rh": 722.2857666015625,
+        "dpr": 1.75,
+        "ow": 962,
+        "oh": 722
+      },
+      "attempts": [
+        {
+          "targetW": 2391,
+          "targetH": 1344,
+          "measured": {
+            "w": 1367,
+            "h": 769,
+            "rw": 1367.4285888671875,
+            "rh": 769.1428833007812,
+            "dpr": 1.75,
+            "ow": 1367,
+            "oh": 769
+          },
+          "applied": true,
+          "osClient": [
+            0,
+            0,
+            2391,
+            1344
+          ],
+          "osClientChanged": true
+        },
+        {
+          "targetW": 2388,
+          "targetH": 1342,
+          "measured": {
+            "w": 1365,
+            "h": 767,
+            "rw": 1365.1429443359375,
+            "rh": 767.4285888671875,
+            "dpr": 1.75,
+            "ow": 1366,
+            "oh": 768
+          },
+          "applied": true,
+          "osClient": [
+            0,
+            0,
+            2388,
+            1342
+          ],
+          "osClientChanged": true
+        },
+        {
+          "targetW": 2389,
+          "targetH": 1343,
+          "measured": {
+            "w": 1366,
+            "h": 768,
+            "rw": 1366.2857666015625,
+            "rh": 768.0000610351562,
+            "dpr": 1.75,
+            "ow": 1366,
+            "oh": 769
+          },
+          "applied": true,
+          "osClient": [
+            0,
+            0,
+            2389,
+            1343
+          ],
+          "osClientChanged": true
+        }
+      ],
+      "after": {
+        "w": 1366,
+        "h": 768,
+        "rw": 1366.2857666015625,
+        "rh": 768.0000610351562,
+        "dpr": 1.75,
+        "ow": 1366,
+        "oh": 769
+      },
+      "osClient": [
+        0,
+        0,
+        2389,
+        1343
+      ],
+      "osClientChanged": true,
+      "clientChanged": true,
+      "matched": true,
+      "residualCss": {
+        "w": 0.29,
+        "h": 0
+      }
+    }
+  ],
+  "emulationActive": false,
+  "pageTarget": {
+    "id": "6B8A7D16B2F434970A8620D01D66A726",
+    "title": "ZCode",
+    "url": "file:///C:/Program%20Files/ZCode/resources/app.asar/out/renderer/index.html?restoreSession=true&supportsSettings=true&initialWorkspacePath=C%3A%5CUsers%5C%3CUSER%3E%5C.zcode%5Cworkspace%5Cdefault&initialWorkspacePurpose=conversation&zcodeLaunchMarks=%7B%22createdAt%22%3A1789641112061.474%2C%22mainStart%22%3A1789641112586%2C%22appReady%22%3A1789641112674%2C%22loadUrl%22%3A1789641113163%7D"
+  },
+  "steps": [
+    {
+      "step": "apply-mode",
+      "cli": "F:\\WSL\\workspace\\zcode-tarkov\\dist\\cli.js",
+      "mode": "tarkov",
+      "exitCode": 0,
+      "stdout": "Theme mode \"tarkov\" applied to 1 window(s).",
+      "stderr": ""
+    },
+    {
+      "step": "mode-settled",
+      "wanted": "tarkov",
+      "observed": {
+        "attr": "1",
+        "banner": true
+      }
+    }
+  ],
+  "modeSettleTimedOut": false,
+  "observations": {
+    "viewport": {
+      "innerWidth": 1366,
+      "innerHeight": 768,
+      "devicePixelRatio": 1.75,
+      "outerWidth": 1366,
+      "outerHeight": 769,
+      "screen": {
+        "w": 2195,
+        "h": 1235,
+        "availW": 2195,
+        "availH": 1187
+      }
+    },
+    "url": "file:///C:/Program%20Files/ZCode/resources/app.asar/out/renderer/index.html?restoreSession=true&supportsSettings=true&initialWorkspacePath=C%3A%5CUsers%5C%3CUSER%3E%5C.zcode%5Cworkspace%5Cdefault&initialWorkspacePurpose=conversation&zcodeLaunchMarks=%7B%22createdAt%22%3A1789641112061.474%2C%22mainStart%22%3A1789641112586%2C%22appReady%22%3A1789641112674%2C%22loadUrl%22%3A1789641113163%7D",
+    "title": "ZCode",
+    "htmlClasses": "dark theme-zai-dark platform-windows-desktop",
+    "bodyClasses": "zcode-startup-ready",
+    "bannerAttribute": "1",
+    "bannerHeightVar": "56px",
+    "html": {
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1366.29,
+        "h": 768,
+        "top": 0,
+        "bottom": 768,
+        "left": 0,
+        "right": 1366.29
+      },
+      "clientWidth": 1366,
+      "clientHeight": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768,
+      "offsetHeight": 768,
+      "styles": {
+        "height": "768px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "visible",
+        "overflow-x": "visible",
+        "overflow-y": "visible",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      }
+    },
+    "body": {
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1366.29,
+        "h": 768,
+        "top": 0,
+        "bottom": 768,
+        "left": 0,
+        "right": 1366.29
+      },
+      "clientWidth": 1366,
+      "clientHeight": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768,
+      "offsetHeight": 768,
+      "styles": {
+        "height": "768px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "flow-root",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      }
+    },
+    "root": {
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 1366.29,
+        "h": 712,
+        "top": 56,
+        "bottom": 768,
+        "left": 0,
+        "right": 1366.29
+      },
+      "clientHeight": 712,
+      "scrollHeight": 712,
+      "styles": {
+        "height": "712px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "56px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      },
+      "offsetParent": "body"
+    },
+    "banner": {
+      "present": true,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1366.29,
+        "h": 56,
+        "top": 0,
+        "bottom": 56,
+        "left": 0,
+        "right": 1366.29
+      },
+      "styles": {
+        "height": "56px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "fixed",
+        "top": "0px",
+        "bottom": "712px",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "flex",
+        "flex": "0 1 auto",
+        "z-index": "2147483000"
+      },
+      "isBodyFirstChild": true,
+      "childCount": 2
+    },
+    "appShell": {
+      "selector": "div#root > div",
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 1366.29,
+        "h": 712,
+        "top": 56,
+        "bottom": 768,
+        "left": 0,
+        "right": 1366.29
+      },
+      "styles": {
+        "height": "712px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "visible",
+        "overflow-x": "visible",
+        "overflow-y": "visible",
+        "box-sizing": "border-box",
+        "position": "relative",
+        "top": "0px",
+        "bottom": "0px",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      },
+      "isRoot": false
+    },
+    "appShellCount": 50,
+    "sidebar": {
+      "selector": "div#root > div > div > div > div > div > div#sidebar",
+      "chain": [
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div#sidebar"
+      ],
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 264,
+        "h": 712,
+        "top": 56,
+        "bottom": 768,
+        "left": 0,
+        "right": 264
+      },
+      "styles": {
+        "height": "712px",
+        "min-height": "auto",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 0 auto",
+        "z-index": "auto"
+      },
+      "insideRoot": true
+    },
+    "sidebarById": {
+      "rect": {
+        "x": 0,
+        "y": 56,
+        "w": 264,
+        "h": 712,
+        "top": 56,
+        "bottom": 768,
+        "left": 0,
+        "right": 264
+      },
+      "styles": {
+        "height": "712px",
+        "min-height": "auto",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 0 auto",
+        "z-index": "auto"
+      },
+      "sameAsSidebar": true
+    },
+    "account": {
+      "text": "连接使用",
+      "selector": "div > div#sidebar > aside > aside > div > div > footer > div > button#radix-_r_12_[data-slot=\"dropdown-menu-trigger\"][aria-label=\"连接使用\"] > div > div > span",
+      "rect": {
+        "x": 56,
+        "y": 725.5,
+        "w": 56,
+        "h": 21,
+        "top": 725.5,
+        "bottom": 746.5,
+        "left": 56,
+        "right": 112
+      },
+      "styles": {
+        "height": "21px",
+        "min-height": "auto",
+        "max-height": "none",
+        "overflow": "hidden",
+        "overflow-x": "hidden",
+        "overflow-y": "hidden",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      },
+      "ancestors": [
+        {
+          "selector": "div",
+          "rect": {
+            "x": 56,
+            "y": 725.5,
+            "w": 104,
+            "h": 21,
+            "top": 725.5,
+            "bottom": 746.5,
+            "left": 56,
+            "right": 160
+          }
+        },
+        {
+          "selector": "div",
+          "rect": {
+            "x": 56,
+            "y": 725.5,
+            "w": 104,
+            "h": 21,
+            "top": 725.5,
+            "bottom": 746.5,
+            "left": 56,
+            "right": 160
+          }
+        },
+        {
+          "selector": "button#radix-_r_12_[data-slot=\"dropdown-menu-trigger\"][aria-label=\"连接使用\"]",
+          "rect": {
+            "x": 16,
+            "y": 720,
+            "w": 154,
+            "h": 32,
+            "top": 720,
+            "bottom": 752,
+            "left": 16,
+            "right": 170
+          }
+        },
+        {
+          "selector": "div",
+          "rect": {
+            "x": 16,
+            "y": 720,
+            "w": 232,
+            "h": 32,
+            "top": 720,
+            "bottom": 752,
+            "left": 16,
+            "right": 248
+          }
+        }
+      ],
+      "insideRoot": true
+    },
+    "editor": {
+      "selector": "div",
+      "rect": {
+        "x": 484.79,
+        "y": 477.5,
+        "w": 646.86,
+        "h": 40,
+        "top": 477.5,
+        "bottom": 517.5,
+        "left": 484.79,
+        "right": 1131.64
+      },
+      "styles": {
+        "height": "40px",
+        "min-height": "40px",
+        "max-height": "160px",
+        "overflow": "auto",
+        "overflow-x": "auto",
+        "overflow-y": "auto",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 1 auto",
+        "z-index": "auto"
+      }
+    },
+    "composer": {
+      "selector": "main > div > div > div > div > div > div > div > div > div > div > div",
+      "rect": {
+        "x": 472.21,
+        "y": 424.93,
+        "w": 672,
+        "h": 145.14,
+        "top": 424.93,
+        "bottom": 570.07,
+        "left": 472.21,
+        "right": 1144.21
+      },
+      "styles": {
+        "height": "145.143px",
+        "min-height": "0px",
+        "max-height": "none",
+        "overflow": "visible",
+        "overflow-x": "visible",
+        "overflow-y": "visible",
+        "box-sizing": "border-box",
+        "position": "static",
+        "top": "auto",
+        "bottom": "auto",
+        "margin-top": "0px",
+        "margin-bottom": "0px",
+        "padding-top": "0px",
+        "padding-bottom": "0px",
+        "display": "block",
+        "flex": "0 0 auto",
+        "z-index": "20"
+      },
+      "foundBy": "class-match",
+      "chain": [
+        "div",
+        "div",
+        "div",
+        "div",
+        "form",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div"
+      ],
+      "insideRoot": true
+    },
+    "clippedTotal": 6,
+    "clippedRawTotal": 6,
+    "clippedOursTotal": 0,
+    "clippedAppTotal": 6,
+    "clipped": [
+      {
+        "depth": 4,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "v3.12.3 已下载，重启即可安装",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 16,
+          "y": 761.86,
+          "w": 300,
+          "h": 38.14,
+          "top": 761.86,
+          "bottom": 800,
+          "left": 16,
+          "right": 316
+        },
+        "painted": {
+          "top": 761.86,
+          "bottom": 800
+        },
+        "overflowBelow": 32,
+        "overflowAbove": -761.86
+      },
+      {
+        "depth": 3,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "v3.12.3 已下载，重启即可安装",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 16,
+          "y": 761.86,
+          "w": 300,
+          "h": 38.14,
+          "top": 761.86,
+          "bottom": 800,
+          "left": 16,
+          "right": 316
+        },
+        "painted": {
+          "top": 761.86,
+          "bottom": 800
+        },
+        "overflowBelow": 32,
+        "overflowAbove": -761.86
+      },
+      {
+        "depth": 5,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "v3.12.3 已下载，重启即可安装",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 16.57,
+          "y": 762.43,
+          "w": 298.86,
+          "h": 37,
+          "top": 762.43,
+          "bottom": 799.43,
+          "left": 16.57,
+          "right": 315.43
+        },
+        "painted": {
+          "top": 762.43,
+          "bottom": 799.43
+        },
+        "overflowBelow": 31.43,
+        "overflowAbove": -762.43
+      },
+      {
+        "depth": 7,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "v3.12.3 已下载，重启即可安装",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 42.57,
+          "y": 770.43,
+          "w": 254.86,
+          "h": 21,
+          "top": 770.43,
+          "bottom": 791.43,
+          "left": 42.57,
+          "right": 297.43
+        },
+        "painted": {
+          "top": 770.43,
+          "bottom": 791.43
+        },
+        "overflowBelow": 23.43,
+        "overflowAbove": -770.43
+      },
+      {
+        "depth": 6,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "v3.12.3 已下载，重启即可安装",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 42.57,
+          "y": 770.43,
+          "w": 254.86,
+          "h": 21,
+          "top": 770.43,
+          "bottom": 791.43,
+          "left": 42.57,
+          "right": 297.43
+        },
+        "painted": {
+          "top": 770.43,
+          "bottom": 791.43
+        },
+        "overflowBelow": 23.43,
+        "overflowAbove": -770.43
+      },
+      {
+        "depth": 6,
+        "tag": "span",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 26.57,
+          "y": 776.93,
+          "w": 8,
+          "h": 8,
+          "top": 776.93,
+          "bottom": 784.93,
+          "left": 26.57,
+          "right": 34.57
+        },
+        "painted": {
+          "top": 776.93,
+          "bottom": 784.93
+        },
+        "overflowBelow": 16.93,
+        "overflowAbove": -776.93
+      }
+    ],
+    "clippedOurs": [],
+    "clippedApp": [
+      {
+        "depth": 4,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "v3.12.3 已下载，重启即可安装",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 16,
+          "y": 761.86,
+          "w": 300,
+          "h": 38.14,
+          "top": 761.86,
+          "bottom": 800,
+          "left": 16,
+          "right": 316
+        },
+        "painted": {
+          "top": 761.86,
+          "bottom": 800
+        },
+        "overflowBelow": 32,
+        "overflowAbove": -761.86
+      },
+      {
+        "depth": 3,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "v3.12.3 已下载，重启即可安装",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 16,
+          "y": 761.86,
+          "w": 300,
+          "h": 38.14,
+          "top": 761.86,
+          "bottom": 800,
+          "left": 16,
+          "right": 316
+        },
+        "painted": {
+          "top": 761.86,
+          "bottom": 800
+        },
+        "overflowBelow": 32,
+        "overflowAbove": -761.86
+      },
+      {
+        "depth": 5,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "v3.12.3 已下载，重启即可安装",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 16.57,
+          "y": 762.43,
+          "w": 298.86,
+          "h": 37,
+          "top": 762.43,
+          "bottom": 799.43,
+          "left": 16.57,
+          "right": 315.43
+        },
+        "painted": {
+          "top": 762.43,
+          "bottom": 799.43
+        },
+        "overflowBelow": 31.43,
+        "overflowAbove": -762.43
+      },
+      {
+        "depth": 7,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "v3.12.3 已下载，重启即可安装",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 42.57,
+          "y": 770.43,
+          "w": 254.86,
+          "h": 21,
+          "top": 770.43,
+          "bottom": 791.43,
+          "left": 42.57,
+          "right": 297.43
+        },
+        "painted": {
+          "top": 770.43,
+          "bottom": 791.43
+        },
+        "overflowBelow": 23.43,
+        "overflowAbove": -770.43
+      },
+      {
+        "depth": 6,
+        "tag": "div",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "v3.12.3 已下载，重启即可安装",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 42.57,
+          "y": 770.43,
+          "w": 254.86,
+          "h": 21,
+          "top": 770.43,
+          "bottom": 791.43,
+          "left": 42.57,
+          "right": 297.43
+        },
+        "painted": {
+          "top": 770.43,
+          "bottom": 791.43
+        },
+        "overflowBelow": 23.43,
+        "overflowAbove": -770.43
+      },
+      {
+        "depth": 6,
+        "tag": "span",
+        "id": null,
+        "dataSlot": null,
+        "ariaLabel": null,
+        "text": "",
+        "owner": "app",
+        "ownerMatch": null,
+        "rect": {
+          "x": 26.57,
+          "y": 776.93,
+          "w": 8,
+          "h": 8,
+          "top": 776.93,
+          "bottom": 784.93,
+          "left": 26.57,
+          "right": 34.57
+        },
+        "painted": {
+          "top": 776.93,
+          "bottom": 784.93
+        },
+        "overflowBelow": 16.93,
+        "overflowAbove": -776.93
+      }
+    ],
+    "overflow": {
+      "windowInnerHeight": 768,
+      "windowInnerWidth": 1366,
+      "scrollingElementTag": "html",
+      "scrollingElementScrollHeight": 768,
+      "scrollingElementClientHeight": 768,
+      "htmlOverflows": false,
+      "bodyOverflows": false,
+      "rootOverflows": false,
+      "documentScrollTop": 0
+    },
+    "bannerCount": 1,
+    "panel": {
+      "present": false
+    },
+    "measuredViewport": {
+      "w": 1366,
+      "h": 768
+    }
+  },
+  "checks": [
+    {
+      "id": "banner.present",
+      "expected": "exactly one banner in Tarkov mode",
+      "observed": true,
+      "pass": true
+    },
+    {
+      "id": "banner.inside-viewport",
+      "expected": "top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        0,
+        56,
+        768
+      ],
+      "pass": true
+    },
+    {
+      "id": "banner.attribute-set",
+      "expected": "html[data-zct-banner=\"1\"]",
+      "observed": "1",
+      "pass": true
+    },
+    {
+      "id": "banner.height-variable",
+      "expected": "--zcode-tarkov-banner-height resolves to the band height",
+      "observed": [
+        "56px",
+        56
+      ],
+      "pass": true
+    },
+    {
+      "id": "app-shell.below-banner",
+      "expected": "app shell top >= banner bottom (no coverage)",
+      "observed": [
+        56,
+        56
+      ],
+      "pass": true
+    },
+    {
+      "id": "root.bottom-at-viewport",
+      "expected": "|#root.bottom - innerHeight| <= 0.5",
+      "observed": [
+        768,
+        768
+      ],
+      "pass": true
+    },
+    {
+      "id": "composer.fully-visible",
+      "expected": "composer top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        424.93,
+        570.07,
+        768
+      ],
+      "pass": true
+    },
+    {
+      "id": "sidebar.fully-visible",
+      "expected": "sidebar top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        56,
+        768,
+        768
+      ],
+      "pass": true
+    },
+    {
+      "id": "account.fully-visible",
+      "expected": "account label top >= 0 and bottom <= innerHeight + 0.5",
+      "observed": [
+        725.5,
+        746.5,
+        768
+      ],
+      "pass": true
+    },
+    {
+      "id": "no-clipped-elements",
+      "expected": "no painted element reaches outside the viewport",
+      "observed": {
+        "paintedOutside": 6,
+        "rawRectHits": 6,
+        "ours": 0,
+        "app": 6,
+        "sample": [
+          {
+            "depth": 4,
+            "tag": "div",
+            "id": null,
+            "dataSlot": null,
+            "ariaLabel": null,
+            "text": "v3.12.3 已下载，重启即可安装",
+            "owner": "app",
+            "ownerMatch": null,
+            "rect": {
+              "x": 16,
+              "y": 761.86,
+              "w": 300,
+              "h": 38.14,
+              "top": 761.86,
+              "bottom": 800,
+              "left": 16,
+              "right": 316
+            },
+            "painted": {
+              "top": 761.86,
+              "bottom": 800
+            },
+            "overflowBelow": 32,
+            "overflowAbove": -761.86
+          },
+          {
+            "depth": 3,
+            "tag": "div",
+            "id": null,
+            "dataSlot": null,
+            "ariaLabel": null,
+            "text": "v3.12.3 已下载，重启即可安装",
+            "owner": "app",
+            "ownerMatch": null,
+            "rect": {
+              "x": 16,
+              "y": 761.86,
+              "w": 300,
+              "h": 38.14,
+              "top": 761.86,
+              "bottom": 800,
+              "left": 16,
+              "right": 316
+            },
+            "painted": {
+              "top": 761.86,
+              "bottom": 800
+            },
+            "overflowBelow": 32,
+            "overflowAbove": -761.86
+          },
+          {
+            "depth": 5,
+            "tag": "div",
+            "id": null,
+            "dataSlot": null,
+            "ariaLabel": null,
+            "text": "v3.12.3 已下载，重启即可安装",
+            "owner": "app",
+            "ownerMatch": null,
+            "rect": {
+              "x": 16.57,
+              "y": 762.43,
+              "w": 298.86,
+              "h": 37,
+              "top": 762.43,
+              "bottom": 799.43,
+              "left": 16.57,
+              "right": 315.43
+            },
+            "painted": {
+              "top": 762.43,
+              "bottom": 799.43
+            },
+            "overflowBelow": 31.43,
+            "overflowAbove": -762.43
+          },
+          {
+            "depth": 7,
+            "tag": "div",
+            "id": null,
+            "dataSlot": null,
+            "ariaLabel": null,
+            "text": "v3.12.3 已下载，重启即可安装",
+            "owner": "app",
+            "ownerMatch": null,
+            "rect": {
+              "x": 42.57,
+              "y": 770.43,
+              "w": 254.86,
+              "h": 21,
+              "top": 770.43,
+              "bottom": 791.43,
+              "left": 42.57,
+              "right": 297.43
+            },
+            "painted": {
+              "top": 770.43,
+              "bottom": 791.43
+            },
+            "overflowBelow": 23.43,
+            "overflowAbove": -770.43
+          },
+          {
+            "depth": 6,
+            "tag": "div",
+            "id": null,
+            "dataSlot": null,
+            "ariaLabel": null,
+            "text": "v3.12.3 已下载，重启即可安装",
+            "owner": "app",
+            "ownerMatch": null,
+            "rect": {
+              "x": 42.57,
+              "y": 770.43,
+              "w": 254.86,
+              "h": 21,
+              "top": 770.43,
+              "bottom": 791.43,
+              "left": 42.57,
+              "right": 297.43
+            },
+            "painted": {
+              "top": 770.43,
+              "bottom": 791.43
+            },
+            "overflowBelow": 23.43,
+            "overflowAbove": -770.43
+          }
+        ]
+      },
+      "pass": true,
+      "detail": {
+        "transientPaintedOutside": {
+          "classification": "transient-app-side",
+          "settleMs": 10000,
+          "cleared": true,
+          "first": {
+            "paintedOutside": 6,
+            "rawRectHits": 6,
+            "ours": 0,
+            "app": 6,
+            "entries": [
+              {
+                "depth": 4,
+                "tag": "div",
+                "id": null,
+                "dataSlot": null,
+                "ariaLabel": null,
+                "text": "v3.12.3 已下载，重启即可安装",
+                "owner": "app",
+                "ownerMatch": null,
+                "rect": {
+                  "x": 16,
+                  "y": 761.86,
+                  "w": 300,
+                  "h": 38.14,
+                  "top": 761.86,
+                  "bottom": 800,
+                  "left": 16,
+                  "right": 316
+                },
+                "painted": {
+                  "top": 761.86,
+                  "bottom": 800
+                },
+                "overflowBelow": 32,
+                "overflowAbove": -761.86
+              },
+              {
+                "depth": 3,
+                "tag": "div",
+                "id": null,
+                "dataSlot": null,
+                "ariaLabel": null,
+                "text": "v3.12.3 已下载，重启即可安装",
+                "owner": "app",
+                "ownerMatch": null,
+                "rect": {
+                  "x": 16,
+                  "y": 761.86,
+                  "w": 300,
+                  "h": 38.14,
+                  "top": 761.86,
+                  "bottom": 800,
+                  "left": 16,
+                  "right": 316
+                },
+                "painted": {
+                  "top": 761.86,
+                  "bottom": 800
+                },
+                "overflowBelow": 32,
+                "overflowAbove": -761.86
+              },
+              {
+                "depth": 5,
+                "tag": "div",
+                "id": null,
+                "dataSlot": null,
+                "ariaLabel": null,
+                "text": "v3.12.3 已下载，重启即可安装",
+                "owner": "app",
+                "ownerMatch": null,
+                "rect": {
+                  "x": 16.57,
+                  "y": 762.43,
+                  "w": 298.86,
+                  "h": 37,
+                  "top": 762.43,
+                  "bottom": 799.43,
+                  "left": 16.57,
+                  "right": 315.43
+                },
+                "painted": {
+                  "top": 762.43,
+                  "bottom": 799.43
+                },
+                "overflowBelow": 31.43,
+                "overflowAbove": -762.43
+              },
+              {
+                "depth": 7,
+                "tag": "div",
+                "id": null,
+                "dataSlot": null,
+                "ariaLabel": null,
+                "text": "v3.12.3 已下载，重启即可安装",
+                "owner": "app",
+                "ownerMatch": null,
+                "rect": {
+                  "x": 42.57,
+                  "y": 770.43,
+                  "w": 254.86,
+                  "h": 21,
+                  "top": 770.43,
+                  "bottom": 791.43,
+                  "left": 42.57,
+                  "right": 297.43
+                },
+                "painted": {
+                  "top": 770.43,
+                  "bottom": 791.43
+                },
+                "overflowBelow": 23.43,
+                "overflowAbove": -770.43
+              },
+              {
+                "depth": 6,
+                "tag": "div",
+                "id": null,
+                "dataSlot": null,
+                "ariaLabel": null,
+                "text": "v3.12.3 已下载，重启即可安装",
+                "owner": "app",
+                "ownerMatch": null,
+                "rect": {
+                  "x": 42.57,
+                  "y": 770.43,
+                  "w": 254.86,
+                  "h": 21,
+                  "top": 770.43,
+                  "bottom": 791.43,
+                  "left": 42.57,
+                  "right": 297.43
+                },
+                "painted": {
+                  "top": 770.43,
+                  "bottom": 791.43
+                },
+                "overflowBelow": 23.43,
+                "overflowAbove": -770.43
+              },
+              {
+                "depth": 6,
+                "tag": "span",
+                "id": null,
+                "dataSlot": null,
+                "ariaLabel": null,
+                "text": "",
+                "owner": "app",
+                "ownerMatch": null,
+                "rect": {
+                  "x": 26.57,
+                  "y": 776.93,
+                  "w": 8,
+                  "h": 8,
+                  "top": 776.93,
+                  "bottom": 784.93,
+                  "left": 26.57,
+                  "right": 34.57
+                },
+                "painted": {
+                  "top": 776.93,
+                  "bottom": 784.93
+                },
+                "overflowBelow": 16.93,
+                "overflowAbove": -776.93
+              }
+            ]
+          },
+          "confirm": {
+            "paintedOutside": 0,
+            "rawRectHits": 0,
+            "ours": 0,
+            "app": 0,
+            "entries": []
+          }
+        }
+      }
+    },
+    {
+      "id": "no-vertical-overflow",
+      "expected": "html.scrollHeight <= html.clientHeight + 1",
+      "observed": [
+        768,
+        768
+      ],
+      "pass": true
+    },
+    {
+      "id": "banner.present-exactly-once",
+      "expected": "exactly 1 banner element in the document",
+      "observed": 1,
+      "pass": true
+    }
+  ],
+  "summary": {
+    "checks": 12,
+    "checksPassed": 12,
+    "clipped": 6
+  },
+  "screenshot": {
+    "file": "F:\\WSL\\workspace\\zcode-tarkov\\docs\\images\\layout\\sweep-tarkov-1366x768.png",
+    "bytes": 266295
+  }
+}
