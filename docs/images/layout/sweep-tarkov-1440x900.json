@@ -4,7 +4,7 @@
   "sweep": true,
   "label": "sweep",
   "mode": "tarkov",
-  "timestamp": "2026-09-17T10:32:14.124Z",
+  "timestamp": "2026-09-17T10:39:34.959Z",
   "port": 9471,
   "requestedViewport": {
     "w": 1440,
@@ -17,16 +17,16 @@
   "resize": {
     "method": "SetWindowPos",
     "real": true,
-    "pid": 17220,
+    "pid": 21360,
     "window": {
       "found": true,
-      "pid": 17220,
-      "hwnd": 263038,
+      "pid": 21360,
+      "hwnd": 263522,
       "title": "ZCode",
       "iconic": false,
       "window": [
-        2009,
-        331,
+        1080,
+        408,
         2389,
         1343
       ],
@@ -58,7 +58,7 @@
           "rw": 1441.1429443359375,
           "rh": 901.1428833007812,
           "dpr": 1.75,
-          "ow": 1440,
+          "ow": 1441,
           "oh": 901
         },
         "applied": true,
@@ -140,16 +140,16 @@
     {
       "method": "SetWindowPos",
       "real": true,
-      "pid": 17220,
+      "pid": 21360,
       "window": {
         "found": true,
-        "pid": 17220,
-        "hwnd": 263038,
+        "pid": 21360,
+        "hwnd": 263522,
         "title": "ZCode",
         "iconic": false,
         "window": [
-          2009,
-          331,
+          1080,
+          408,
           2389,
           1343
         ],
@@ -181,7 +181,7 @@
             "rw": 1441.1429443359375,
             "rh": 901.1428833007812,
             "dpr": 1.75,
-            "ow": 1440,
+            "ow": 1441,
             "oh": 901
           },
           "applied": true,
@@ -262,9 +262,9 @@
   ],
   "emulationActive": false,
   "pageTarget": {
-    "id": "6B8A7D16B2F434970A8620D01D66A726",
-    "title": "ZCode",
-    "url": "file:///C:/Program%20Files/ZCode/resources/app.asar/out/renderer/index.html?restoreSession=true&supportsSettings=true&initialWorkspacePath=C%3A%5CUsers%5C%3CUSER%3E%5C.zcode%5Cworkspace%5Cdefault&initialWorkspacePurpose=conversation&zcodeLaunchMarks=%7B%22createdAt%22%3A1789641112061.474%2C%22mainStart%22%3A1789641112586%2C%22appReady%22%3A1789641112674%2C%22loadUrl%22%3A1789641113163%7D"
+    "id": "E568D3951C0156A8D9EFE7D568C57886",
+    "title": "",
+    "url": "file:///C:/Program%20Files/ZCode/resources/app.asar/out/renderer/index.html?restoreSession=true&supportsSettings=true&initialWorkspacePath=C%3A%5CUsers%5C%3CUSER%3E%5C.zcode%5Cworkspace%5Cdefault&initialWorkspacePurpose=conversation&zcodeLaunchMarks=%7B%22createdAt%22%3A1789641563454.931%2C%22mainStart%22%3A1789641564001%2C%22appReady%22%3A1789641564097%2C%22loadUrl%22%3A1789641564537%7D"
   },
   "steps": [
     {
@@ -299,7 +299,7 @@
         "availH": 1187
       }
     },
-    "url": "file:///C:/Program%20Files/ZCode/resources/app.asar/out/renderer/index.html?restoreSession=true&supportsSettings=true&initialWorkspacePath=C%3A%5CUsers%5C%3CUSER%3E%5C.zcode%5Cworkspace%5Cdefault&initialWorkspacePurpose=conversation&zcodeLaunchMarks=%7B%22createdAt%22%3A1789641112061.474%2C%22mainStart%22%3A1789641112586%2C%22appReady%22%3A1789641112674%2C%22loadUrl%22%3A1789641113163%7D",
+    "url": "file:///C:/Program%20Files/ZCode/resources/app.asar/out/renderer/index.html?restoreSession=true&supportsSettings=true&initialWorkspacePath=C%3A%5CUsers%5C%3CUSER%3E%5C.zcode%5Cworkspace%5Cdefault&initialWorkspacePurpose=conversation&zcodeLaunchMarks=%7B%22createdAt%22%3A1789641563454.931%2C%22mainStart%22%3A1789641564001%2C%22appReady%22%3A1789641564097%2C%22loadUrl%22%3A1789641564537%7D",
     "title": "ZCode",
     "htmlClasses": "dark theme-zai-dark platform-windows-desktop",
     "bodyClasses": "zcode-startup-ready",
@@ -478,7 +478,7 @@
       },
       "isRoot": false
     },
-    "appShellCount": 50,
+    "appShellCount": 53,
     "sidebar": {
       "selector": "div#root > div > div > div > div > div > div#sidebar",
       "chain": [
@@ -590,12 +590,12 @@
           "rect": {
             "x": 56,
             "y": 857.5,
-            "w": 104,
+            "w": 108,
             "h": 21,
             "top": 857.5,
             "bottom": 878.5,
             "left": 56,
-            "right": 160
+            "right": 164
           }
         },
         {
@@ -603,12 +603,12 @@
           "rect": {
             "x": 56,
             "y": 857.5,
-            "w": 104,
+            "w": 108,
             "h": 21,
             "top": 857.5,
             "bottom": 878.5,
             "left": 56,
-            "right": 160
+            "right": 164
           }
         },
         {
@@ -616,12 +616,12 @@
           "rect": {
             "x": 16,
             "y": 852,
-            "w": 154,
+            "w": 158,
             "h": 32,
             "top": 852,
             "bottom": 884,
             "left": 16,
-            "right": 170
+            "right": 174
           }
         },
         {
@@ -629,12 +629,12 @@
           "rect": {
             "x": 16,
             "y": 852,
-            "w": 232,
+            "w": 236,
             "h": 32,
             "top": 852,
             "bottom": 884,
             "left": 16,
-            "right": 248
+            "right": 252
           }
         }
       ],
@@ -643,14 +643,14 @@
     "editor": {
       "selector": "div",
       "rect": {
-        "x": 521.64,
+        "x": 521.14,
         "y": 543.5,
         "w": 646.86,
         "h": 40,
         "top": 543.5,
         "bottom": 583.5,
-        "left": 521.64,
-        "right": 1168.5
+        "left": 521.14,
+        "right": 1168
       },
       "styles": {
         "height": "40px",
@@ -673,16 +673,16 @@
       }
     },
     "composer": {
-      "selector": "main > div > div > div > div > div > div > div > div > div > div > div",
+      "selector": "div > div > div > div > div > div > div > div > div > div > div > div",
       "rect": {
-        "x": 509.07,
+        "x": 508.57,
         "y": 490.93,
         "w": 672,
         "h": 145.14,
         "top": 490.93,
         "bottom": 636.07,
-        "left": 509.07,
-        "right": 1181.07
+        "left": 508.57,
+        "right": 1180.57
       },
       "styles": {
         "height": "145.143px",
@@ -860,6 +860,6 @@
   },
   "screenshot": {
     "file": "F:\\WSL\\workspace\\zcode-tarkov\\docs\\images\\layout\\sweep-tarkov-1440x900.png",
-    "bytes": 275338
+    "bytes": 267826
   }
 }
