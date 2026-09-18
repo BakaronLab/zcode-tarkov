@@ -72,6 +72,37 @@ test("no HKLM path and no elevation mechanism can appear", () => {
   assert.ok(PROD.includes("machine-wide entry needs administrator rights; not modified"));
 });
 
+// The textual assertions above cannot prove the machine-scope entry is
+// unreachable from a write: a future change could keep every string above and
+// still fall through to a Save. This counts the writes instead. There is
+// exactly one shortcut write and exactly one registry write in the whole
+// script, and the machine-scope branch returns before reaching either, so
+// "machine-wide entries are never written" becomes a property of the generated
+// script rather than of its prose — and it is checked by `npm test`, on every
+// platform, rather than only by the Windows-only PowerShell harness.
+function occurrences(text, needle) {
+  return text.split(needle).length - 1;
+}
+
+test("the script can only ever write one shortcut and one registry value", () => {
+  assert.equal(occurrences(PROD, "$sc.Save()"), 1, "a second Save would be a second write path");
+  assert.equal(occurrences(PROD, ".SetValue("), 1, "a second SetValue would be a second write path");
+});
+
+test("the machine-scope branch cannot reach either write", () => {
+  const branch = section(PROD, "if ($scope -eq 'machine')", "continue");
+  assert.ok(
+    branch.includes("machine-wide entry needs administrator rights; not modified"),
+    "a machine-wide entry must be reported as failed"
+  );
+  assert.equal(branch.includes("Save"), false, "the machine-scope branch must not save anything");
+
+  // And the branch is genuinely reached before the shortcut write.
+  const machineAt = PROD.indexOf("if ($scope -eq 'machine')");
+  const saveAt = PROD.indexOf("$sc.Save()");
+  assert.ok(machineAt >= 0 && saveAt > machineAt, "the machine check must come before the only shortcut write");
+});
+
 test("the shortcut identity gate proves the target's file name is exactly ZCode.exe", () => {
   assert.ok(
     PROD.includes("[System.IO.Path]::GetFileName($target) -ne 'ZCode.exe'"),
