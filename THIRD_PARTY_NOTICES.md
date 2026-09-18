@@ -61,6 +61,7 @@ Used essentially unchanged, and not re-implemented:
 ## 2. dsh-theme-tarkov — the visual language and the feature set
 
 - **Upstream:** https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov
+- **Original author:** [@ZHIGENGNIAO258](https://github.com/ZHIGENGNIAO258)
 - **Copyright:** Copyright (c) 2026 dsh-theme-tarkov contributors
 - **License:** MIT — reproduced in [`licenses/dsh-theme-tarkov.LICENSE`](licenses/dsh-theme-tarkov.LICENSE)
 - **Pinned revision referenced:** `be1123c1c158e58ba0aa1c311c22d793b09f9c0d` (v0.2.0,
@@ -69,25 +70,112 @@ Used essentially unchanged, and not re-implemented:
 This upstream targets a **different application** (DeepSeek Harness / Cordis).
 It was consulted as a **read-only reference** for both the visual language and,
 from v0.2, the product feature set. It is *not* vendored, nested, or merged into
-this repository, and no DSH-specific host, Cordis, or runtime code was copied.
+this repository, and no DSH-specific host, Cordis, or runtime code was copied —
+no `schemastery` schema, no `Settings > Plugins` registration, no `dsh` manifest
+block, no Cordis patch file.
 
-### What was adapted from dsh-theme-tarkov
+**That is a statement about the host/runtime layer only.** The beta notice's
+copy and its presentation values are reproduced from the upstream, and §2.1
+below says exactly where. Everything else is a re-implementation of the
+upstream's *ideas*; §2.1 is the disclosed exception.
+
+### 2.1 Material reproduced directly from the upstream
+
+The following is **not** an independent re-implementation. It is reproduced from
+dsh-theme-tarkov, and the upstream's MIT copyright and permission notice is
+retained in [`licenses/dsh-theme-tarkov.LICENSE`](licenses/dsh-theme-tarkov.LICENSE)
+as that licence requires.
+
+#### The beta notice text — copied
+
+`src/themes/tarkov.ts:59-60` (`TARKOV_GREETING`, re-exported as
+`DEFAULT_GREETING`), from the upstream `src/index.js:62-63` (identical strings at
+`lib/client.js:17`):
+
+| | Upstream | `zcode-tarkov` |
+|---|---|---|
+| line 1 | `注意！这是“Deepseek Harness”的Beta测试版本。` | `注意！这是“ZCode”的Beta测试版本。` |
+| line 2 | `Beta测试版本不代表本产品的最终质量。感谢您的理解和支持，祝你好运！` | *byte-for-byte identical* |
+
+Line 2 is identical, including its punctuation and the missing space after
+"Beta". Line 1 differs **only** in the product name, which was changed to name
+ZCode. These strings were copied, not written here; the module comment at
+`src/themes/tarkov.ts:51-53` states this, and `tests/greeting.test.mjs` asserts
+the values. The built client embeds them as well (`dist/client.js`).
+
+#### The beta notice's presentation values — reproduced
+
+`src/themes/tarkov.ts:284-358`, from the upstream banner stylesheet at
+`lib/client.js:570-576`. The rules are re-expressed against ZCode's own greeting
+font-size variable so the notice scales with the host, but the values they
+resolve to are the upstream's:
+
+| Upstream declaration (`lib/client.js:570-576`) | In `zcode-tarkov` |
+|---|---|
+| `display:flex; align-items:center; gap:16px` | identical |
+| `width:min(94%,720px); margin:18px auto 10px` | identical |
+| `padding:15px 22px 15px 16px; border-radius:6px` | identical |
+| `box-sizing:border-box; text-align:left` | identical |
+| `background:rgba(224,121,48,var(--tarkov-banner-opacity,0.55))` | same structure; variable renamed `--zct-banner-opacity`, default raised to `0.62` |
+| icon `42×36`, `background:#1c1207`, `color:#e07930`, `font:800 24px/1` | ×1.45 / ×1.25 / ×0.8 of the greeting font variable — 43.5×37.5 and 24px at its 30px default |
+| `clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%)` | identical |
+| line 1 `#111111`, `18px`, `700`, `line-height:1.5`, `letter-spacing:1.5px` | same values, via ×0.6 of the greeting font variable |
+| line 2 `#111111`, `15px`, `400`, `line-height:1.5`, `letter-spacing:1.5px` | same values, via ×0.5 of the greeting font variable |
+| `gap:5px` between the two lines | same value, via ×0.1667 of the greeting font variable |
+
+The v0.1 markup taxonomy and behaviour follow the upstream's too: the
+`icon` / `text` / `line1` / `line2` four-part structure in the same nesting
+order, the `!` badge glyph, the same hexagon `clip-path`, `role="status"`, a
+stylesheet appended to `<head>`, a `MutationObserver` on `documentElement`, and
+"write only if the text changed" guarded updates. The real differences are the
+anchor, the debounce, the polling cap, the z-index and the band styling; the
+class prefix was renamed `tarkov-` → `zct-`. This is a renamed adaptation, not a
+block copy, but it is closer to the upstream than "design ideas" suggests.
+
+This repository's own engineering notes already record the reproduction in
+detail — see [`docs/dev/zcode-dom-notes.md`](docs/dev/zcode-dom-notes.md), which
+tabulates the reference declarations and marks most of them "unchanged". §2.1
+exists so that the public attribution matches that internal record.
+
+#### Everything else — independently written
+
+No upstream code, comment, artwork, audio, phrase list or screenshot was found
+verbatim in `src/`. Measured by longest common substring, the longest run of
+characters shared between the upstream JavaScript and this project's `src/` is
+**71 characters, and it is a decorative dash divider inside a comment**
+(`--- background music ---…`). Excluding padding-heavy runs like that divider,
+the longest shared run is **64 characters, and it is the generic DOM idiom**
+`(document.head || document.documentElement).appendChild(`. Nothing resembling a
+copied function, declaration block or comment body survives that measure — no
+common run reaches even the length of a trivial helper.
+
+The one place where the *shape* rather than the text follows the upstream is the
+phrase parser in `src/status/pool.ts`, which applies the same rule set as the
+upstream's `parseStatusTexts` (split on newlines, trim, drop blanks and `#`
+comments, cap length, dedupe first-wins, cap count) with different limits and
+extra hardening. That is a re-implementation of an adopted specification, not
+copied code.
+
+### 2.2 What was adapted from dsh-theme-tarkov
 
 - The **color palette direction**: a warm orange accent, deep brown surfaces
   (`#1c1207`, `rgba(26,18,10,…)`, `rgba(30,20,10,…)`), warm text `#e8d9c8`,
   highlights `#ffd7ae` / `#ffb27a`, muted `#8b877c`. This project's own accent is
   `#ee8a3a` (see `src/themes/palette.ts`); the DSH value is `#e07930`.
-- The **beta warning banner design ideas**: a translucent accent band, a dark
-  hexagonal `!` badge, two lines of text, a `MutationObserver`-driven
-  re-attachment, guarded DOM writes, and fail-soft behavior.
+- The **beta warning banner**: a translucent accent band, a dark hexagonal `!`
+  badge, two lines of text, a `MutationObserver`-driven re-attachment, guarded
+  DOM writes, and fail-soft behavior. Unlike the other items in this list, the
+  banner's wording and presentation values are reproduced rather than adapted —
+  see §2.1.
 - **The v0.2 feature set**, at the level of *what the product does*: background
   music with a dock, event sound effects with per-event switches and volume, a
   draggable desktop pet with a random voice, a randomized running-status line
   drawn from an editable text pool, a data directory of `music/` `sounds/`
   `voice/` `pet/` with a `prefs.json` beside it, and a settings panel that drives
   all of it. The **abilities** were taken as the specification; each one is
-  re-implemented against ZCode's own runtime, and none of the DSH implementation
-  is reused. Notable differences in the result:
+  re-implemented against ZCode's own runtime, and — with the single exception
+  recorded in §2.1, the beta notice — none of the DSH implementation is reused.
+  Notable differences in the result:
   - This project detects run state from ZCode's renderer DOM and passes it
     through its own debounced state machine; DSH uses its host's notification
     API, which ZCode does not expose.
@@ -97,15 +185,20 @@ this repository, and no DSH-specific host, Cordis, or runtime code was copied.
   - This project has five sound events (`start`, `approval`, `done`, `error`,
     `tool`) where DSH has three.
 
-### What was deliberately NOT taken
+### 2.3 What was deliberately NOT taken
 
 - **Selectors.** DSH anchors its banner on `[class*="_heroWorkspaceRow"]`, which
   is a DSH/Cordis class and does not exist in ZCode. `zcode-tarkov` uses its own
   anchors, derived from the shipped ZCode renderer — see
   [`docs/dev/zcode-dom-notes.md`](docs/dev/zcode-dom-notes.md) and
   [`docs/dev/zcode-runtime-signals.md`](docs/dev/zcode-runtime-signals.md).
-- **Banner text.** The DSH banner text is not reused; `zcode-tarkov` ships its
-  own wording.
+- **Banner text — correction.** Earlier revisions of this file stated that the
+  DSH banner text "is not reused". **That was wrong**, and it is corrected by
+  §2.1: line 2 is byte-for-byte identical and line 1 differs only in the product
+  name. The upstream text is MIT-licensed and used with its notice retained, so
+  the copy itself is permitted; what was inaccurate was the disclosure, not the
+  use. The v0.1 English banner copy in `src/core/banner.ts` *is* this project's
+  own wording, but it is the v0.1 band, not the greeting that ships today.
 - **Host, locale and settings APIs.** DSH's `schemastery` config schema, its
   `Settings > Plugins` registration, its `dsh` manifest block and its Cordis
   patch file have no equivalent in ZCode and were not translated. This project's
@@ -144,7 +237,16 @@ this repository, and no DSH-specific host, Cordis, or runtime code was copied.
 | Upstream | License | Relationship | Code copied? | Assets copied? |
 |---|---|---|---|---|
 | [zcode-beautify](https://github.com/Logocceai/zcode-beautify) | MIT | Code base (derivative work) | Yes, with attribution | No |
-| [dsh-theme-tarkov](https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov) | MIT | Visual reference only | No | No |
+| [dsh-theme-tarkov](https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov) | MIT | Visual and product-design reference | **Partly** — the beta notice's text and presentation values, reproduced; see §2.1 | No |
+
+In one sentence each, for the two questions a reader is most likely to be asking:
+
+- `No DSH-specific runtime code was incorporated verbatim.` No Cordis, DSH host,
+  `schemastery`, manifest or settings-API code is present in this repository.
+- The beta notice's **text** was incorporated verbatim (line 2) and
+  near-verbatim (line 1, product name changed), together with its presentation
+  values. Its upstream MIT copyright and permission notice is retained in
+  [`licenses/dsh-theme-tarkov.LICENSE`](licenses/dsh-theme-tarkov.LICENSE).
 
 ---
 

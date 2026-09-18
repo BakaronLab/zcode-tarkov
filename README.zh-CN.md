@@ -285,10 +285,45 @@ npm run package        # 生成发布 zip
 
 ## 致谢
 
-建立在两个 MIT 许可的上游项目之上。完整文本和精确的素材边界见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
+建立在两个 MIT 许可的上游项目之上。完整的许可证文本、以及分别从两者取用了什么的精确边界，见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
 
-- **[zcode-beautify](https://github.com/Logocceai/zcode-beautify)** —— 代码基础：CDP 注入、壁纸与 Monet 取色架构、恢复/服务框架，以及启动器。本仓库是它的衍生作品，并保留了 git 历史。
-- **[dsh-theme-tarkov](https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov)** —— 视觉语言，以及从 v0.2 起的整套产品功能：暖色 Tarkov 调色板、测试版警示带的设计，以及背景音乐悬浮条 / 事件音效 / 桌宠 / 随机状态文案这些概念。仅作只读参考；没有复制任何 DSH 代码，而且**它附带的任何源自游戏的媒体都没有在这里再分发**。
+### zcode-beautify
+
+- **仓库：** https://github.com/Logocceai/zcode-beautify
+- **角色：** 代码基础 —— CDP 注入层、常驻服务与设置架构、壁纸层，以及 Monet 动态取色。
+- **许可证：** MIT。
+
+本仓库是它的衍生作品，并保留了 git 历史；原始 remote 保留为 `upstream-beautify`。这些文件基本原样沿用，而非重新实现，具体清单在 THIRD_PARTY_NOTICES 中逐条列出。
+
+### dsh-theme-tarkov
+
+- **仓库：** https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov
+- **原作者：** [@ZHIGENGNIAO258](https://github.com/ZHIGENGNIAO258)
+- **角色：** 视觉与产品设计上的主要参考项目。
+- **许可证：** MIT，参考的提交为 `be1123c1c158e58ba0aa1c311c22d793b09f9c0d`。
+
+本项目在视觉语言和产品设计上大量参考了 [`ZHIGENGNIAO258/dsh-theme-tarkov`](https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov)，原作者为 [@ZHIGENGNIAO258](https://github.com/ZHIGENGNIAO258)。
+
+Beta 警告横幅、BGM 浮窗、事件提示音、桌宠交互、随机语音、随机状态文案和统一设置体验等能力，均受到该项目的直接启发：
+
+- Tarkov 调色板方向
+- 测试版警示横幅
+- BGM 浮窗概念
+- 事件音效概念
+- 可拖动桌宠 / 伙伴交互
+- 随机语音播放
+- 随机状态文案
+- 统一主题设置体验
+
+在 ZCode 中，这些能力针对 ZCode 自身 runtime 重新实现，不依赖 DSH 的 Cordis / host API —— 本仓库里没有 Cordis、DSH host 或 `schemastery` 代码。**其中有一处例外，我们明确写出来而不是含糊带过：** 测试版提示条的文案及其视觉呈现数值是直接沿用上游横幅的，不是重新创作的。[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) 精确标明了具体文件和片段。**上游附带的任何源自游戏的媒体，都没有在这里再分发。**
+
+## 特别致谢（Acknowledgements）
+
+首先感谢 [@ZHIGENGNIAO258](https://github.com/ZHIGENGNIAO258)。他们的 [`dsh-theme-tarkov`](https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov) 先于本项目确定了 Tarkov 界面应该长什么样、应该怎么用 —— 暖色配色、测试版警示带、浮窗、桌宠。这里的大部分产品想法都来自他们；本仓库自己的贡献只是把它们移植到另一个宿主上。
+
+同样感谢 [`zcode-beautify`](https://github.com/Logocceai/zcode-beautify) 的作者们：本项目的 CDP 注入、壁纸和 Monet 层直接建立在他们之上。
+
+也感谢 ZCode 的维护者，做出了一个可以在不修改安装目录任何文件的前提下、就这样接管渲染进程的客户端。
 
 ## 许可证
 

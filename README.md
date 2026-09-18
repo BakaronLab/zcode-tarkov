@@ -382,18 +382,70 @@ with its own profile and its own data root, never the running user's:
 
 ## Credits
 
-Built on two MIT-licensed upstreams. The full text and the precise asset boundary
-are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+Built on two MIT-licensed upstreams. The full license texts and the exact
+boundary of what was taken from each are in
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
-- **[zcode-beautify](https://github.com/Logocceai/zcode-beautify)** — the code
-  base: CDP injection, the wallpaper and Monet architecture, the recovery/service
-  foundation, and the launcher. This repository is a derivative work with its git
-  history retained.
-- **[dsh-theme-tarkov](https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov)** —
-  the visual language and, from v0.2, the product feature set: the warm Tarkov
-  palette, the beta-band design, and the BGM dock / event SFX / pet /
-  randomized-status concepts. Consulted as a read-only reference; no DSH code was
-  copied, and **none of the game-derived media it ships is redistributed here.**
+### zcode-beautify
+
+- **Repository:** https://github.com/Logocceai/zcode-beautify
+- **Role:** the code base — the CDP injection foundation, the persistent service
+  and settings architecture, the wallpaper layer, and Monet dynamic color.
+- **License:** MIT.
+
+This repository is a derivative work with its git history retained; the original
+remote is kept as `upstream-beautify`. Those files are used essentially
+unchanged rather than re-implemented, and the notices list them one by one.
+
+### dsh-theme-tarkov
+
+- **Repository:** https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov
+- **Original author:** [@ZHIGENGNIAO258](https://github.com/ZHIGENGNIAO258)
+- **Role:** the major visual and product-design reference.
+- **License:** MIT, referenced at commit
+  `be1123c1c158e58ba0aa1c311c22d793b09f9c0d`.
+
+`zcode-tarkov` was heavily inspired by
+[`ZHIGENGNIAO258/dsh-theme-tarkov`](https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov),
+created by [`@ZHIGENGNIAO258`](https://github.com/ZHIGENGNIAO258).
+
+Its Tarkov visual language and several product concepts directly informed this
+project's:
+
+- Tarkov palette direction
+- Beta warning banner
+- BGM dock concept
+- event SFX concept
+- draggable companion / pet interaction
+- random voice playback
+- randomized status text
+- unified theme settings experience
+
+These features were rebuilt for ZCode's runtime rather than copied as
+DSH-specific host/runtime integrations — there is no Cordis, DSH host or
+`schemastery` code here. **One exception is disclosed rather than glossed:** the
+beta notice's own wording and its presentation values are reproduced from the
+upstream banner rather than re-invented.
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) names the exact files and
+segments. **None of the game-derived media the upstream ships is redistributed
+here.**
+
+## Acknowledgements
+
+Thanks first to [`@ZHIGENGNIAO258`](https://github.com/ZHIGENGNIAO258). Their
+[`dsh-theme-tarkov`](https://github.com/ZHIGENGNIAO258/dsh-theme-tarkov) worked
+out what a Tarkov interface should look like and how it should behave — the warm
+palette, the beta band, the dock, the companion — before this project existed.
+Most of the product ideas here are theirs; this repository's own contribution is
+porting them to a different host.
+
+Thanks equally to the
+[`zcode-beautify`](https://github.com/Logocceai/zcode-beautify) authors, whose
+CDP injection, wallpaper and Monet layers this project is built directly on top
+of.
+
+And thanks to the ZCode maintainers, for shipping a client whose renderer can be
+reached this way without patching a single file of the installation.
 
 ## License
 
