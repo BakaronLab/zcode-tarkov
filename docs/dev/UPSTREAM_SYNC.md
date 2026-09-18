@@ -133,7 +133,14 @@ never edits this ledger and never makes the change itself.
   anywhere in the generated script, and `tests/launcherScript.test.mjs` pins
   the refusal and the absence of `HKLM`.
 - **The automatic repair triggers more narrowly.** This project repairs only
-  when ZCode is running **and** the CDP endpoint does not answer, decided in
-  `src/core/startupRepair.ts` before any location is scanned. A closed app and a
-  healthy endpoint both produce zero launcher writes, and only "running with the
-  port closed" reaches the repair — pinned by `tests/startupRepair.test.mjs`.
+  after a probe has found ZCode running **and** the CDP endpoint not answering,
+  decided in `src/core/startupRepair.ts` before any location is scanned, so a
+  probe that sees a healthy endpoint — or no running ZCode — never reaches a
+  write. `tests/startupRepair.test.mjs` pins that by call count: a `probeCdp`
+  that returns true never invokes the repair function at all. The probes and the
+  write are **not** atomic, though, and there is no final recheck between them,
+  so a transition inside that sub-second window is not noticed and the repair
+  would then append the flag to entries that genuinely lack it — the same
+  idempotent, user-scope write it makes when the symptom is still present. Treat
+  "a healthy ZCode is never repaired" as a property of the probe result, not as
+  a guarantee about the instant of the write.

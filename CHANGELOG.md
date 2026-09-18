@@ -90,8 +90,12 @@ verbs. The guarded decision lives in `src/core/startupRepair.ts` and is shared b
 `src/mcp/server.ts`, which calls it after the theme-restore retries are
 exhausted (the normal post-update path), and by `src/core/server.ts`, once per
 process, on the first poll that sees a running ZCode with no CDP endpoint. A
-healthy endpoint produces zero launcher writes, a shut-down app is not mistaken
-for a lost flag, and the function never throws. The repair cannot take effect
+probe that finds a healthy endpoint — or no running ZCode — never reaches a
+write, so a shut-down app is not mistaken for a lost flag, and the function never
+throws. The probes and the write are not atomic: there is no final recheck
+between them, so a transition inside that sub-second window is not noticed, and
+the repair would then make the same idempotent user-scope write it makes when the
+symptom is still present. The repair cannot take effect
 in place — ZCode reads the flag only at startup — so repairing now makes the
 *next* start healthy. It is needed because ZCode's updater rebuilds the Start
 Menu shortcut without the flag, and the app re-registers its own `zcode://`

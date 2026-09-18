@@ -48,11 +48,20 @@ function errorMessage(err: unknown): string {
  * The order matters and is pinned by tests:
  *   1. non-Windows platforms are skipped without probing anything;
  *   2. a reachable CDP endpoint means the flag is present, so the launchers are
- *      never touched (a healthy ZCode must produce zero writes);
+ *      not touched;
  *   3. a closed port while ZCode is not running is just a shut-down app, not a
  *      lost flag;
  *   4. only then is the repair run, and a report with no `updated` fix is a
  *      no-op rather than a repair.
+ *
+ * The probes gate the write, but the sequence is not atomic and there is no
+ * final recheck between the last probe and the repair: a transition inside that
+ * sub-second window (the port opening as ZCode finishes booting, or the app
+ * exiting) is not noticed. What the repair then does is unchanged — it appends
+ * the missing flag to user-scope entries that genuinely lack it, the same
+ * idempotent write it makes when the symptom is still present — so the window
+ * costs nothing, but "a healthy ZCode is never repaired" is a property of the
+ * probe result rather than a guarantee about the instant of the write.
  */
 export async function repairLaunchersIfZcodeLostTheFlag(
   deps: StartupRepairDeps
