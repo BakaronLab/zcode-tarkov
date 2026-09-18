@@ -4,6 +4,46 @@
 history of the upstream project this repository was forked from,
 [zcode-beautify](https://github.com/Logocceai/zcode-beautify) (MIT).
 
+## v0.2.3
+
+Documentation accuracy. An adversarial review of v0.2.2 checked the promises the
+repair section makes against what the code actually does, and two of them did not
+hold. No behaviour changed in this release — `dist/` differs only by the version
+string — but the README is what ships inside the plugin zip, so the correction is
+published rather than left on `main`.
+
+**`uninstall.ps1` does not reverse every change the repair makes.** The repair
+section said "every change it makes is reversed by running `uninstall.ps1`". It
+is not: `uninstall.ps1` strips the flag from exactly two shortcuts — `ZCode.lnk`
+in the user's own Desktop and Start Menu — and from the three `HKCU` handler
+values, and only when the argument names the configured port or the historical
+default `9222`. The repair, meanwhile, scans those directories *recursively* and
+now includes the pinned taskbar, so it can legitimately fix a taskbar pin or a
+renamed shortcut that the uninstaller will never revisit. Both READMEs and
+`INSTALL-FOR-AI.md` now say what is reversed, what is not, and how to remove the
+argument by hand. `v0.2.1` is what made this worth correcting: adding the pinned
+taskbar to the repair widened the gap between the promise and the code.
+
+**A mixed custom-port configuration fails silently.** If a shortcut already
+carries `--remote-debugging-port` naming a *different* port than the plugin is
+configured to use, the repair treats that entry as already correct — it never
+rewrites a port the user chose — and reports `no-op` without logging anything.
+When ZCode was started that way the theme cannot reach it, and nothing said so.
+This is now documented in both READMEs as a known limitation with the fix (make
+the two ports agree, or drop the argument); the code is deliberately unchanged,
+because rewriting a user-selected port is worse than reporting the state.
+
+**The machine-wide refusal is now pinned structurally.** `npm test` previously
+checked that behaviour only through the reason string, the absence of `HKLM` and
+the absence of any elevation mechanism — all of which a regression can satisfy
+while still writing a machine-wide entry, since the only thing that would have
+caught it was the Windows-only PowerShell harness. The generated script is now
+asserted to contain exactly one shortcut write and one registry write, and the
+machine-scope branch is sliced from its test to its `continue` and asserted to
+contain no write at all. Verified by mutation: adding a machine-wide save while
+leaving every prose assertion intact fails both new guards. `npm test` is 331
+tests.
+
 ## v0.2.2
 
 A hardening release for the automatic launcher repair introduced in v0.2.1. An

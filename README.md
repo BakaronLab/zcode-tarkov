@@ -5,7 +5,7 @@ a beta-warning band, background music with a dock, event sound effects, a dragga
 desktop companion, and a randomized running-status line, all driven from a settings
 centre inside the app.
 
-[![version](https://img.shields.io/badge/version-0.2.2-informational)](#)
+[![version](https://img.shields.io/badge/version-0.2.3-informational)](#)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![ZCode](https://img.shields.io/badge/ZCode-3.12.x-informational)](#zcode-updates--compatibility)
 [![bundled game assets](https://img.shields.io/badge/bundled%20game%20assets-none-success)](#disclaimer)
@@ -367,9 +367,24 @@ handler values under `HKCU`. Machine-wide entries — the shared desktop and the
 shared Start Menu — are reported but never written, because they would need
 administrator rights; `HKLM` is never touched, and no file of ZCode's is ever
 touched. It also never touches the official shortcuts' identity, only the
-arguments they pass. Every change it makes is reversed by running
-`uninstall.ps1` — and the startup repair performs the same writes by itself when
+arguments they pass. The startup repair performs the same writes by itself when
 it finds ZCode running without the port.
+
+`uninstall.ps1` reverses the flag on the two official shortcuts it knows about —
+`ZCode.lnk` in your own Desktop and in your Start Menu — and on the three `HKCU`
+handler values, and only when the argument names the configured port or the
+historical default `9222`. It does **not** reach every entry the repair may have
+fixed: a pinned taskbar shortcut, or one you renamed or nested somewhere else,
+keeps the argument after uninstalling. To revert one of those, open its
+properties and delete `--remote-debugging-port=<port>` from the target.
+
+One case the repair will not fix for you: if a shortcut already carries
+`--remote-debugging-port` naming a *different* port than the one the plugin is
+configured to use, that entry counts as already correct and nothing happens — by
+design, it never rewrites a port you chose. If ZCode was started that way, the
+theme cannot reach it and the repair reports `no-op` rather than saying so, so
+make the two ports agree (or drop the argument from that shortcut) instead of
+waiting for the repair to notice.
 
 ## Uninstall
 

@@ -113447,7 +113447,7 @@ var init_boot = __esm({
 // dist/core/version.js
 function pluginVersion() {
   try {
-    return true ? "0.2.2" : "0.0.0-dev";
+    return true ? "0.2.3" : "0.0.0-dev";
   } catch {
     return "0.0.0-dev";
   }

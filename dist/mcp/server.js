@@ -146449,7 +146449,7 @@ function describeStartupRepair(outcome) {
 // dist/mcp/server.js
 var server = new McpServer({
   name: "zcode-tarkov",
-  version: "0.2.2"
+  version: "0.2.3"
 });
 server.registerTool("set_background", {
   title: "Set ZCode wallpaper",

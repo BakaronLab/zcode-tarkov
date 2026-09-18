@@ -2,7 +2,7 @@
 
 **为 ZCode 桌面客户端打造的 Tarkov 风格界面层** —— 一套温暖的战术配色、一条测试版警示带、带悬浮条播放的背景音乐、事件音效、一只可拖动的桌宠，以及一行随机轮换的运行状态文案，全部由应用内的设置中心驱动。
 
-[![version](https://img.shields.io/badge/version-0.2.2-informational)](#)
+[![version](https://img.shields.io/badge/version-0.2.3-informational)](#)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![ZCode](https://img.shields.io/badge/ZCode-3.12.x-informational)](#zcode-updates--compatibility)
 [![bundled game assets](https://img.shields.io/badge/bundled%20game%20assets-none-success)](#disclaimer)
@@ -250,7 +250,11 @@ node "$env:LOCALAPPDATA\Programs\zcode-tarkov\dist\cli.js" repair-launchers
 
 先加 `--dry-run` 可以看到具体哪些入口会被改动、哪些已经正确。
 
-这项修复能写入的位置，全部列在这里：你自己桌面、开始菜单和任务栏固定项里的 ZCode 启动快捷方式，以及 `HKCU` 下三个按用户注册的处理程序值。机器级入口 —— 公共桌面和公共开始菜单 —— 只会被报告、**绝不会被写入**，因为它们需要管理员权限；`HKLM` 绝不涉及，ZCode 自己的文件也绝不修改。它同样不会改动官方快捷方式的身份，只改它们传入的参数。它做的每一处改动都可以通过运行 `uninstall.ps1` 撤销 —— 而当启动修复发现"ZCode 在运行、端口不通"时，它会自行做同样的写入。
+这项修复能写入的位置，全部列在这里：你自己桌面、开始菜单和任务栏固定项里的 ZCode 启动快捷方式，以及 `HKCU` 下三个按用户注册的处理程序值。机器级入口 —— 公共桌面和公共开始菜单 —— 只会被报告、**绝不会被写入**，因为它们需要管理员权限；`HKLM` 绝不涉及，ZCode 自己的文件也绝不修改。它同样不会改动官方快捷方式的身份，只改它们传入的参数。而当启动修复发现"ZCode 在运行、端口不通"时，它会自行做同样的写入。
+
+`uninstall.ps1` 只会撤销它认识的那两个官方快捷方式 —— 你自己桌面和开始菜单里的 `ZCode.lnk` —— 以及 `HKCU` 下那三个处理程序值上的参数，而且只在该参数写的端口是配置端口或历史默认值 `9222` 时才撤销。它**并不会**覆盖这项修复可能改过的每一个入口：任务栏固定项、或者被你改过名、挪到别处的快捷方式，卸载之后仍会保留那个参数。要撤销这些，请打开该快捷方式的属性，从目标里删掉 `--remote-debugging-port=<port>`。
+
+有一种情况这项修复不会替你处理：如果某个快捷方式上已经有 `--remote-debugging-port`，而它写的端口和插件配置的端口**不一致**，这个入口就会被当作本来就正确，什么也不会发生 —— 这是有意为之，它绝不会改写你自己选的端口。如果 ZCode 是这样启动的，主题就连不上它，而修复只会返回 `no-op`、并不会告诉你原因。请让两边端口一致（或者把该快捷方式上的这个参数删掉），不要等着修复自己发现。
 
 ## 卸载
 

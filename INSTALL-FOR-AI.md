@@ -4,7 +4,7 @@ You are installing a **theming plugin for the ZCode desktop client**. Read this
 whole file before you touch anything; the rules in "Never do these" are the
 difference between a helpful install and damaging someone's machine.
 
-Version this guide covers: **v0.2.2**.
+Version this guide covers: **v0.2.3**.
 
 ---
 
@@ -196,7 +196,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\uninstall.ps1 -PurgeUserDa
 |---|---|---|
 | Theme applies but no dock / pet / sound | `dist\client.js` is missing from the install | Run `repair.ps1 -SourceDir <the tree you installed from>`; it restores the injected client from the source tree. Without `-SourceDir` the repair reports the missing bundle instead of writing it |
 | Nothing happens at all | ZCode was started without the debug port | Quit ZCode fully, relaunch from the **ZCode Tarkov** shortcut |
-| Still nothing after relaunching correctly | ZCode's launch entries lost the debug-port argument (an update can recreate them) | First tell them to quit ZCode completely and relaunch from the **ZCode Tarkov** shortcut: the plugin now repairs the desktop, Start Menu and pinned-taskbar shortcuts plus the `zcode://` and context-menu entries by itself at startup, whenever it finds ZCode running with the port closed. If that does not take, run `node "<installDir>\dist\cli.js" repair-launchers --dry-run` first, then without `--dry-run`. This repair writes to the user's own launch shortcuts and three `HKCU` handler values (machine-wide entries are only reported, never written) — say what it will change before running it, and tell them `uninstall.ps1` reverses it |
+| Still nothing after relaunching correctly | ZCode's launch entries lost the debug-port argument (an update can recreate them) | First tell them to quit ZCode completely and relaunch from the **ZCode Tarkov** shortcut: the plugin now repairs the desktop, Start Menu and pinned-taskbar shortcuts plus the `zcode://` and context-menu entries by itself at startup, whenever it finds ZCode running with the port closed. If that does not take, run `node "<installDir>\dist\cli.js" repair-launchers --dry-run` first, then without `--dry-run`. This repair writes to the user's own launch shortcuts and three `HKCU` handler values (machine-wide entries are only reported, never written) — say what it will change before running it. `uninstall.ps1` reverses it on the two official shortcuts it knows (`ZCode.lnk` in the user's Desktop and Start Menu) and on the three handler values; a pinned-taskbar or renamed shortcut keeps the argument and has to be cleaned up by hand, so say that rather than promising a full reversal |
 | "a service is already running" | The resident service is already up on 9223 | Open the settings panel in ZCode, or stop that process first |
 | Dock shows a lock icon | Chromium's autoplay policy | Click anywhere in the window, or press the dock's play button — a click is the gesture that unlocks audio |
 | No music | The user has not added any | Tell them the `music\` path above; the dock's empty state names it too |
