@@ -82,6 +82,55 @@ lives in `src/themes/palette.ts`:
 Export the active palette and preferences as one JSON file, import someone
 else's. The cheapest path to community palettes without building a marketplace.
 
+## Known limitations carried from the v0.2.1–v0.2.3 launcher work
+
+Found by an adversarial review of the automatic launcher repair, and deliberately
+left in place rather than patched. None of them is a safety issue: every one
+concerns how reliably or how precisely the repair acts, never a write to a
+machine-wide entry, an elevation, or a `HKLM` value. Each is recorded here with
+the fix that would close it, so a later change does not have to rediscover it.
+
+### The service's one-shot attempt is consumed even when it does nothing
+
+`startupLauncherRepairStarted` in `src/core/server.ts` is set before the guard is
+awaited, so a service process attempts the repair exactly once. It is spent even
+if the guard answered `skipped` — including a transient `cdp-reachable` race
+against a recovering ZCode — or `failed`. If the flag is lost later in the same
+service process, nothing retries.
+
+Reachable only in `always` mode: in the default `on-start` mode the MCP path
+repairs on every ZCode start, so the service's spent attempt is covered. The fix
+is to clear the flag when the outcome is not `repaired`/`no-op`, or to re-arm it
+after a cooldown.
+
+### The service probe reads state instead of re-probing
+
+`src/core/server.ts` passes `probeZcode: async () => runtimeState.zcodeRunning`,
+a snapshot taken before the guard's CDP await. A fresh `isZcodeProcessRunning()`
+would remove the staleness question entirely. The cost of the current shape is
+nil — the write it permits is the same idempotent user-scope append — which is why
+it was left alone.
+
+### A mixed custom-port configuration is a silent no-op
+
+If a shortcut already carries `--remote-debugging-port` for a port the plugin is
+not configured to use, the repair counts that entry as already correct, by design,
+and returns `no-op` without logging anything. ZCode then starts on one port while
+the plugin dials another, and the theme cannot reach it. Upstream logs a
+diagnostic in this case; this project currently stays quiet. Both READMEs document
+the limitation and the workaround. The fix is to log the mismatch — not to rewrite
+a port the user chose.
+
+### An unknown shortcut scope becomes writable user scope
+
+`buildRepairScript` treats any `scope` value other than the exact string
+`"machine"` as `"user"`, so a typo in the test-only `shortcutDirs` override would
+make a machine-wide path writable. No production caller passes that override —
+the CLI and the MCP tool supply only `port` and `dryRun` — so this is an internal
+trust boundary rather than an exposure. Rejecting an unknown value instead of
+defaulting it is a two-line change that was deferred because it would alter the
+shipped payload for a path no external input can reach.
+
 ## Explicitly out of scope
 
 Deliberately not implemented, so that a reader does not mistake an omission for
