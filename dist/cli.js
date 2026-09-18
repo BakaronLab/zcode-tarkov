@@ -19720,15 +19720,15 @@ var init_parseUtil = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH = [];
@@ -23846,15 +23846,15 @@ var init_parseUtil2 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH2 = [];
@@ -28757,15 +28757,15 @@ var init_parseUtil3 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH3 = [];
@@ -32911,15 +32911,15 @@ var init_parseUtil4 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH4 = [];
@@ -44918,15 +44918,15 @@ var init_parseUtil5 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH5 = [];
@@ -49676,15 +49676,15 @@ var init_parseUtil6 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH6 = [];
@@ -53843,15 +53843,15 @@ var init_parseUtil7 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH7 = [];
@@ -58137,15 +58137,15 @@ var init_parseUtil8 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH8 = [];
@@ -62299,15 +62299,15 @@ var init_parseUtil9 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH9 = [];
@@ -66498,15 +66498,15 @@ var init_parseUtil10 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH10 = [];
@@ -70649,15 +70649,15 @@ var init_parseUtil11 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH11 = [];
@@ -75035,15 +75035,15 @@ var init_parseUtil12 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH12 = [];
@@ -79205,15 +79205,15 @@ var init_parseUtil13 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH13 = [];
@@ -83532,15 +83532,15 @@ var init_parseUtil14 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH14 = [];
@@ -87809,15 +87809,15 @@ var init_parseUtil15 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH15 = [];
@@ -94859,15 +94859,15 @@ var init_parseUtil16 = __esm({
           message: issueData.message
         };
       }
-      let errorMessage = "";
+      let errorMessage2 = "";
       const maps = errorMaps.filter((m) => !!m).slice().reverse();
       for (const map of maps) {
-        errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+        errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
       }
       return {
         ...issueData,
         path: fullPath,
-        message: errorMessage
+        message: errorMessage2
       };
     };
     EMPTY_PATH16 = [];
@@ -111859,6 +111859,189 @@ var init_recovery = __esm({
   }
 });
 
+// dist/core/launchers.js
+import { execFile as execFile2 } from "node:child_process";
+import { promisify as promisify2 } from "node:util";
+function psQuote(value) {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+function buildRepairScript(port, dryRun, options = {}) {
+  const dirs = (options.shortcutDirs ? options.shortcutDirs.map((d) => ({
+    expr: psQuote(d.path),
+    scope: d.scope === "machine" ? "machine" : "user"
+  })) : DEFAULT_SHORTCUT_DIRS).map((d) => `  @{ path = ${d.expr}; scope = ${psQuote(d.scope)} }`);
+  const keys = (options.registryKeys ?? DEFAULT_REGISTRY_KEYS).map((key) => {
+    if (!key.startsWith("HKCU:")) {
+      throw new Error(`launcher repair only supports HKCU registry keys (got "${key}")`);
+    }
+    return `  ${psQuote(key)}`;
+  });
+  return `
+$ErrorActionPreference = 'Continue'
+# Without this, Chinese Windows error strings come back as mojibake through
+# Node's UTF-8 stdout decoding.
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$port = ${port}
+$dryRun = $${dryRun ? "true" : "false"}
+$flag = ' --remote-debugging-port=' + $port
+$results = New-Object System.Collections.ArrayList
+
+function Add-Result($kind, $p, $before, $after, $status, $reason) {
+  [void]$results.Add([pscustomobject]@{
+    kind = $kind; path = $p; before = $before; after = $after
+    status = $status; reason = $reason
+  })
+}
+
+# --- shortcuts -------------------------------------------------------------
+# Each entry carries the scope that owns it. "user" entries are written when
+# the flag is missing; "machine" entries would need administrator rights, so
+# they are reported as failed and the file is left exactly as it is.
+$dirs = @(
+${dirs.join(",\n")}
+)
+
+$wsh = New-Object -ComObject WScript.Shell
+foreach ($d in $dirs) {
+  $dirPath = [string]$d.path
+  $scope = [string]$d.scope
+  if (-not $dirPath -or -not (Test-Path -LiteralPath $dirPath)) { continue }
+  foreach ($item in @(Get-ChildItem -LiteralPath $dirPath -Filter '*.lnk' -Recurse -ErrorAction SilentlyContinue)) {
+    try { $sc = $wsh.CreateShortcut($item.FullName) } catch { continue }
+    $target = [string]$sc.TargetPath
+    if ($target -notlike '*ZCode.exe') { continue }
+
+    $before = [string]$sc.Arguments
+    if ($before -match 'remote-debugging-port') {
+      Add-Result 'shortcut' $item.FullName $before $before 'already-ok' $null
+      continue
+    }
+
+    $after = ($before.Trim() + $flag).Trim()
+    if ($scope -eq 'machine') {
+      Add-Result 'shortcut' $item.FullName $before $before 'failed' 'machine-wide entry needs administrator rights; not modified'
+      continue
+    }
+    if ($dryRun) {
+      Add-Result 'shortcut' $item.FullName $before $after 'updated' 'dry-run'
+      continue
+    }
+    try {
+      $sc.Arguments = $after
+      $sc.Save()
+      Add-Result 'shortcut' $item.FullName $before $after 'updated' $null
+    } catch {
+      Add-Result 'shortcut' $item.FullName $before $after 'failed' $_.Exception.Message
+    }
+  }
+}
+
+# --- HKCU protocol / shell handlers ----------------------------------------
+# Only HKCU keys ever reach this list; buildRepairScript rejects anything else.
+$keys = @(
+${keys.join(",\n")}
+)
+
+foreach ($k in $keys) {
+  if (-not (Test-Path -LiteralPath $k)) { continue }
+  try {
+    $key = Get-Item -LiteralPath $k
+    $before = [string]$key.GetValue('')
+    if ($before -notmatch 'ZCode\\.exe') { continue }
+    if ($before -match 'remote-debugging-port') {
+      Add-Result 'registry' $k $before $before 'already-ok' $null
+      continue
+    }
+    # Insert the flag directly after the executable token, keeping any
+    # placeholders ("%1") and quoting untouched.
+    $after = $before -replace '^(\\s*("[^"]+"|\\S+))', ('$1' + $flag)
+    if ($dryRun) {
+      Add-Result 'registry' $k $before $after 'updated' 'dry-run'
+      continue
+    }
+    try {
+      # Get-Item hands back a read-only handle, so the default value can only be
+      # changed through a .NET key opened with write access.
+      $sub = $k -replace '^HKCU:\\\\', ''
+      $writable = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($sub, $true)
+      if (-not $writable) { throw 'cannot open the key for writing' }
+      $writable.SetValue('', $after, [Microsoft.Win32.RegistryValueKind]::String)
+      $writable.Close()
+      Add-Result 'registry' $k $before $after 'updated' $null
+    } catch {
+      Add-Result 'registry' $k $before $after 'failed' $_.Exception.Message
+    }
+  } catch {
+    Add-Result 'registry' $k '' '' 'failed' $_.Exception.Message
+  }
+}
+
+@($results) | ConvertTo-Json -Depth 4 -Compress
+`;
+}
+async function repairLaunchers(opts) {
+  const dryRun = opts.dryRun ?? false;
+  if (process.platform !== "win32") {
+    return {
+      supported: false,
+      dryRun,
+      fixes: [],
+      error: "launcher repair is only implemented for Windows; on other platforms edit your app shortcut manually"
+    };
+  }
+  let script;
+  try {
+    script = buildRepairScript(opts.port, dryRun, opts);
+  } catch (err) {
+    return { supported: true, dryRun, fixes: [], error: err.message };
+  }
+  const encoded = Buffer.from(script, "utf16le").toString("base64");
+  try {
+    const { stdout } = await execFileAsync2("powershell", ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded], { maxBuffer: 8 * 1024 * 1024, timeout: 12e4, windowsHide: true });
+    const trimmed = stdout.trim();
+    if (!trimmed)
+      return { supported: true, dryRun, fixes: [] };
+    const raw = JSON.parse(trimmed);
+    const list = Array.isArray(raw) ? raw : [raw];
+    return {
+      supported: true,
+      dryRun,
+      fixes: list.map((r2) => ({
+        kind: r2.kind === "registry" ? "registry" : "shortcut",
+        path: r2.path,
+        before: r2.before,
+        after: r2.after,
+        status: r2.status === "updated" || r2.status === "already-ok" ? r2.status : "failed",
+        reason: r2.reason ?? void 0
+      }))
+    };
+  } catch (err) {
+    return { supported: true, dryRun, fixes: [], error: err.message };
+  }
+}
+var execFileAsync2, DEFAULT_SHORTCUT_DIRS, DEFAULT_REGISTRY_KEYS;
+var init_launchers = __esm({
+  "dist/core/launchers.js"() {
+    "use strict";
+    execFileAsync2 = promisify2(execFile2);
+    DEFAULT_SHORTCUT_DIRS = [
+      { expr: "(Join-Path $env:USERPROFILE 'Desktop')", scope: "user" },
+      { expr: "(Join-Path $env:APPDATA 'Microsoft\\Windows\\Start Menu\\Programs')", scope: "user" },
+      {
+        expr: "(Join-Path $env:APPDATA 'Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar')",
+        scope: "user"
+      },
+      { expr: "(Join-Path $env:PUBLIC 'Desktop')", scope: "machine" },
+      { expr: "(Join-Path $env:ProgramData 'Microsoft\\Windows\\Start Menu\\Programs')", scope: "machine" }
+    ];
+    DEFAULT_REGISTRY_KEYS = [
+      "HKCU:\\Software\\Classes\\zcode\\shell\\open\\command",
+      "HKCU:\\Software\\Classes\\Directory\\shell\\ZCode.OpenInZCode\\command",
+      "HKCU:\\Software\\Classes\\Drive\\shell\\ZCode.OpenInZCode\\command"
+    ];
+  }
+});
+
 // dist/panel/panelScript.js
 function panelAccentCss(rgb) {
   const at = (alpha) => `rgba(${rgb},${alpha})`;
@@ -112336,6 +112519,57 @@ var init_panelScript = __esm({
     "use strict";
     init_palette();
     PANEL_ROOT_ID = "zcode-beautify-panel-root";
+  }
+});
+
+// dist/core/startupRepair.js
+function errorMessage(err) {
+  return err instanceof Error ? err.message : String(err);
+}
+async function repairLaunchersIfZcodeLostTheFlag(deps) {
+  const platform = deps.platform ?? process.platform;
+  if (platform !== "win32") {
+    return { kind: "skipped", reason: "unsupported-platform" };
+  }
+  try {
+    if (await deps.probeCdp()) {
+      return { kind: "skipped", reason: "cdp-reachable" };
+    }
+    if (!await deps.probeZcode()) {
+      return { kind: "skipped", reason: "zcode-not-running" };
+    }
+    const report = await deps.repair({ port: deps.port });
+    if (report.error) {
+      return { kind: "failed", port: deps.port, error: report.error };
+    }
+    const updated = report.fixes.filter((f2) => f2.status === "updated").map((f2) => f2.path);
+    if (updated.length > 0) {
+      return { kind: "repaired", port: deps.port, updated };
+    }
+    return { kind: "no-op", port: deps.port, scanned: report.fixes.length };
+  } catch (err) {
+    return { kind: "failed", port: deps.port, error: errorMessage(err) };
+  }
+}
+function describeStartupRepair(outcome) {
+  switch (outcome.kind) {
+    case "repaired":
+      return [
+        `ZCode is running without --remote-debugging-port=${outcome.port}, and its launch entries were missing the flag.`,
+        `Added the flag to ${outcome.updated.length} launch entry(ies):`,
+        ...outcome.updated,
+        "Quit ZCode completely (including the tray icon), then start it again from one of these entries \u2014 the flag is read only at startup."
+      ];
+    case "failed":
+      return [`Could not repair ZCode's launch entries: ${outcome.error}`];
+    case "no-op":
+    case "skipped":
+      return [];
+  }
+}
+var init_startupRepair = __esm({
+  "dist/core/startupRepair.js"() {
+    "use strict";
   }
 });
 
@@ -113204,7 +113438,7 @@ var init_boot = __esm({
 // dist/core/version.js
 function pluginVersion() {
   try {
-    return true ? "0.2.0" : "0.0.0-dev";
+    return true ? "0.2.1" : "0.0.0-dev";
   } catch {
     return "0.0.0-dev";
   }
@@ -113388,6 +113622,28 @@ async function pushConfigToSessions(config, apiPort, token) {
   }
   return ok;
 }
+function repairLaunchersInBackground(port) {
+  if (startupLauncherRepairStarted)
+    return;
+  startupLauncherRepairStarted = true;
+  void repairLaunchersIfZcodeLostTheFlag({
+    port,
+    probeCdp: async () => {
+      try {
+        await listTargets(port);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    probeZcode: async () => runtimeState.zcodeRunning,
+    repair: repairLaunchers
+  }).then((outcome) => {
+    for (const line of describeStartupRepair(outcome))
+      console.log(`serve: ${line}`);
+  }).catch(() => {
+  });
+}
 async function poll(config, apiPort, token, mediaToken) {
   try {
     const targets = pickRendererTargets(await listTargets(config.port));
@@ -113420,13 +113676,16 @@ async function poll(config, apiPort, token, mediaToken) {
     }
     if (Date.now() > nextProcessProbe) {
       nextProcessProbe = Date.now() + 15e3;
+      const zcodeRunning = await isZcodeProcessRunning();
       runtimeState = {
         cdpReachable: false,
         rendererCount: 0,
-        zcodeRunning: await isZcodeProcessRunning(),
+        zcodeRunning,
         lastError: err.message,
         updatedAt: (/* @__PURE__ */ new Date()).toISOString()
       };
+      if (zcodeRunning)
+        repairLaunchersInBackground(config.port);
     }
   }
 }
@@ -113653,7 +113912,7 @@ async function startServe(opts) {
     await poll(runtimeConfig(), apiPort, token, mediaToken);
   }
 }
-var MAX_WALLPAPER_BYTES, MAX_BODY_BYTES, POLL_MS, SERVICE_ID, LEGACY_SERVICE_IDS, runtimeState, nextProcessProbe, cachedAssets, held, warnedAboutClientBundle, IMAGE_EXT;
+var MAX_WALLPAPER_BYTES, MAX_BODY_BYTES, POLL_MS, SERVICE_ID, LEGACY_SERVICE_IDS, runtimeState, nextProcessProbe, startupLauncherRepairStarted, cachedAssets, held, warnedAboutClientBundle, IMAGE_EXT;
 var init_server = __esm({
   "dist/core/server.js"() {
     "use strict";
@@ -113667,6 +113926,8 @@ var init_server = __esm({
     init_types();
     init_palette();
     init_recovery();
+    init_launchers();
+    init_startupRepair();
     init_autostart();
     init_store();
     init_hostRoutes();
@@ -113679,6 +113940,7 @@ var init_server = __esm({
     LEGACY_SERVICE_IDS = ["zcode-beautify"];
     runtimeState = { cdpReachable: false, rendererCount: 0, zcodeRunning: false };
     nextProcessProbe = 0;
+    startupLauncherRepairStarted = false;
     held = /* @__PURE__ */ new Map();
     warnedAboutClientBundle = false;
     IMAGE_EXT = {
@@ -113698,152 +113960,9 @@ init_session();
 init_colorMode();
 init_autostart();
 init_recovery();
+init_launchers();
 import fs16 from "node:fs";
 import path12 from "node:path";
-
-// dist/core/launchers.js
-import { execFile as execFile2 } from "node:child_process";
-import { promisify as promisify2 } from "node:util";
-var execFileAsync2 = promisify2(execFile2);
-function psScript(port, dryRun) {
-  return `
-$ErrorActionPreference = 'Continue'
-# Without this, Chinese Windows error strings come back as mojibake through
-# Node's UTF-8 stdout decoding.
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$port = ${port}
-$dryRun = $${dryRun ? "true" : "false"}
-$flag = ' --remote-debugging-port=' + $port
-$results = New-Object System.Collections.ArrayList
-
-function Add-Result($kind, $p, $before, $after, $status, $reason) {
-  [void]$results.Add([pscustomobject]@{
-    kind = $kind; path = $p; before = $before; after = $after
-    status = $status; reason = $reason
-  })
-}
-
-# --- shortcuts -------------------------------------------------------------
-$dirs = @(
-  (Join-Path $env:USERPROFILE 'Desktop'),
-  (Join-Path $env:APPDATA 'Microsoft\\Windows\\Start Menu\\Programs'),
-  (Join-Path $env:PUBLIC 'Desktop'),
-  (Join-Path $env:ProgramData 'Microsoft\\Windows\\Start Menu\\Programs')
-)
-
-$lnks = @()
-foreach ($d in $dirs) {
-  if ($d -and (Test-Path -LiteralPath $d)) {
-    $lnks += @(Get-ChildItem -LiteralPath $d -Filter '*.lnk' -Recurse -ErrorAction SilentlyContinue)
-  }
-}
-
-$wsh = New-Object -ComObject WScript.Shell
-foreach ($item in $lnks) {
-  try { $sc = $wsh.CreateShortcut($item.FullName) } catch { continue }
-  $target = [string]$sc.TargetPath
-  if ($target -notlike '*ZCode.exe') { continue }
-
-  $before = [string]$sc.Arguments
-  if ($before -match 'remote-debugging-port') {
-    Add-Result 'shortcut' $item.FullName $before $before 'already-ok' $null
-    continue
-  }
-
-  $after = ($before.Trim() + $flag).Trim()
-  if ($dryRun) {
-    Add-Result 'shortcut' $item.FullName $before $after 'updated' 'dry-run'
-    continue
-  }
-  try {
-    $sc.Arguments = $after
-    $sc.Save()
-    Add-Result 'shortcut' $item.FullName $before $after 'updated' $null
-  } catch {
-    Add-Result 'shortcut' $item.FullName $before $after 'failed' $_.Exception.Message
-  }
-}
-
-# --- HKCU protocol / shell handlers ----------------------------------------
-$keys = @(
-  'HKCU:\\Software\\Classes\\zcode\\shell\\open\\command',
-  'HKCU:\\Software\\Classes\\Directory\\shell\\ZCode.OpenInZCode\\command',
-  'HKCU:\\Software\\Classes\\Drive\\shell\\ZCode.OpenInZCode\\command'
-)
-
-foreach ($k in $keys) {
-  if (-not (Test-Path -LiteralPath $k)) { continue }
-  try {
-    $key = Get-Item -LiteralPath $k
-    $before = [string]$key.GetValue('')
-    if ($before -notmatch 'ZCode\\.exe') { continue }
-    if ($before -match 'remote-debugging-port') {
-      Add-Result 'registry' $k $before $before 'already-ok' $null
-      continue
-    }
-    # Insert the flag directly after the executable token, keeping any
-    # placeholders ("%1") and quoting untouched.
-    $after = $before -replace '^(\\s*("[^"]+"|\\S+))', ('$1' + $flag)
-    if ($dryRun) {
-      Add-Result 'registry' $k $before $after 'updated' 'dry-run'
-      continue
-    }
-    try {
-      # Get-Item hands back a read-only handle, so the default value can only be
-      # changed through a .NET key opened with write access.
-      $sub = $k -replace '^HKCU:\\\\', ''
-      $writable = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($sub, $true)
-      if (-not $writable) { throw 'cannot open the key for writing' }
-      $writable.SetValue('', $after, [Microsoft.Win32.RegistryValueKind]::String)
-      $writable.Close()
-      Add-Result 'registry' $k $before $after 'updated' $null
-    } catch {
-      Add-Result 'registry' $k $before $after 'failed' $_.Exception.Message
-    }
-  } catch {
-    Add-Result 'registry' $k '' '' 'failed' $_.Exception.Message
-  }
-}
-
-@($results) | ConvertTo-Json -Depth 4 -Compress
-`;
-}
-async function repairLaunchers(opts) {
-  const dryRun = opts.dryRun ?? false;
-  if (process.platform !== "win32") {
-    return {
-      supported: false,
-      dryRun,
-      fixes: [],
-      error: "launcher repair is only implemented for Windows; on other platforms edit your app shortcut manually"
-    };
-  }
-  const encoded = Buffer.from(psScript(opts.port, dryRun), "utf16le").toString("base64");
-  try {
-    const { stdout } = await execFileAsync2("powershell", ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded], { maxBuffer: 8 * 1024 * 1024, timeout: 12e4, windowsHide: true });
-    const trimmed = stdout.trim();
-    if (!trimmed)
-      return { supported: true, dryRun, fixes: [] };
-    const raw = JSON.parse(trimmed);
-    const list = Array.isArray(raw) ? raw : [raw];
-    return {
-      supported: true,
-      dryRun,
-      fixes: list.map((r2) => ({
-        kind: r2.kind === "registry" ? "registry" : "shortcut",
-        path: r2.path,
-        before: r2.before,
-        after: r2.after,
-        status: r2.status === "updated" || r2.status === "already-ok" ? r2.status : "failed",
-        reason: r2.reason ?? void 0
-      }))
-    };
-  } catch (err) {
-    return { supported: true, dryRun, fixes: [], error: err.message };
-  }
-}
-
-// dist/cli.js
 var USAGE = `zcode-tarkov <command> [options]
 
 Commands:
@@ -113882,6 +114001,13 @@ function autostartSpec(cdpPort, apiPort = 9223) {
     dataDir: process.env.ZCODE_BEAUTIFY_DATA_DIR,
     userDataDir: process.env.ZCODE_TARKOV_DATA_DIR
   };
+}
+function cdpRepairHint(port) {
+  return [
+    `ZCode was probably started from an entry without --remote-debugging-port=${port}; it cannot open the port by itself.`,
+    "Run `zcode-tarkov repair-launchers` to add the flag to every launch entry (--dry-run previews the changes).",
+    "Then quit ZCode completely (including the tray icon) and start it again from a repaired shortcut."
+  ];
 }
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
@@ -113966,6 +114092,8 @@ Quit ZCode completely (including any tray icon), then run \`zcode-tarkov launch\
             console.log(`  - [${t2.id}] ${t2.title} ${t2.url}`);
         } catch (err) {
           console.log(`CDP not reachable on port ${port}: ${err.message}`);
+          for (const line of cdpRepairHint(port))
+            console.log(line);
           process.exitCode = 1;
         }
         break;
@@ -114052,7 +114180,12 @@ Quit ZCode completely (including any tray icon), then run \`zcode-tarkov launch\
           process.exitCode = 1;
     }
   } catch (err) {
-    console.error(`error: ${err.message}`);
+    const message = err.message;
+    console.error(`error: ${message}`);
+    if (message.includes("Cannot reach CDP")) {
+      for (const line of cdpRepairHint(port))
+        console.error(line);
+    }
     process.exitCode = 1;
   }
 }

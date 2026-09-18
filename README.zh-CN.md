@@ -2,7 +2,7 @@
 
 **为 ZCode 桌面客户端打造的 Tarkov 风格界面层** —— 一套温暖的战术配色、一条测试版警示带、带悬浮条播放的背景音乐、事件音效、一只可拖动的桌宠，以及一行随机轮换的运行状态文案，全部由应用内的设置中心驱动。
 
-[![version](https://img.shields.io/badge/version-0.2.0-informational)](#)
+[![version](https://img.shields.io/badge/version-0.2.1-informational)](#)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![ZCode](https://img.shields.io/badge/ZCode-3.12.x-informational)](#zcode-updates--compatibility)
 [![bundled game assets](https://img.shields.io/badge/bundled%20game%20assets-none-success)](#disclaimer)
@@ -218,13 +218,15 @@ README.md, README.zh-CN.md
 
 在 Windows 上验证于 **ZCode 3.12.3.7463**。
 
+zcode-tarkov 不修改 ZCode 的任何安装文件，因此 ZCode 正常升级不会覆盖本项目，也不会产生安装文件冲突。但部分运行时集成仍具有版本相关性：未来 ZCode 版本可能调整 DOM 结构、语义 CSS token、运行状态信号或启动入口。此类变化最多使对应功能暂时失效，不会损坏 ZCode；项目通过软失败、启动入口自动修复和后续兼容性更新恢复功能。
+
 主题的工作方式是与 ZCode 自己的 DOM 匹配，所以一次 ZCode 更新*确实可能*弄坏它的某些部分。设计上正视这一点，而不是假装它不存在：
 
 - 调色板建立在**语义 CSS 自定义属性**和稳定的 `data-slot` / Radix `data-state` 属性之上，而不是哈希类名。
 - 每一处依赖 DOM 的行为都**失败软着陆**：锚点找不到就是"没有警示带" / "没有状态文案" / "那个事件没有声音"，绝不会变成报错，也绝不会让页面卡住。
 - 运行状态信号有完整记录，包括观察到的状态迁移，以及那些*无法*观察到的项，见 [`docs/dev/zcode-runtime-signals.md`](docs/dev/zcode-runtime-signals.md)。当 ZCode 更新改变了什么时，就从那个文件开始看。
 
-ZCode 更新之后，请从 **ZCode Tarkov** 快捷方式重新启动；如果快捷方式不见了，就运行 `repair.ps1`。
+ZCode 更新之后，请从 **ZCode Tarkov** 快捷方式重新启动；如果快捷方式不见了，就运行 `repair.ps1`。如果 ZCode 启动后没有调试端口，插件会自行修复启动入口 —— 见[如果 ZCode 启动时没有调试端口](#如果-zcode-启动时没有调试端口)。
 
 ## 修复
 
@@ -232,17 +234,23 @@ ZCode 更新之后，请从 **ZCode Tarkov** 快捷方式重新启动；如果�
 powershell -NoProfile -ExecutionPolicy Bypass -File .\repair.ps1
 ```
 
-恢复启动器、常驻服务、登录自启动项、插件部署、注入用的客户端打包产物，以及任何缺失的媒体目录。它只创建**缺失**的部分 —— 从不会覆盖你的媒体或设置。
+它会重新探测 ZCode、重建启动器快捷方式和任何缺失的媒体目录、校验已安装的程序文件（包括注入用的客户端打包产物，`-SourceDir` 可以把它恢复回来），并检查或启动常驻服务。登录自启动项只会被报告，绝不会被写入：缺失时请重新运行 `install.ps1`。插件注册本身属于 ZCode 的插件市场，这里不会改动。它会创建缺失的部分，并刷新启动器快捷方式（加 `-SourceDir` 时还会刷新已安装的程序文件），但从不会覆盖你的媒体或设置。
 
 ### 如果 ZCode 启动时没有调试端口
 
-主题需要 ZCode 以 `--remote-debugging-port` 启动，而这个参数必须由启动它的入口提供。一台机器上通常有多个启动入口 —— 桌面快捷方式、开始菜单快捷方式、任务栏固定项 —— 而 ZCode 更新可能会重建其中一些且不带该参数。下面这条命令会把它补回到所有能找到的入口：
+主题需要 ZCode 以 `--remote-debugging-port` 启动，而这个参数只能由启动 ZCode 的入口提供 —— 正在运行的应用无法自己补上它。ZCode 的更新程序会重建开始菜单快捷方式、且不带该参数，而应用每次启动都会重新注册自己的 `zcode://` 协议处理程序和资源管理器右键菜单动词，把那些值又写回去；真正持久的入口是各种快捷方式副本。因此修复会覆盖桌面、开始菜单和任务栏固定项的快捷方式，以及 `zcode://` 协议处理程序和右键菜单动词。
+
+**插件现在也会在启动时自行执行这套修复。** 当它发现 ZCode 正在运行、而 CDP 端口不通时，就会执行同样的扫描并记录改动了什么，所以更新之后的常见情况不再需要手动敲命令。修复之后，仍要**彻底退出 ZCode**（包括托盘图标），再从修好的快捷方式重新启动：这个参数只在启动时读取，正在运行的实例无法就地补上。
+
+想自己查看或手动执行，命令仍然可用：
 
 ```powershell
 node "$env:LOCALAPPDATA\Programs\zcode-tarkov\dist\cli.js" repair-launchers
 ```
 
-先加 `--dry-run` 可以看到具体哪些入口会被改动、哪些已经正确。这是本项目**唯一会写到用户目录之外**的操作：它修改的是你自己的 ZCode 启动快捷方式，以及 `HKCU` 下三个按用户注册的处理程序值（绝不涉及 `HKLM`，也绝不修改 ZCode 的文件）。它也不会改动官方快捷方式的身份，只改它们传入的参数。它做的每一处改动都可以通过运行 `uninstall.ps1` 撤销。
+先加 `--dry-run` 可以看到具体哪些入口会被改动、哪些已经正确。
+
+这项修复能写入的位置，全部列在这里：你自己桌面、开始菜单和任务栏固定项里的 ZCode 启动快捷方式，以及 `HKCU` 下三个按用户注册的处理程序值。机器级入口 —— 公共桌面和公共开始菜单 —— 只会被报告、**绝不会被写入**，因为它们需要管理员权限；`HKLM` 绝不涉及，ZCode 自己的文件也绝不修改。它同样不会改动官方快捷方式的身份，只改它们传入的参数。它做的每一处改动都可以通过运行 `uninstall.ps1` 撤销 —— 而当启动修复发现"ZCode 在运行、端口不通"时，它会自行做同样的写入。
 
 ## 卸载
 

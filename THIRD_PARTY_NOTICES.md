@@ -15,6 +15,10 @@ logos, textures, or other assets from the game are included in this repository.
 - **Copyright:** Copyright (c) 2026 Logocceai
 - **License:** MIT — reproduced in [`licenses/zcode-beautify.LICENSE`](licenses/zcode-beautify.LICENSE)
 - **Pinned revision used as the base:** `8639446a4534be667a8fa76ea7757c139ee9df71` (v0.3.1)
+- **Latest revision reviewed:** `a98bb9ef161b08937dfe724316ba893855db07c9`
+  (tag `v0.3.3`). The base remains v0.3.1; the commits after it were reviewed one
+  by one and ported selectively, and the per-commit record is kept in
+  [`docs/dev/UPSTREAM_SYNC.md`](docs/dev/UPSTREAM_SYNC.md).
 
 `zcode-tarkov` is a **derivative work**: this repository began as a clone of
 zcode-beautify with its full git history retained (the original remote is kept as
@@ -39,6 +43,15 @@ Used essentially unchanged, and not re-implemented:
 - The MCP tool surface — `src/mcp/server.ts`.
 - The plugin/marketplace manifests, `commands/`, `skills/`, and the build
   tooling — `scripts/bundle.mjs`, `scripts/package.mjs`.
+
+From the review through v0.3.3, the launcher-repair changes to
+`src/core/launchers.ts` and the guarded startup-repair behaviour
+(`src/core/startupRepair.ts`, called from `src/mcp/server.ts` and
+`src/core/server.ts`) were adapted from the upstream, and one gap in the shipped
+`skill-pack/references/cdp-minimal.mjs` snippet was ported (`windowsHide` on its
+`tasklist` probe). The per-commit record of that review — what was already
+equivalent, what was ported and what was deliberately not — is kept in
+[`docs/dev/UPSTREAM_SYNC.md`](docs/dev/UPSTREAM_SYNC.md).
 
 ### What `zcode-tarkov` changed
 

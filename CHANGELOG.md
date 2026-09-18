@@ -4,6 +4,73 @@
 history of the upstream project this repository was forked from,
 [zcode-beautify](https://github.com/Logocceai/zcode-beautify) (MIT).
 
+## v0.2.1
+
+Launcher resilience for the post-update case, ported from the upstream review
+through v0.3.3.
+
+**The plugin repairs its launch entries by itself.** When it finds ZCode running
+with the CDP port closed, it runs the same repair the `repair-launchers` command
+performs and logs what it changed — via stderr in the MCP host, and to the
+service log in the resident service: the desktop, Start Menu and pinned-taskbar
+shortcuts, plus the `zcode://` protocol handler and the Explorer context-menu
+verbs. The guarded decision lives in `src/core/startupRepair.ts` and is shared by
+`src/mcp/server.ts`, which calls it after the theme-restore retries are
+exhausted (the normal post-update path), and by `src/core/server.ts`, once per
+process, on the first poll that sees a running ZCode with no CDP endpoint. A
+healthy endpoint produces zero launcher writes, a shut-down app is not mistaken
+for a lost flag, and the function never throws. The repair cannot take effect
+in place — ZCode reads the flag only at startup — so repairing now makes the
+*next* start healthy. It is needed because ZCode's updater rebuilds the Start
+Menu shortcut without the flag, and the app re-registers its own `zcode://`
+protocol and context-menu registry handlers on every start, restoring those
+values; shortcut copies are the durable entries.
+
+**The pinned taskbar is now covered.** The repair scans
+`%APPDATA%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar` as a
+user-scope location — where a user who pinned the app actually clicks — in
+addition to the desktop and Start Menu shortcuts.
+
+**Machine-wide entries are reported, never written.** The shared desktop and the
+shared Start Menu are returned as `failed` with "machine-wide entry needs
+administrator rights; not modified", and no write is ever attempted. This is a
+deliberate divergence from upstream, which attempts the write and reports the OS
+error: this project does not elevate, so it refuses the path outright rather than
+leave a half-applied change behind.
+
+**The CLI says what to do.** When a command reports the CDP port unreachable, the
+message now names `repair-launchers` (with `--dry-run` for a preview) and the
+full quit-and-relaunch, because the flag is read only at startup.
+
+**The shipped CDP snippet hides its child console.**
+`skill-pack/references/cdp-minimal.mjs` now passes `windowsHide: true` to its
+`tasklist` probe, matching the three product spawn sites (`src/core/launch.ts`,
+`src/core/launchers.ts`) where the option was already present. Without it,
+probing for the ZCode process could flash a console window.
+
+**Tests.** `tests/startupRepair.test.mjs` pins the decision order with fake
+dependencies — a healthy endpoint and a shut-down app both produce zero repair
+calls, and only "running with the port closed" repairs.
+`tests/launcherScript.test.mjs` asserts the generated PowerShell directly: the
+scanned locations and their scopes, the `HKCU`-only registry list, the identity
+gates and the promise that no elevation mechanism is ever emitted.
+`tools/test-launcher-repair.ps1`, run by `npm run test:launcher-repair`, drives
+the real repair against a scratch tree below `%TEMP%` with real `.lnk` files and
+a scratch `HKCU` prefix: 51 assertions covering the pinned-taskbar fix,
+machine-wide entries reported with their files byte-identical, a decoy
+executable untouched, a malformed shortcut that does not abort the run, and an
+idempotent second pass. Nothing real is read or written.
+
+**Documentation.** The update-compatibility section now separates file-level
+safety from runtime version sensitivity: a ZCode update cannot overwrite or
+conflict with this project because it never modifies the installation, while DOM
+structure, semantic tokens, runtime signals and launch entries stay
+version-sensitive and are handled by fail-soft behaviour and automatic repair.
+The repair sections now say exactly what the manual command and the startup
+repair can write, where machine-wide entries stop, and that the per-user
+autostart entry is reported rather than written. The upstream review this port
+came from is recorded in `docs/dev/UPSTREAM_SYNC.md`.
+
 ## v0.2.0
 
 v0.1 was a Tarkov *theme*. v0.2 is a Tarkov *interface layer*: the theme plus

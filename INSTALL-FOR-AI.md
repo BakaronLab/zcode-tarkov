@@ -4,7 +4,7 @@ You are installing a **theming plugin for the ZCode desktop client**. Read this
 whole file before you touch anything; the rules in "Never do these" are the
 difference between a helpful install and damaging someone's machine.
 
-Version this guide covers: **v0.2.0**.
+Version this guide covers: **v0.2.1**.
 
 ---
 
@@ -99,8 +99,11 @@ the Tarkov one — say so plainly rather than reinstalling.
 ### Repair instead, if it is already installed
 
 Use repair, not install, when the program is present but something is missing
-(the launcher, the service, the autostart entry, the plugin deployment, or a
-media directory):
+(the launcher, the service, a media directory, or — with `-SourceDir` — the
+installed program files). It re-detects ZCode and recreates the launcher
+shortcuts, but it does not write the per-user autostart entry (it reports it:
+re-run `install.ps1` if that is missing) and it does not re-register the plugin
+with ZCode's marketplace.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\repair.ps1
@@ -191,14 +194,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\uninstall.ps1 -PurgeUserDa
 
 | Symptom | Cause | What to tell the user |
 |---|---|---|
-| Theme applies but no dock / pet / sound | `dist\client.js` is missing from the install | Run `repair.ps1`; it restores the injected client |
+| Theme applies but no dock / pet / sound | `dist\client.js` is missing from the install | Run `repair.ps1 -SourceDir <the tree you installed from>`; it restores the injected client from the source tree. Without `-SourceDir` the repair reports the missing bundle instead of writing it |
 | Nothing happens at all | ZCode was started without the debug port | Quit ZCode fully, relaunch from the **ZCode Tarkov** shortcut |
-| Still nothing after relaunching correctly | ZCode's launch entries lost the debug-port argument (an update can recreate them) | Run `node "<installDir>\dist\cli.js" repair-launchers --dry-run` first, then without `--dry-run`. This is the only operation that writes outside the user profile — it edits the user's own launch shortcuts and three `HKCU` handler values — so say so before running it, and tell them `uninstall.ps1` reverses it |
+| Still nothing after relaunching correctly | ZCode's launch entries lost the debug-port argument (an update can recreate them) | First tell them to quit ZCode completely and relaunch from the **ZCode Tarkov** shortcut: the plugin now repairs the desktop, Start Menu and pinned-taskbar shortcuts plus the `zcode://` and context-menu entries by itself at startup, whenever it finds ZCode running with the port closed. If that does not take, run `node "<installDir>\dist\cli.js" repair-launchers --dry-run` first, then without `--dry-run`. This repair writes to the user's own launch shortcuts and three `HKCU` handler values (machine-wide entries are only reported, never written) — say what it will change before running it, and tell them `uninstall.ps1` reverses it |
 | "a service is already running" | The resident service is already up on 9223 | Open the settings panel in ZCode, or stop that process first |
 | Dock shows a lock icon | Chromium's autoplay policy | Click anywhere in the window, or press the dock's play button — a click is the gesture that unlocks audio |
 | No music | The user has not added any | Tell them the `music\` path above; the dock's empty state names it too |
 | Music stops after a few tracks with a notice | The files could not be decoded | Check `music\` for truncated or mislabelled files; the player stops rather than skipping forever |
-| The theme disappears after a ZCode update | The app was relaunched from the official shortcut | Relaunch from the Tarkov shortcut; `repair.ps1` if the shortcut is gone |
+| The theme disappears after a ZCode update | The app was relaunched from the official shortcut | Quit it completely and relaunch from the Tarkov shortcut: the plugin now repairs launch entries by itself at startup when it finds ZCode running with the port closed. `repair.ps1` if the shortcut is gone |
 
 When the user reports a bug, collect `dist\cli.js status` output and the service
 log (`%LOCALAPPDATA%\zcode-tarkov\data\..\serve.log`, or the plugin data

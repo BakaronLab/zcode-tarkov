@@ -1,6 +1,6 @@
 {
   "name": "zcode-tarkov",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Escape-from-Tarkov-inspired theme mode for the ZCode desktop client: fixed Tarkov palette, Monet dynamic color, and native passthrough, via CDP injection with a live settings panel.",
   "type": "module",
   "license": "MIT",
@@ -16,6 +16,7 @@
     "bundle": "npm run build && node scripts/bundle.mjs",
     "test": "tsc -p tsconfig.test.json && node --test \"tests/**/*.test.mjs\"",
     "test:lifecycle": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-lifecycle.ps1",
+    "test:launcher-repair": "tsc -p tsconfig.test.json && powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-launcher-repair.ps1",
     "package": "node scripts/package.mjs",
     "build:client": "node scripts/bundle-client.mjs"
   },

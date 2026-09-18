@@ -5,7 +5,7 @@ a beta-warning band, background music with a dock, event sound effects, a dragga
 desktop companion, and a randomized running-status line, all driven from a settings
 centre inside the app.
 
-[![version](https://img.shields.io/badge/version-0.2.0-informational)](#)
+[![version](https://img.shields.io/badge/version-0.2.1-informational)](#)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![ZCode](https://img.shields.io/badge/ZCode-3.12.x-informational)](#zcode-updates--compatibility)
 [![bundled game assets](https://img.shields.io/badge/bundled%20game%20assets-none-success)](#disclaimer)
@@ -295,6 +295,13 @@ on purpose, so users install it without a build step and without `npm install`.
 
 Verified against **ZCode 3.12.3.7463** on Windows.
 
+**File-level, a ZCode update cannot overwrite or conflict with zcode-tarkov
+because this project never modifies the ZCode installation.** Runtime
+integrations are version-sensitive, however: a future ZCode release may change
+DOM structure, semantic tokens, runtime signals, or launch entries used by the
+injected interface. These integrations fail soft and can be repaired or updated
+without patching ZCode itself.
+
 The theme works by matching ZCode's own DOM, so a ZCode update *can* break parts
 of it. The design anticipates that rather than pretending otherwise:
 
@@ -309,7 +316,9 @@ of it. The design anticipates that rather than pretending otherwise:
   file is the place to start when a ZCode update changes something.
 
 After a ZCode update, relaunch from the **ZCode Tarkov** shortcut, and run
-`repair.ps1` if the shortcut is gone.
+`repair.ps1` if the shortcut is gone. If ZCode came up without the debug port,
+the plugin repairs the launch entries by itself — see
+[If ZCode opens without the debug port](#if-zcode-opens-without-the-debug-port).
 
 ## Repair
 
@@ -317,28 +326,50 @@ After a ZCode update, relaunch from the **ZCode Tarkov** shortcut, and run
 powershell -NoProfile -ExecutionPolicy Bypass -File .\repair.ps1
 ```
 
-Restores the launcher, the resident service, the autostart entry, the plugin
-deployment, the injected client bundle, and any missing media directory. It only
-creates what is **missing** — it never overwrites your media or settings.
+It re-detects ZCode, recreates the launcher shortcuts and any missing media
+directory, verifies the installed payload — including the injected client
+bundle, which `-SourceDir` also restores — and checks or starts the resident
+service. The per-user autostart entry is reported but never written: re-run
+`install.ps1` if it is missing. The plugin registration itself belongs to ZCode's
+marketplace and is not touched here. It creates what is missing and refreshes
+the launcher shortcuts (with `-SourceDir`, the installed program files too), and
+it never overwrites your media or settings.
 
 ### If ZCode opens without the debug port
 
-The theme needs ZCode to start with `--remote-debugging-port`, and that flag has
-to come from whatever launches it. A machine usually has several launch entries —
-a desktop shortcut, a Start Menu shortcut, a taskbar pin — and ZCode updates can
-recreate some of them without the flag. One command puts it back on every entry
-it finds:
+The theme needs ZCode to start with `--remote-debugging-port`, and that flag can
+only come from whatever launches ZCode — the running app cannot add it to itself.
+ZCode's updater rebuilds the Start Menu shortcut without the flag, and the app
+re-registers its own `zcode://` protocol handler and context-menu verbs on every
+start, restoring those values; shortcut copies are the durable entries. The
+repair therefore covers the desktop, the Start Menu and the pinned taskbar,
+plus the `zcode://` handler and the context-menu verbs.
+
+**The plugin also performs this repair by itself at startup.** When it finds
+ZCode running with the CDP port closed, it runs the same scan and logs what it
+changed, so the normal post-update case no longer needs a manual command. Then
+quit ZCode completely (including the tray icon) and start it again from a
+repaired shortcut: the flag is read only at startup, so the running instance
+cannot be fixed in place.
+
+The command is still there when you want to see or do it yourself:
 
 ```powershell
 node "$env:LOCALAPPDATA\Programs\zcode-tarkov\dist\cli.js" repair-launchers
 ```
 
 Add `--dry-run` first to see exactly which entries would change and which are
-already correct. This is the **one thing in this project that writes outside your
-user profile**: it edits your own ZCode launch shortcuts and the three per-user
-handler values under `HKCU` (never `HKLM`, and never ZCode's files). It also never
-touches the official shortcuts' identity — only the arguments they pass. Every
-change it makes is reversed by running `uninstall.ps1`.
+already correct.
+
+What this repair can write, in full: your own ZCode launch shortcuts on the
+desktop, in the Start Menu and in the pinned taskbar, and the three per-user
+handler values under `HKCU`. Machine-wide entries — the shared desktop and the
+shared Start Menu — are reported but never written, because they would need
+administrator rights; `HKLM` is never touched, and no file of ZCode's is ever
+touched. It also never touches the official shortcuts' identity, only the
+arguments they pass. Every change it makes is reversed by running
+`uninstall.ps1` — and the startup repair performs the same writes by itself when
+it finds ZCode running without the port.
 
 ## Uninstall
 

@@ -70,6 +70,22 @@ function autostartSpec(cdpPort: number, apiPort = 9223): AutostartSpec {
   };
 }
 
+/**
+ * Extra guidance when a command that needs the CDP port cannot reach it.
+ *
+ * The usual cause is not a broken install: ZCode only opens the port when it is
+ * started with the flag, its updater rebuilds the Start Menu shortcut without
+ * it, and the app cannot add the flag to itself once it is running. Repairing
+ * the entries only helps the next start, so the restart is part of the fix.
+ */
+function cdpRepairHint(port: number): string[] {
+  return [
+    `ZCode was probably started from an entry without --remote-debugging-port=${port}; it cannot open the port by itself.`,
+    "Run `zcode-tarkov repair-launchers` to add the flag to every launch entry (--dry-run previews the changes).",
+    "Then quit ZCode completely (including the tray icon) and start it again from a repaired shortcut.",
+  ];
+}
+
 async function main(): Promise<void> {
   const [cmd, ...rest] = process.argv.slice(2);
   const flag = (name: string): string | undefined => {
@@ -155,6 +171,7 @@ async function main(): Promise<void> {
           for (const t of targets) console.log(`  - [${t.id}] ${t.title} ${t.url}`);
         } catch (err) {
           console.log(`CDP not reachable on port ${port}: ${(err as Error).message}`);
+          for (const line of cdpRepairHint(port)) console.log(line);
           process.exitCode = 1;
         }
         break;
@@ -256,7 +273,13 @@ async function main(): Promise<void> {
         if (cmd !== undefined) process.exitCode = 1;
     }
   } catch (err) {
-    console.error(`error: ${(err as Error).message}`);
+    const message = (err as Error).message;
+    console.error(`error: ${message}`);
+    // The appearance commands reach here when the CDP endpoint is closed, which
+    // is exactly when the launcher hint is worth printing.
+    if (message.includes("Cannot reach CDP")) {
+      for (const line of cdpRepairHint(port)) console.error(line);
+    }
     process.exitCode = 1;
   }
 }

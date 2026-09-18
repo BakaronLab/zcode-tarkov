@@ -29,6 +29,8 @@ import { ensureDataRoot } from "./dataRoot.js";
 import { BANNER_MODES } from "../prefs/types.js";
 import { resolvePalette } from "../themes/palette.js";
 import { applyRecoveryMode, loadRecovery, normalizeMode } from "./recovery.js";
+import { repairLaunchers } from "./launchers.js";
+import { describeStartupRepair, repairLaunchersIfZcodeLostTheFlag } from "./startupRepair.js";
 import { cliEntryPath, getAutostartStatus } from "./autostart.js";
 import { getPrefs, prefsLoadInfo, setPrefs } from "../prefs/store.js";
 import { handleHostRoute } from "../api/hostRoutes.js";
@@ -91,6 +93,14 @@ let runtimeState: RuntimeState = { cdpReachable: false, rendererCount: 0, zcodeR
 
 /** Walking the process table on every failed poll would be wasteful. */
 let nextProcessProbe = 0;
+
+/**
+ * The startup launcher repair runs at most once per process: the poll can keep
+ * seeing "ZCode is running, no CDP" forever, and re-running a repair every
+ * probe would keep rewriting shortcuts for a state the user has to fix by
+ * restarting ZCode anyway.
+ */
+let startupLauncherRepairStarted = false;
 
 // One decoded image + extracted theme, reused across slider updates so the
 // panel feels instant. Invalidated whenever the wallpaper file changes.
@@ -313,6 +323,36 @@ async function pushConfigToSessions(
   return ok;
 }
 
+/**
+ * Repairs the launch entries in the background when ZCode is up without CDP.
+ *
+ * Fire-and-forget: the poll loop must keep running (the panel shows the live
+ * state) and a failure here must never become an unhandled rejection. The
+ * decision logic lives in startupRepair.ts, shared with the MCP server; the
+ * outcome lines are the only thing logged, so an uneventful run is silent.
+ */
+function repairLaunchersInBackground(port: number): void {
+  if (startupLauncherRepairStarted) return;
+  startupLauncherRepairStarted = true;
+  void repairLaunchersIfZcodeLostTheFlag({
+    port,
+    probeCdp: async () => {
+      try {
+        await listTargets(port);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    probeZcode: async () => runtimeState.zcodeRunning,
+    repair: repairLaunchers,
+  })
+    .then((outcome) => {
+      for (const line of describeStartupRepair(outcome)) console.log(`serve: ${line}`);
+    })
+    .catch(() => {});
+}
+
 async function poll(
   config: BeautifyConfig,
   apiPort: number,
@@ -354,13 +394,18 @@ async function poll(
     }
     if (Date.now() > nextProcessProbe) {
       nextProcessProbe = Date.now() + 15_000;
+      const zcodeRunning = await isZcodeProcessRunning();
       runtimeState = {
         cdpReachable: false,
         rendererCount: 0,
-        zcodeRunning: await isZcodeProcessRunning(),
+        zcodeRunning,
         lastError: (err as Error).message,
         updatedAt: new Date().toISOString(),
       };
+      // ZCode running with the port closed is the symptom of a launch entry
+      // that lost --remote-debugging-port (its updater rebuilds the Start Menu
+      // shortcut without it). Repair once per process, off the poll path.
+      if (zcodeRunning) repairLaunchersInBackground(config.port);
     }
   }
 }

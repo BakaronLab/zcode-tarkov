@@ -3,15 +3,23 @@
  *
  * ZCode only opens its CDP port when it is started with
  * `--remote-debugging-port=<port>`, and that argument has to come from whatever
- * launches it — the app cannot add it to itself once it is running. A typical
- * machine has several entry points (desktop shortcut, Start Menu shortcut, the
- * machine-wide Public Desktop shortcut, the `zcode://` protocol handler and the
- * Explorer context-menu verbs) and usually only some of them carry the flag.
+ * launches it — the app cannot add it to itself once it is running, and its
+ * updater rebuilds the Start Menu shortcut without the flag. A typical machine
+ * has several entry points (desktop shortcut, Start Menu shortcut, the pinned
+ * taskbar shortcut, the machine-wide Public Desktop / ProgramData Start Menu
+ * shortcuts, the `zcode://` protocol handler and the Explorer context-menu
+ * verbs) and usually only some of them carry the flag.
  *
  * This module finds the ones that don't and adds it. All writes are per-user:
- * shortcuts in the user's own Desktop / Start Menu, plus ZCode's HKCU protocol
- * and shell handlers. The machine-wide Public Desktop and Start Menu are
- * reported as failures rather than attempted, because they need elevation.
+ * shortcuts in the user's own Desktop, Start Menu and pinned taskbar folder
+ * (ordinary `.lnk` files under
+ * `%APPDATA%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar`),
+ * plus ZCode's HKCU protocol and shell handlers. Machine-wide entries are
+ * reported as failures but never written at all — they need administrator
+ * rights, and this project never elevates.
+ *
+ * The scanned locations are overridable so tests and dev harnesses can run the
+ * whole thing against a scratch tree; production callers use the defaults.
  */
 
 import { execFile } from "node:child_process";
@@ -34,6 +42,9 @@ export interface RepairOptions {
   port: number;
   /** Report what would change without writing anything. */
   dryRun?: boolean;
+  /** Overrides for tests/dev harnesses. Defaults to the production locations. */
+  shortcutDirs?: ReadonlyArray<{ path: string; scope: "user" | "machine" }>;
+  registryKeys?: string[];
 }
 
 export interface RepairReport {
@@ -44,7 +55,67 @@ export interface RepairReport {
   error?: string;
 }
 
-function psScript(port: number, dryRun: boolean): string {
+/**
+ * The production shortcut directories, as PowerShell expressions so the script
+ * resolves them inside the user's own session. The pinned taskbar folder sits
+ * between the user Start Menu and the machine-wide entries on purpose: it is a
+ * user-scope location and the shortcuts there are what a user actually clicks.
+ */
+const DEFAULT_SHORTCUT_DIRS: ReadonlyArray<{
+  expr: string;
+  scope: "user" | "machine";
+}> = [
+  { expr: "(Join-Path $env:USERPROFILE 'Desktop')", scope: "user" },
+  { expr: "(Join-Path $env:APPDATA 'Microsoft\\Windows\\Start Menu\\Programs')", scope: "user" },
+  {
+    expr: "(Join-Path $env:APPDATA 'Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar')",
+    scope: "user",
+  },
+  { expr: "(Join-Path $env:PUBLIC 'Desktop')", scope: "machine" },
+  { expr: "(Join-Path $env:ProgramData 'Microsoft\\Windows\\Start Menu\\Programs')", scope: "machine" },
+];
+
+/** ZCode's own HKCU handlers. These are the only registry keys that may be written. */
+const DEFAULT_REGISTRY_KEYS = [
+  "HKCU:\\Software\\Classes\\zcode\\shell\\open\\command",
+  "HKCU:\\Software\\Classes\\Directory\\shell\\ZCode.OpenInZCode\\command",
+  "HKCU:\\Software\\Classes\\Drive\\shell\\ZCode.OpenInZCode\\command",
+];
+
+/** A single-quoted PowerShell literal. A quote in the value is doubled, not escaped. */
+function psQuote(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
+/**
+ * Builds the PowerShell script that scans and repairs the launch entries.
+ *
+ * Exported so tests can assert on the generated source without running it. The
+ * caller-supplied locations are embedded as single-quoted literals, and a
+ * registry key outside `HKCU:` is rejected outright — there is no HKLM path in
+ * this project, and machine-wide entries are never written.
+ */
+export function buildRepairScript(
+  port: number,
+  dryRun: boolean,
+  options: Pick<RepairOptions, "shortcutDirs" | "registryKeys"> = {}
+): string {
+  const dirs = (
+    options.shortcutDirs
+      ? options.shortcutDirs.map((d) => ({
+          expr: psQuote(d.path),
+          scope: d.scope === "machine" ? ("machine" as const) : ("user" as const),
+        }))
+      : DEFAULT_SHORTCUT_DIRS
+  ).map((d) => `  @{ path = ${d.expr}; scope = ${psQuote(d.scope)} }`);
+
+  const keys = (options.registryKeys ?? DEFAULT_REGISTRY_KEYS).map((key) => {
+    if (!key.startsWith("HKCU:")) {
+      throw new Error(`launcher repair only supports HKCU registry keys (got "${key}")`);
+    }
+    return `  ${psQuote(key)}`;
+  });
+
   return `
 $ErrorActionPreference = 'Continue'
 # Without this, Chinese Windows error strings come back as mojibake through
@@ -63,51 +134,52 @@ function Add-Result($kind, $p, $before, $after, $status, $reason) {
 }
 
 # --- shortcuts -------------------------------------------------------------
+# Each entry carries the scope that owns it. "user" entries are written when
+# the flag is missing; "machine" entries would need administrator rights, so
+# they are reported as failed and the file is left exactly as it is.
 $dirs = @(
-  (Join-Path $env:USERPROFILE 'Desktop'),
-  (Join-Path $env:APPDATA 'Microsoft\\Windows\\Start Menu\\Programs'),
-  (Join-Path $env:PUBLIC 'Desktop'),
-  (Join-Path $env:ProgramData 'Microsoft\\Windows\\Start Menu\\Programs')
+${dirs.join(",\n")}
 )
 
-$lnks = @()
-foreach ($d in $dirs) {
-  if ($d -and (Test-Path -LiteralPath $d)) {
-    $lnks += @(Get-ChildItem -LiteralPath $d -Filter '*.lnk' -Recurse -ErrorAction SilentlyContinue)
-  }
-}
-
 $wsh = New-Object -ComObject WScript.Shell
-foreach ($item in $lnks) {
-  try { $sc = $wsh.CreateShortcut($item.FullName) } catch { continue }
-  $target = [string]$sc.TargetPath
-  if ($target -notlike '*ZCode.exe') { continue }
+foreach ($d in $dirs) {
+  $dirPath = [string]$d.path
+  $scope = [string]$d.scope
+  if (-not $dirPath -or -not (Test-Path -LiteralPath $dirPath)) { continue }
+  foreach ($item in @(Get-ChildItem -LiteralPath $dirPath -Filter '*.lnk' -Recurse -ErrorAction SilentlyContinue)) {
+    try { $sc = $wsh.CreateShortcut($item.FullName) } catch { continue }
+    $target = [string]$sc.TargetPath
+    if ($target -notlike '*ZCode.exe') { continue }
 
-  $before = [string]$sc.Arguments
-  if ($before -match 'remote-debugging-port') {
-    Add-Result 'shortcut' $item.FullName $before $before 'already-ok' $null
-    continue
-  }
+    $before = [string]$sc.Arguments
+    if ($before -match 'remote-debugging-port') {
+      Add-Result 'shortcut' $item.FullName $before $before 'already-ok' $null
+      continue
+    }
 
-  $after = ($before.Trim() + $flag).Trim()
-  if ($dryRun) {
-    Add-Result 'shortcut' $item.FullName $before $after 'updated' 'dry-run'
-    continue
-  }
-  try {
-    $sc.Arguments = $after
-    $sc.Save()
-    Add-Result 'shortcut' $item.FullName $before $after 'updated' $null
-  } catch {
-    Add-Result 'shortcut' $item.FullName $before $after 'failed' $_.Exception.Message
+    $after = ($before.Trim() + $flag).Trim()
+    if ($scope -eq 'machine') {
+      Add-Result 'shortcut' $item.FullName $before $before 'failed' 'machine-wide entry needs administrator rights; not modified'
+      continue
+    }
+    if ($dryRun) {
+      Add-Result 'shortcut' $item.FullName $before $after 'updated' 'dry-run'
+      continue
+    }
+    try {
+      $sc.Arguments = $after
+      $sc.Save()
+      Add-Result 'shortcut' $item.FullName $before $after 'updated' $null
+    } catch {
+      Add-Result 'shortcut' $item.FullName $before $after 'failed' $_.Exception.Message
+    }
   }
 }
 
 # --- HKCU protocol / shell handlers ----------------------------------------
+# Only HKCU keys ever reach this list; buildRepairScript rejects anything else.
 $keys = @(
-  'HKCU:\\Software\\Classes\\zcode\\shell\\open\\command',
-  'HKCU:\\Software\\Classes\\Directory\\shell\\ZCode.OpenInZCode\\command',
-  'HKCU:\\Software\\Classes\\Drive\\shell\\ZCode.OpenInZCode\\command'
+${keys.join(",\n")}
 )
 
 foreach ($k in $keys) {
@@ -159,8 +231,8 @@ interface RawResult {
 
 /**
  * Scans every ZCode launcher and adds the CDP flag where it is missing.
- * Never throws: a platform without these mechanisms, or a missing PowerShell,
- * comes back as a report with `error` set.
+ * Never throws: a platform without these mechanisms, a missing PowerShell, or
+ * an invalid custom target comes back as a report with `error` set.
  */
 export async function repairLaunchers(opts: RepairOptions): Promise<RepairReport> {
   const dryRun = opts.dryRun ?? false;
@@ -173,7 +245,14 @@ export async function repairLaunchers(opts: RepairOptions): Promise<RepairReport
     };
   }
 
-  const encoded = Buffer.from(psScript(opts.port, dryRun), "utf16le").toString("base64");
+  let script: string;
+  try {
+    script = buildRepairScript(opts.port, dryRun, opts);
+  } catch (err) {
+    return { supported: true, dryRun, fixes: [], error: (err as Error).message };
+  }
+
+  const encoded = Buffer.from(script, "utf16le").toString("base64");
   try {
     const { stdout } = await execFileAsync(
       "powershell",

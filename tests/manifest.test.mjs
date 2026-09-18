@@ -18,7 +18,7 @@ const marketplace = readJson("marketplace.json");
 const lock = readJson("package-lock.json");
 
 const PRODUCT_NAME = "zcode-tarkov";
-const PRODUCT_VERSION = "0.2.0";
+const PRODUCT_VERSION = "0.2.1";
 
 test("package.json carries the frozen product identity", () => {
   assert.equal(pkg.name, PRODUCT_NAME);

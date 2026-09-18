@@ -11,6 +11,7 @@ verification material. It is not user documentation; the user guide is
 | `install-layout.md` | The authoritative lifecycle contract: the installed tree, the `settings.json` schema, the ZCode discovery order, the exit codes, what each script may destroy, and the interfaces a ZCode update can invalidate. |
 | `zcode-dom-notes.md` | The live DOM/CSS facts the theme depends on — token scopes, the stable `data-slot` / Radix vocabulary, the banner anchor — plus the isolated-instance recipe used to observe a running ZCode without disturbing the user's own instance. |
 | `zcode-runtime-signals.md` | The **run-state** signals — is the agent working, finished, waiting for an approval, rendering a tool call — with the state transition each was observed to move between and, just as importantly, the items that could **not** be observed. Start here when a ZCode update breaks something behavioural. |
+| `UPSTREAM_SYNC.md` | The upstream review ledger: which `zcode-beautify` revisions have been reviewed, how each commit was classified, what was ported, and which divergences from upstream are deliberate. |
 | `OWNER_PLAYTEST.md` | The owner checklist for the v0.1.0 playtest: eyeball checks, no commands. |
 | `../tools/` | The re-runnable verification harnesses (below). |
 | `../evidence/` | Historical deployment evidence, including the owner-playtest preparation record with its before/after hashes. |
@@ -24,6 +25,7 @@ npm run build            # tsc -> dist, then esbuild -> dist/client.js
 npm test                 # compiles to .test-build/ and runs node --test
 npm run bundle           # build, then esbuild -> the three committed dist bundles
 npm run test:lifecycle   # the lifecycle regression suite (PowerShell, temp-only)
+npm run test:launcher-repair # the launcher-repair regression suite (PowerShell, temp-only)
 ```
 
 Three bundles are committed and users never build them: `dist/cli.js`,
@@ -51,6 +53,7 @@ line carries the scratch CDP port).
 | `tools/probe-signals.mjs` | Rediscovery of the DOM run-state signals after a ZCode update. Subcommands `launch / snapshot / watch / send / eval / click / close / session`. |
 | `tools/verify-clean-install.ps1` (with the CDP driver `tools/verify-clean-install.mjs`) | The full end-to-end journey on an isolated scratch tree: clean `install.ps1` -> isolated launch -> the Tarkov theme visible in the live renderer (30 renderer assertions) -> screenshots -> uninstall (dry run, real run, idempotency) -> the real profile provably unchanged. Result: `docs/images/clean-install-evidence.json`. |
 | `tools/test-lifecycle.ps1` | The bounded, temp-only regression suite for `install.ps1` / `repair.ps1` / `uninstall.ps1`: clean install, install idempotency, refusal of a foreign `settings.json` (and `-Force` adoption), `repair.ps1` merging `-ShortcutDir` into the recorded list, uninstall `-DryRun` changing nothing, a real uninstall that keeps the data directory **and the user's media**, `-PurgeUserData` deleting exactly the root it was aimed at, a second uninstall reporting `[absent]`, and the real profile unchanged. It runs with `-NoService` and `-KeepOfficialShortcuts`, so no real service, shortcut or registry value is touched. |
+| `tools/test-launcher-repair.ps1` | The bounded, temp-only regression suite for `repair-launchers`: it builds real `.lnk` files and a scratch `HKCU` prefix below `$TEMP` and drives the compiled repair with `USERPROFILE`, `APPDATA`, `PUBLIC` and `ProgramData` redirected into the scratch tree. 51 assertions: the pinned taskbar is repaired as a user entry, machine-wide entries are reported `failed` and proven byte-identical, a decoy executable is untouched, a malformed shortcut does not abort the run, and a second run changes nothing. |
 
 Known `NOT TESTED` branch: the launcher's start path (starting ZCode itself).
 The end-to-end run happened while a ZCode instance was already live, so the

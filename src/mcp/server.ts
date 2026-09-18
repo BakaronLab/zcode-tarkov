@@ -8,13 +8,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { applyColorsOnly, applyWallpaper, reapplyStored, resetAppearance } from "../core/session.js";
-import { loadConfig } from "../core/launch.js";
+import { isZcodeProcessRunning, loadConfig } from "../core/launch.js";
 import { DEFAULT_CONFIG } from "../core/inject.js";
 import { migrateColorMode } from "../core/colorMode.js";
 import { listTargets, pickRendererTargets } from "../core/cdp.js";
 import { getAutostartStatus, installAutostart, uninstallAutostart } from "../core/autostart.js";
 import { loadRecovery, setRecoveryMode } from "../core/recovery.js";
 import { repairLaunchers } from "../core/launchers.js";
+import { describeStartupRepair, repairLaunchersIfZcodeLostTheFlag } from "../core/startupRepair.js";
 
 // Substituted at bundle time by scripts/bundle.mjs from package.json.
 declare const __PLUGIN_VERSION__: string;
@@ -234,8 +235,10 @@ server.registerTool(
     description:
       "ZCode only opens its CDP port when it is started with --remote-debugging-port, and that flag has to come from the " +
       "shortcut or handler that launches it. A machine usually has several launch entries and only some carry the flag. " +
-      "This scans the desktop and Start Menu shortcuts plus the zcode:// protocol and Explorer context-menu verbs, and adds " +
-      "the flag where it is missing. Machine-wide entries that need administrator rights are reported, not modified.",
+      "This scans the desktop, Start Menu and pinned taskbar shortcuts plus the zcode:// protocol and Explorer " +
+      "context-menu verbs, and adds the flag where it is missing. Shortcuts are the durable entries: ZCode's updater " +
+      "rebuilds the Start Menu shortcut without the flag, while the app re-registers its registry handlers on every " +
+      "start. Machine-wide entries that need administrator rights are reported, not modified.",
     inputSchema: {
       dry_run: z.boolean().optional().describe("Only report what would change; write nothing"),
     },
@@ -284,6 +287,31 @@ async function restoreAfterStart(): Promise<void> {
     } catch {
       /* CDP not up yet, or ZCode started without the debug port */
     }
+  }
+
+  // The theme never came back. If ZCode is running but its CDP port is closed,
+  // the entry that started it probably lost --remote-debugging-port: the app
+  // cannot add the flag to itself, and its updater rebuilds the Start Menu
+  // shortcut without it. Repair the entries once so the next start is healthy.
+  try {
+    const port = loadConfig().port ?? DEFAULT_CONFIG.port;
+    const outcome = await repairLaunchersIfZcodeLostTheFlag({
+      port,
+      probeCdp: async () => {
+        try {
+          await listTargets(port);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      probeZcode: isZcodeProcessRunning,
+      repair: repairLaunchers,
+    });
+    // stdout carries the MCP protocol; the launcher-repair lines go to stderr.
+    for (const line of describeStartupRepair(outcome)) console.error(line);
+  } catch {
+    /* a startup repair must never take the MCP server down */
   }
 }
 

@@ -37092,15 +37092,15 @@ var makeIssue = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 function addIssueToContext(ctx, issueData) {
@@ -62086,19 +62086,19 @@ var getRefs = (options) => {
 };
 
 // node_modules/zod-to-json-schema/dist/esm/errorMessages.js
-function addErrorMessage(res, key, errorMessage, refs) {
+function addErrorMessage(res, key, errorMessage2, refs) {
   if (!refs?.errorMessages)
     return;
-  if (errorMessage) {
+  if (errorMessage2) {
     res.errorMessage = {
       ...res.errorMessage,
-      [key]: errorMessage
+      [key]: errorMessage2
     };
   }
 }
-function setResponseValueAndErrors(res, key, value, errorMessage, refs) {
+function setResponseValueAndErrors(res, key, value, errorMessage2, refs) {
   res[key] = value;
-  addErrorMessage(res, key, errorMessage, refs);
+  addErrorMessage(res, key, errorMessage2, refs);
 }
 
 // node_modules/zod-to-json-schema/dist/esm/getRelativePath.js
@@ -63409,8 +63409,8 @@ var Protocol = class {
                   if (queuedMessage.type === "response") {
                     resolver(message);
                   } else {
-                    const errorMessage = message;
-                    const error62 = new McpError(errorMessage.error.code, errorMessage.error.message, errorMessage.error.data);
+                    const errorMessage2 = message;
+                    const error62 = new McpError(errorMessage2.error.code, errorMessage2.error.message, errorMessage2.error.data);
                     resolver(error62);
                   }
                 } else {
@@ -64701,23 +64701,23 @@ var Server = class extends Protocol {
       const wrappedHandler = async (request, extra) => {
         const validatedRequest = safeParse2(CallToolRequestSchema, request);
         if (!validatedRequest.success) {
-          const errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage}`);
+          const errorMessage2 = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage2}`);
         }
         const { params } = validatedRequest.data;
         const result = await Promise.resolve(handler(request, extra));
         if (params.task) {
           const taskValidationResult = safeParse2(CreateTaskResultSchema, result);
           if (!taskValidationResult.success) {
-            const errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
-            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
+            const errorMessage2 = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
+            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage2}`);
           }
           return taskValidationResult.data;
         }
         const validationResult = safeParse2(CallToolResultSchema, result);
         if (!validationResult.success) {
-          const errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call result: ${errorMessage}`);
+          const errorMessage2 = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call result: ${errorMessage2}`);
         }
         return validationResult.data;
       };
@@ -65211,12 +65211,12 @@ var McpServer = class {
    * @param errorMessage - The error message.
    * @returns The tool error result.
    */
-  createToolError(errorMessage) {
+  createToolError(errorMessage2) {
     return {
       content: [
         {
           type: "text",
-          text: errorMessage
+          text: errorMessage2
         }
       ],
       isError: true
@@ -65234,8 +65234,8 @@ var McpServer = class {
     const parseResult = await safeParseAsync2(schemaToParse, args);
     if (!parseResult.success) {
       const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-      const errorMessage = getParseErrorMessage(error62);
-      throw new McpError(ErrorCode.InvalidParams, `Input validation error: Invalid arguments for tool ${toolName}: ${errorMessage}`);
+      const errorMessage2 = getParseErrorMessage(error62);
+      throw new McpError(ErrorCode.InvalidParams, `Input validation error: Invalid arguments for tool ${toolName}: ${errorMessage2}`);
     }
     return parseResult.data;
   }
@@ -65259,8 +65259,8 @@ var McpServer = class {
     const parseResult = await safeParseAsync2(outputObj, result.structuredContent);
     if (!parseResult.success) {
       const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-      const errorMessage = getParseErrorMessage(error62);
-      throw new McpError(ErrorCode.InvalidParams, `Output validation error: Invalid structured content for tool ${toolName}: ${errorMessage}`);
+      const errorMessage2 = getParseErrorMessage(error62);
+      throw new McpError(ErrorCode.InvalidParams, `Output validation error: Invalid structured content for tool ${toolName}: ${errorMessage2}`);
     }
   }
   /**
@@ -65472,8 +65472,8 @@ var McpServer = class {
         const parseResult = await safeParseAsync2(argsObj, request.params.arguments);
         if (!parseResult.success) {
           const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-          const errorMessage = getParseErrorMessage(error62);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request.params.name}: ${errorMessage}`);
+          const errorMessage2 = getParseErrorMessage(error62);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request.params.name}: ${errorMessage2}`);
         }
         const args = parseResult.data;
         const cb = prompt.callback;
@@ -69078,15 +69078,15 @@ var makeIssue2 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH = [];
@@ -73134,15 +73134,15 @@ var makeIssue3 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH2 = [];
@@ -77960,15 +77960,15 @@ var makeIssue4 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH3 = [];
@@ -82043,15 +82043,15 @@ var makeIssue5 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH4 = [];
@@ -87573,15 +87573,15 @@ var makeIssue6 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH5 = [];
@@ -92246,15 +92246,15 @@ var makeIssue7 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH6 = [];
@@ -96338,15 +96338,15 @@ var makeIssue8 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH7 = [];
@@ -100560,15 +100560,15 @@ var makeIssue9 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH8 = [];
@@ -104648,15 +104648,15 @@ var makeIssue10 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH9 = [];
@@ -108769,15 +108769,15 @@ var makeIssue11 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH10 = [];
@@ -112848,15 +112848,15 @@ var makeIssue12 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH11 = [];
@@ -117081,15 +117081,15 @@ var makeIssue13 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH12 = [];
@@ -121179,15 +121179,15 @@ var makeIssue14 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH13 = [];
@@ -125420,15 +125420,15 @@ var makeIssue15 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH14 = [];
@@ -129622,15 +129622,15 @@ var makeIssue16 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH15 = [];
@@ -136594,15 +136594,15 @@ var makeIssue17 = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage = map2(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map2(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH16 = [];
@@ -145978,6 +145978,21 @@ var ZCODE_EXE_CANDIDATES = process.platform === "win32" ? [
   path3.join(os2.homedir(), "AppData", "Local", "Programs", "ZCode", "ZCode.exe")
 ].filter(Boolean) : process.platform === "darwin" ? ["/Applications/ZCode.app/Contents/MacOS/ZCode"] : ["/usr/bin/zcode", "/opt/ZCode/zcode"];
 var execFileAsync = promisify(execFile);
+async function isZcodeProcessRunning() {
+  try {
+    if (process.platform === "win32") {
+      const { stdout: stdout2 } = await execFileAsync("tasklist", ["/NH", "/FI", "IMAGENAME eq ZCode.exe"], {
+        windowsHide: true
+      });
+      return stdout2.toLowerCase().includes("zcode.exe");
+    }
+    const name = process.platform === "darwin" ? "ZCode" : "zcode";
+    const { stdout } = await execFileAsync("pgrep", ["-x", name]);
+    return stdout.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
 
 // dist/core/session.js
 function mergedConfig(opts, stored = loadConfig()) {
@@ -146203,7 +146218,35 @@ function setRecoveryMode(mode) {
 import { execFile as execFile2 } from "node:child_process";
 import { promisify as promisify2 } from "node:util";
 var execFileAsync2 = promisify2(execFile2);
-function psScript(port, dryRun) {
+var DEFAULT_SHORTCUT_DIRS = [
+  { expr: "(Join-Path $env:USERPROFILE 'Desktop')", scope: "user" },
+  { expr: "(Join-Path $env:APPDATA 'Microsoft\\Windows\\Start Menu\\Programs')", scope: "user" },
+  {
+    expr: "(Join-Path $env:APPDATA 'Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar')",
+    scope: "user"
+  },
+  { expr: "(Join-Path $env:PUBLIC 'Desktop')", scope: "machine" },
+  { expr: "(Join-Path $env:ProgramData 'Microsoft\\Windows\\Start Menu\\Programs')", scope: "machine" }
+];
+var DEFAULT_REGISTRY_KEYS = [
+  "HKCU:\\Software\\Classes\\zcode\\shell\\open\\command",
+  "HKCU:\\Software\\Classes\\Directory\\shell\\ZCode.OpenInZCode\\command",
+  "HKCU:\\Software\\Classes\\Drive\\shell\\ZCode.OpenInZCode\\command"
+];
+function psQuote(value) {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+function buildRepairScript(port, dryRun, options = {}) {
+  const dirs = (options.shortcutDirs ? options.shortcutDirs.map((d) => ({
+    expr: psQuote(d.path),
+    scope: d.scope === "machine" ? "machine" : "user"
+  })) : DEFAULT_SHORTCUT_DIRS).map((d) => `  @{ path = ${d.expr}; scope = ${psQuote(d.scope)} }`);
+  const keys = (options.registryKeys ?? DEFAULT_REGISTRY_KEYS).map((key) => {
+    if (!key.startsWith("HKCU:")) {
+      throw new Error(`launcher repair only supports HKCU registry keys (got "${key}")`);
+    }
+    return `  ${psQuote(key)}`;
+  });
   return `
 $ErrorActionPreference = 'Continue'
 # Without this, Chinese Windows error strings come back as mojibake through
@@ -146222,51 +146265,52 @@ function Add-Result($kind, $p, $before, $after, $status, $reason) {
 }
 
 # --- shortcuts -------------------------------------------------------------
+# Each entry carries the scope that owns it. "user" entries are written when
+# the flag is missing; "machine" entries would need administrator rights, so
+# they are reported as failed and the file is left exactly as it is.
 $dirs = @(
-  (Join-Path $env:USERPROFILE 'Desktop'),
-  (Join-Path $env:APPDATA 'Microsoft\\Windows\\Start Menu\\Programs'),
-  (Join-Path $env:PUBLIC 'Desktop'),
-  (Join-Path $env:ProgramData 'Microsoft\\Windows\\Start Menu\\Programs')
+${dirs.join(",\n")}
 )
 
-$lnks = @()
-foreach ($d in $dirs) {
-  if ($d -and (Test-Path -LiteralPath $d)) {
-    $lnks += @(Get-ChildItem -LiteralPath $d -Filter '*.lnk' -Recurse -ErrorAction SilentlyContinue)
-  }
-}
-
 $wsh = New-Object -ComObject WScript.Shell
-foreach ($item in $lnks) {
-  try { $sc = $wsh.CreateShortcut($item.FullName) } catch { continue }
-  $target = [string]$sc.TargetPath
-  if ($target -notlike '*ZCode.exe') { continue }
+foreach ($d in $dirs) {
+  $dirPath = [string]$d.path
+  $scope = [string]$d.scope
+  if (-not $dirPath -or -not (Test-Path -LiteralPath $dirPath)) { continue }
+  foreach ($item in @(Get-ChildItem -LiteralPath $dirPath -Filter '*.lnk' -Recurse -ErrorAction SilentlyContinue)) {
+    try { $sc = $wsh.CreateShortcut($item.FullName) } catch { continue }
+    $target = [string]$sc.TargetPath
+    if ($target -notlike '*ZCode.exe') { continue }
 
-  $before = [string]$sc.Arguments
-  if ($before -match 'remote-debugging-port') {
-    Add-Result 'shortcut' $item.FullName $before $before 'already-ok' $null
-    continue
-  }
+    $before = [string]$sc.Arguments
+    if ($before -match 'remote-debugging-port') {
+      Add-Result 'shortcut' $item.FullName $before $before 'already-ok' $null
+      continue
+    }
 
-  $after = ($before.Trim() + $flag).Trim()
-  if ($dryRun) {
-    Add-Result 'shortcut' $item.FullName $before $after 'updated' 'dry-run'
-    continue
-  }
-  try {
-    $sc.Arguments = $after
-    $sc.Save()
-    Add-Result 'shortcut' $item.FullName $before $after 'updated' $null
-  } catch {
-    Add-Result 'shortcut' $item.FullName $before $after 'failed' $_.Exception.Message
+    $after = ($before.Trim() + $flag).Trim()
+    if ($scope -eq 'machine') {
+      Add-Result 'shortcut' $item.FullName $before $before 'failed' 'machine-wide entry needs administrator rights; not modified'
+      continue
+    }
+    if ($dryRun) {
+      Add-Result 'shortcut' $item.FullName $before $after 'updated' 'dry-run'
+      continue
+    }
+    try {
+      $sc.Arguments = $after
+      $sc.Save()
+      Add-Result 'shortcut' $item.FullName $before $after 'updated' $null
+    } catch {
+      Add-Result 'shortcut' $item.FullName $before $after 'failed' $_.Exception.Message
+    }
   }
 }
 
 # --- HKCU protocol / shell handlers ----------------------------------------
+# Only HKCU keys ever reach this list; buildRepairScript rejects anything else.
 $keys = @(
-  'HKCU:\\Software\\Classes\\zcode\\shell\\open\\command',
-  'HKCU:\\Software\\Classes\\Directory\\shell\\ZCode.OpenInZCode\\command',
-  'HKCU:\\Software\\Classes\\Drive\\shell\\ZCode.OpenInZCode\\command'
+${keys.join(",\n")}
 )
 
 foreach ($k in $keys) {
@@ -146316,7 +146360,13 @@ async function repairLaunchers(opts) {
       error: "launcher repair is only implemented for Windows; on other platforms edit your app shortcut manually"
     };
   }
-  const encoded = Buffer.from(psScript(opts.port, dryRun), "utf16le").toString("base64");
+  let script;
+  try {
+    script = buildRepairScript(opts.port, dryRun, opts);
+  } catch (err) {
+    return { supported: true, dryRun, fixes: [], error: err.message };
+  }
+  const encoded = Buffer.from(script, "utf16le").toString("base64");
   try {
     const { stdout } = await execFileAsync2("powershell", ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded], { maxBuffer: 8 * 1024 * 1024, timeout: 12e4, windowsHide: true });
     const trimmed = stdout.trim();
@@ -146341,10 +146391,56 @@ async function repairLaunchers(opts) {
   }
 }
 
+// dist/core/startupRepair.js
+function errorMessage(err) {
+  return err instanceof Error ? err.message : String(err);
+}
+async function repairLaunchersIfZcodeLostTheFlag(deps) {
+  const platform = deps.platform ?? process.platform;
+  if (platform !== "win32") {
+    return { kind: "skipped", reason: "unsupported-platform" };
+  }
+  try {
+    if (await deps.probeCdp()) {
+      return { kind: "skipped", reason: "cdp-reachable" };
+    }
+    if (!await deps.probeZcode()) {
+      return { kind: "skipped", reason: "zcode-not-running" };
+    }
+    const report = await deps.repair({ port: deps.port });
+    if (report.error) {
+      return { kind: "failed", port: deps.port, error: report.error };
+    }
+    const updated = report.fixes.filter((f2) => f2.status === "updated").map((f2) => f2.path);
+    if (updated.length > 0) {
+      return { kind: "repaired", port: deps.port, updated };
+    }
+    return { kind: "no-op", port: deps.port, scanned: report.fixes.length };
+  } catch (err) {
+    return { kind: "failed", port: deps.port, error: errorMessage(err) };
+  }
+}
+function describeStartupRepair(outcome) {
+  switch (outcome.kind) {
+    case "repaired":
+      return [
+        `ZCode is running without --remote-debugging-port=${outcome.port}, and its launch entries were missing the flag.`,
+        `Added the flag to ${outcome.updated.length} launch entry(ies):`,
+        ...outcome.updated,
+        "Quit ZCode completely (including the tray icon), then start it again from one of these entries \u2014 the flag is read only at startup."
+      ];
+    case "failed":
+      return [`Could not repair ZCode's launch entries: ${outcome.error}`];
+    case "no-op":
+    case "skipped":
+      return [];
+  }
+}
+
 // dist/mcp/server.js
 var server = new McpServer({
   name: "zcode-tarkov",
-  version: "0.2.0"
+  version: "0.2.1"
 });
 server.registerTool("set_background", {
   title: "Set ZCode wallpaper",
@@ -146490,7 +146586,7 @@ server.registerTool("set_recovery_mode", {
 });
 server.registerTool("repair_launchers", {
   title: "Fix ZCode launch entries",
-  description: "ZCode only opens its CDP port when it is started with --remote-debugging-port, and that flag has to come from the shortcut or handler that launches it. A machine usually has several launch entries and only some carry the flag. This scans the desktop and Start Menu shortcuts plus the zcode:// protocol and Explorer context-menu verbs, and adds the flag where it is missing. Machine-wide entries that need administrator rights are reported, not modified.",
+  description: "ZCode only opens its CDP port when it is started with --remote-debugging-port, and that flag has to come from the shortcut or handler that launches it. A machine usually has several launch entries and only some carry the flag. This scans the desktop, Start Menu and pinned taskbar shortcuts plus the zcode:// protocol and Explorer context-menu verbs, and adds the flag where it is missing. Shortcuts are the durable entries: ZCode's updater rebuilds the Start Menu shortcut without the flag, while the app re-registers its registry handlers on every start. Machine-wide entries that need administrator rights are reported, not modified.",
   inputSchema: {
     dry_run: external_exports.boolean().optional().describe("Only report what would change; write nothing")
   }
@@ -146524,6 +146620,25 @@ async function restoreAfterStart() {
         return;
     } catch {
     }
+  }
+  try {
+    const port = loadConfig().port ?? DEFAULT_CONFIG.port;
+    const outcome = await repairLaunchersIfZcodeLostTheFlag({
+      port,
+      probeCdp: async () => {
+        try {
+          await listTargets(port);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      probeZcode: isZcodeProcessRunning,
+      repair: repairLaunchers
+    });
+    for (const line of describeStartupRepair(outcome))
+      console.error(line);
+  } catch {
   }
 }
 await server.connect(new StdioServerTransport());
