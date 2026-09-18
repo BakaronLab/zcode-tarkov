@@ -71,6 +71,14 @@ repair can write, where machine-wide entries stop, and that the per-user
 autostart entry is reported rather than written. The upstream review this port
 came from is recorded in `docs/dev/UPSTREAM_SYNC.md`.
 
+**Maintenance.** The repository now watches its own upstreams: a weekly
+`upstream-radar` workflow compares the revisions recorded in the ledger with the
+code upstream's latest release tag and default-branch head and with the design
+reference's default-branch head, and opens or updates a single
+`Upstream update available` issue when something moved. It only reads — it never
+merges, pulls, pushes or writes to the repository, and a ledger it cannot parse
+is reported instead of turning into a bogus issue.
+
 ## v0.2.0
 
 v0.1 was a Tarkov *theme*. v0.2 is a Tarkov *interface layer*: the theme plus

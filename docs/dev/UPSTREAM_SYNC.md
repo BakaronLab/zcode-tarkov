@@ -86,6 +86,26 @@ behavioural source change).
 6. Never rewrite a published tag, and never push upstream's tags into this
    repository's release namespace.
 
+### Upstream radar
+
+`.github/workflows/upstream-radar.yml` runs every Monday at 05:37 UTC (and can
+be dispatched manually with `force: true`, which reports the comparison even
+when nothing moved). It reads the three recorded values above, asks `gh api`
+for the code upstream's latest release tag and default-branch head and for the
+reference upstream's default-branch head, and writes its result to the job
+summary. It never merges, pulls, pushes or writes to this repository.
+
+- **Nothing moved:** no issue is touched.
+- **Something moved:** exactly one issue titled `Upstream update available` is
+  opened, or its body is updated if that issue is already open. The body names
+  each moved upstream, the recorded and observed revisions, the `git log`
+  command and the upstream compare link, and points back to this file.
+
+Act on such an issue by running the review above: classify every commit in the
+range, port only the delta with a regression test, then update the recorded
+values in this file (and `CHANGELOG.md`). The radar is a reminder only — it
+never edits this ledger and never makes the change itself.
+
 ## Deliberate divergences from upstream
 
 - **Machine-wide launch entries are reported, never written.** Upstream's

@@ -1,0 +1,219 @@
+name: Upstream radar
+
+# Weekly, read-only check: have either of this project's two upstreams moved
+# since the revision recorded in docs/dev/UPSTREAM_SYNC.md?
+#
+# The only write this workflow can perform is opening or updating ONE issue
+# titled "Upstream update available". It never merges, pulls, pushes, opens a
+# pull request, or modifies a file in this repository.
+
+on:
+  schedule:
+    # Mondays 05:37 UTC - deliberately offset from the other weekly job.
+    - cron: '37 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Report the comparison result even when nothing has moved
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Compare the recorded revisions with the upstream heads
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+
+          ledger=docs/dev/UPSTREAM_SYNC.md
+          code_repo=Logocceai/zcode-beautify
+          ref_repo=ZHIGENGNIAO258/dsh-theme-tarkov
+          issue_title='Upstream update available'
+          : "${GITHUB_STEP_SUMMARY:=/dev/null}"
+
+          # A parse failure must never open a bogus issue and must never look
+          # like an upstream change: report it, stop, exit 0.
+          give_up() {
+            echo "::error::upstream radar: $1"
+            echo "Upstream radar: $1 -- no issue was created or edited." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          }
+
+          [ -f "$ledger" ] || give_up "ledger $ledger not found"
+
+          # The tag and the commit sit on their marker line; -A1 is deliberately
+          # NOT used for them, because a missing value would then silently pick
+          # up the next field's value. The reference revision sits on the line
+          # after its marker, so -A1 is required there.
+          recorded_tag="$(grep -F -m1 'Last reviewed upstream tag:' "$ledger" | grep -oE '`[^`]+`' | head -n1 | tr -d '`' || true)"
+          recorded_commit="$(grep -F -m1 'Last reviewed upstream commit:' "$ledger" | grep -oE '`[0-9a-f]{40}`' | head -n1 | tr -d '`' || true)"
+          recorded_ref="$(grep -F -m1 -A1 'Last deliberately reviewed reference revision:' "$ledger" | grep -oE '`[0-9a-f]{40}`' | head -n1 | tr -d '`' || true)"
+
+          [ -n "$recorded_tag" ] || give_up "no recorded upstream tag in $ledger"
+          printf '%s' "$recorded_commit" | grep -qE '^[0-9a-f]{40}$' \
+            || give_up "recorded upstream commit '$recorded_commit' is not a 40-character hex SHA"
+          printf '%s' "$recorded_ref" | grep -qE '^[0-9a-f]{40}$' \
+            || give_up "recorded reference revision '$recorded_ref' is not a 40-character hex SHA"
+
+          echo "Recorded in $ledger: tag $recorded_tag, commit $recorded_commit, reference $recorded_ref"
+
+          # --- query the upstreams (public read through the default token) ---
+
+          code_tag=""
+          if ! code_tag="$(gh api "repos/$code_repo/releases/latest" --jq '.tag_name' 2>/dev/null)"; then
+            # No release at all (404): fall back to the newest tag, if any.
+            code_tag="$(gh api "repos/$code_repo/tags" --jq '.[0].name // empty' 2>/dev/null || true)"
+            if [ -n "$code_tag" ]; then
+              echo "Code upstream has no release; comparing against its newest tag ($code_tag)."
+            else
+              echo "::warning::code upstream has neither releases nor tags; tag comparison skipped."
+            fi
+          fi
+          code_tag_display="$code_tag"
+          [ -n "$code_tag_display" ] || code_tag_display='(no release or tag found)'
+
+          code_branch="$(gh api "repos/$code_repo" --jq '.default_branch')"
+          code_head="$(gh api "repos/$code_repo/commits/$code_branch" --jq '.sha')"
+          ref_branch="$(gh api "repos/$ref_repo" --jq '.default_branch')"
+          ref_head="$(gh api "repos/$ref_repo/commits/$ref_branch" --jq '.sha')"
+
+          # --- decide what moved ---
+
+          tag_moved=false
+          head_moved=false
+          ref_moved=false
+          if [ -n "$code_tag" ] && [ "$code_tag" != "$recorded_tag" ]; then
+            tag_moved=true
+          fi
+          if [ "$code_head" != "$recorded_commit" ]; then
+            head_moved=true
+          fi
+          if [ "$ref_head" != "$recorded_ref" ]; then
+            ref_moved=true
+          fi
+
+          if [ "$tag_moved" = false ] && [ "$head_moved" = false ] && [ "$ref_moved" = false ]; then
+            echo "Upstream radar: no change."
+            echo "  code upstream: tag $code_tag_display (recorded $recorded_tag), head $code_head (recorded $recorded_commit)"
+            echo "  reference upstream: head $ref_head (recorded $recorded_ref)"
+            if [ "${FORCE:-false}" = 'true' ]; then
+              {
+                echo '### Upstream radar (forced check)'
+                echo
+                echo 'No upstream has moved since the last recorded review.'
+                echo
+                echo "- Code upstream \`$code_repo\`: release tag \`$code_tag_display\` (recorded \`$recorded_tag\`); default-branch head \`$code_head\` (recorded \`$recorded_commit\`)"
+                echo "- Reference upstream \`$ref_repo\`: default-branch head \`$ref_head\` (recorded \`$recorded_ref\`)"
+              } >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "Upstream radar: unchanged -- code tag \`$code_tag_display\` = recorded \`$recorded_tag\`, code head \`$code_head\` = recorded \`$recorded_commit\`, reference head \`$ref_head\` = recorded \`$recorded_ref\`; nothing to review." >> "$GITHUB_STEP_SUMMARY"
+            fi
+            exit 0
+          fi
+
+          # --- something moved: build ONE issue body ---
+
+          body_file="$(mktemp)"
+          trap 'rm -f "$body_file"' EXIT
+
+          {
+            echo 'The weekly upstream radar found upstream movement since the last recorded review.'
+            echo
+            echo 'This is a review request, not a change: the radar only reads. Nothing was merged, pulled, pushed or modified in this repository, and upstream code must not be taken wholesale.'
+            echo
+          } > "$body_file"
+
+          if [ "$tag_moved" = true ] || [ "$head_moved" = true ]; then
+            {
+              echo "## Code upstream: \`$code_repo\`"
+              echo
+            } >> "$body_file"
+            if [ "$tag_moved" = true ]; then
+              {
+                echo '**Moved: latest release tag**'
+                echo
+                echo "- Recorded in the ledger: \`$recorded_tag\`"
+                echo "- Observed upstream: \`$code_tag\`"
+                echo "- See the difference: \`git log --oneline $recorded_tag..$code_tag\` (after fetching upstream's tags; see \"How to run a review\" in \`docs/dev/UPSTREAM_SYNC.md\`)"
+                echo "- Compare view: https://github.com/$code_repo/compare/$recorded_tag...$code_tag"
+                echo
+              } >> "$body_file"
+            fi
+            if [ "$head_moved" = true ]; then
+              {
+                echo '**Moved: default-branch head**'
+                echo
+                echo "- Recorded in the ledger: \`$recorded_commit\`"
+                echo "- Observed upstream: \`$code_head\`"
+                echo "- See the difference: \`git log --oneline $recorded_commit..$code_head\`"
+                echo "- Compare view: https://github.com/$code_repo/compare/$recorded_commit...$code_head"
+                echo
+              } >> "$body_file"
+            fi
+          fi
+
+          if [ "$ref_moved" = true ]; then
+            {
+              echo "## Design / reference upstream: \`$ref_repo\`"
+              echo
+              echo 'This upstream is a design and product reference only and is deliberately never merged.'
+              echo
+              echo '**Moved: default-branch head**'
+              echo
+              echo "- Recorded in the ledger: \`$recorded_ref\`"
+              echo "- Observed upstream: \`$ref_head\`"
+              echo "- See the difference: \`git log --oneline $recorded_ref..$ref_head\`"
+              echo "- Compare view: https://github.com/$ref_repo/compare/$recorded_ref...$ref_head"
+              echo
+            } >> "$body_file"
+          fi
+
+          {
+            echo '## What to do'
+            echo
+            echo '1. Review the movement with the procedure in `docs/dev/UPSTREAM_SYNC.md` ("How to run a review").'
+            echo '2. Classify **every** commit in the range and port only the delta -- do not merge or pull upstream code.'
+            echo '3. Update the recorded values in `docs/dev/UPSTREAM_SYNC.md` (and `CHANGELOG.md`) in the same change; add a regression test for every ported behaviour.'
+            echo
+            echo '_This issue is created or updated by `.github/workflows/upstream-radar.yml`._'
+          } >> "$body_file"
+
+          {
+            echo '### Upstream radar: update available'
+            echo
+            if [ "$tag_moved" = true ] || [ "$head_moved" = true ]; then
+              echo "- Code upstream \`$code_repo\`: tag \`$recorded_tag\` -> \`$code_tag_display\`; head \`$recorded_commit\` -> \`$code_head\`"
+            fi
+            if [ "$ref_moved" = true ]; then
+              echo "- Reference upstream \`$ref_repo\`: head \`$recorded_ref\` -> \`$ref_head\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # --- exactly one open issue with this exact title ---
+
+          issue_number="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "in:title \"$issue_title\"" --limit 100 \
+            --json number,title --jq ".[] | select(.title == \"$issue_title\") | .number" \
+            | head -n1 || true)"
+
+          if [ -n "$issue_number" ]; then
+            gh issue edit "$issue_number" --repo "$GITHUB_REPOSITORY" --body-file "$body_file"
+            echo "Updated issue #$issue_number."
+            echo "- Issue: https://github.com/$GITHUB_REPOSITORY/issues/$issue_number" >> "$GITHUB_STEP_SUMMARY"
+          else
+            issue_url="$(gh issue create --repo "$GITHUB_REPOSITORY" --title "$issue_title" --body-file "$body_file")"
+            echo "Created issue: $issue_url"
+            echo "- Issue: $issue_url" >> "$GITHUB_STEP_SUMMARY"
+          fi
