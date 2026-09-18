@@ -4,7 +4,7 @@ You are installing a **theming plugin for the ZCode desktop client**. Read this
 whole file before you touch anything; the rules in "Never do these" are the
 difference between a helpful install and damaging someone's machine.
 
-Version this guide covers: **v0.2.1**.
+Version this guide covers: **v0.2.2**.
 
 ---
 

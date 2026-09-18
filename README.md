@@ -5,7 +5,7 @@ a beta-warning band, background music with a dock, event sound effects, a dragga
 desktop companion, and a randomized running-status line, all driven from a settings
 centre inside the app.
 
-[![version](https://img.shields.io/badge/version-0.2.1-informational)](#)
+[![version](https://img.shields.io/badge/version-0.2.2-informational)](#)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![ZCode](https://img.shields.io/badge/ZCode-3.12.x-informational)](#zcode-updates--compatibility)
 [![bundled game assets](https://img.shields.io/badge/bundled%20game%20assets-none-success)](#disclaimer)

@@ -111909,7 +111909,11 @@ foreach ($d in $dirs) {
   foreach ($item in @(Get-ChildItem -LiteralPath $dirPath -Filter '*.lnk' -Recurse -ErrorAction SilentlyContinue)) {
     try { $sc = $wsh.CreateShortcut($item.FullName) } catch { continue }
     $target = [string]$sc.TargetPath
-    if ($target -notlike '*ZCode.exe') { continue }
+    # Identity must be proven before any write: the executable's file name has to
+    # be exactly ZCode.exe. A leading-wildcard match would also accept an
+    # unrelated MyZCode.exe, and the automatic startup repair would then edit
+    # that shortcut.
+    if ([System.IO.Path]::GetFileName($target) -ne 'ZCode.exe') { continue }
 
     $before = [string]$sc.Arguments
     if ($before -match 'remote-debugging-port') {
@@ -111947,7 +111951,12 @@ foreach ($k in $keys) {
   try {
     $key = Get-Item -LiteralPath $k
     $before = [string]$key.GetValue('')
-    if ($before -notmatch 'ZCode\\.exe') { continue }
+    # The value is '<exe>' followed by arguments. Take the first token and prove
+    # it is ZCode.exe itself, rather than merely mentioning it somewhere.
+    $exe = ''
+    if ($before -match '^\\s*"([^"]+)"') { $exe = $matches[1] }
+    elseif ($before -match '^\\s*(\\S+)') { $exe = $matches[1] }
+    if ([System.IO.Path]::GetFileName($exe) -ne 'ZCode.exe') { continue }
     if ($before -match 'remote-debugging-port') {
       Add-Result 'registry' $k $before $before 'already-ok' $null
       continue
@@ -113438,7 +113447,7 @@ var init_boot = __esm({
 // dist/core/version.js
 function pluginVersion() {
   try {
-    return true ? "0.2.1" : "0.0.0-dev";
+    return true ? "0.2.2" : "0.0.0-dev";
   } catch {
     return "0.0.0-dev";
   }

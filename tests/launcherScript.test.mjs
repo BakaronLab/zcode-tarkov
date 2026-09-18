@@ -72,9 +72,45 @@ test("no HKLM path and no elevation mechanism can appear", () => {
   assert.ok(PROD.includes("machine-wide entry needs administrator rights; not modified"));
 });
 
-test("the identity gates are present for both entry kinds", () => {
-  assert.ok(PROD.includes("'*ZCode.exe'"), "shortcuts must be filtered by TargetPath");
-  assert.ok(PROD.includes("'ZCode\\.exe'"), "registry values must be filtered by the command they hold");
+test("the shortcut identity gate proves the target's file name is exactly ZCode.exe", () => {
+  assert.ok(
+    PROD.includes("[System.IO.Path]::GetFileName($target) -ne 'ZCode.exe'"),
+    "a shortcut must be filtered on the exact file name of its resolved target"
+  );
+  // The loose leading-wildcard form also accepted an unrelated MyZCode.exe.
+  assert.equal(
+    PROD.includes("-notlike '*ZCode.exe'"),
+    false,
+    "the loose leading-wildcard target test must be gone"
+  );
+  assert.ok(
+    PROD.indexOf("[System.IO.Path]::GetFileName($target)") < PROD.indexOf("$before = [string]$sc.Arguments"),
+    "the identity gate must still run before the argument check and any write"
+  );
+});
+
+test("the registry identity gate proves the executable token's file name is exactly ZCode.exe", () => {
+  assert.ok(PROD.includes('if ($before -match \'^\\s*"([^"]+)"\') { $exe = $matches[1] }'), "a quoted first token must be extracted");
+  assert.ok(PROD.includes("elseif ($before -match '^\\s*(\\S+)') { $exe = $matches[1] }"), "an unquoted first token must be extracted");
+  assert.ok(PROD.includes("$exe = $matches[1]"), "the executable token must be captured from the match");
+  assert.ok(
+    PROD.includes("[System.IO.Path]::GetFileName($exe) -ne 'ZCode.exe'"),
+    "the extracted token's file name must be exactly ZCode.exe"
+  );
+  // The loose presence test accepted any command value merely containing ZCode.exe.
+  assert.equal(
+    PROD.includes("-notmatch 'ZCode\\.exe'"),
+    false,
+    "the loose registry presence test must be gone"
+  );
+});
+
+test("the registry flag insertion still targets the executable token and keeps the arguments", () => {
+  assert.ok(
+    PROD.includes("$after = $before -replace '^(\\s*(\"[^\"]+\"|\\S+))', ('$1' + $flag)"),
+    "the flag must still be inserted directly after the first token"
+  );
+  assert.ok(PROD.includes("if ($before -match 'remote-debugging-port')"), "an existing port value must still be honoured");
 });
 
 test("custom shortcut directories replace the production locations", () => {

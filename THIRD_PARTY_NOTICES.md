@@ -68,6 +68,11 @@ equivalent, what was ported and what was deliberately not — is kept in
   accent out of four independent literals and into one token. The build gained
   `scripts/bundle-client.mjs`. Nothing in this list came from either upstream;
   both are original to this project, written against ZCode's own runtime.
+- **v0.2.2** tightened the launcher-identity gate in `src/core/launchers.ts` to
+  compare the executable's file name for exact equality, where upstream accepts
+  any path ending in `ZCode.exe`. Recorded with its rationale under "Deliberate
+  divergences from upstream" in
+  [`docs/dev/UPSTREAM_SYNC.md`](docs/dev/UPSTREAM_SYNC.md).
 
 ---
 

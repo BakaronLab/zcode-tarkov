@@ -2,7 +2,7 @@
 
 **为 ZCode 桌面客户端打造的 Tarkov 风格界面层** —— 一套温暖的战术配色、一条测试版警示带、带悬浮条播放的背景音乐、事件音效、一只可拖动的桌宠，以及一行随机轮换的运行状态文案，全部由应用内的设置中心驱动。
 
-[![version](https://img.shields.io/badge/version-0.2.1-informational)](#)
+[![version](https://img.shields.io/badge/version-0.2.2-informational)](#)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![ZCode](https://img.shields.io/badge/ZCode-3.12.x-informational)](#zcode-updates--compatibility)
 [![bundled game assets](https://img.shields.io/badge/bundled%20game%20assets-none-success)](#disclaimer)

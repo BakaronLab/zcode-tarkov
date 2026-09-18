@@ -108,6 +108,21 @@ never edits this ledger and never makes the change itself.
 
 ## Deliberate divergences from upstream
 
+- **Launcher identity is proven by exact file name, not by suffix.** Upstream
+  decides a shortcut belongs to ZCode with `$target -notlike '*ZCode.exe'`, which
+  matches anything whose path merely *ends* in `ZCode.exe` — an unrelated
+  `C:\tools\MyZCode.exe` passes it — and its registry check accepts any command
+  value that mentions `ZCode.exe` anywhere. Both gates here compare the
+  executable's file name for exact equality
+  (`[System.IO.Path]::GetFileName(...) -ne 'ZCode.exe'`), and the registry value
+  is resolved to its executable token first. The looseness was harmless while the
+  repair was manual; v0.2.1 made it run automatically, and v0.2.2 tightened the
+  gates. `tools/test-launcher-repair.ps1` carries `NotZCode.exe` decoys for both
+  a shortcut and a registry value, and fails loudly against the loose gates.
+  Known behaviour delta: an unquoted handler value containing spaces now yields
+  its first token only (`C:\Program`), so it is rejected rather than accepted.
+  Windows handler values are conventionally quoted, and the value ZCode itself
+  registers is quoted, so this is treated as a malformed-value case.
 - **Machine-wide launch entries are reported, never written.** Upstream's
   generated repair script attempts to rewrite the `%PUBLIC%\Desktop` and
   `%ProgramData%\...\Start Menu\Programs` shortcuts and reports the OS error

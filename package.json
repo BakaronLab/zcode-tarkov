@@ -1,6 +1,6 @@
 {
   "name": "zcode-tarkov",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Escape-from-Tarkov-inspired theme mode for the ZCode desktop client: fixed Tarkov palette, Monet dynamic color, and native passthrough, via CDP injection with a live settings panel.",
   "type": "module",
   "license": "MIT",

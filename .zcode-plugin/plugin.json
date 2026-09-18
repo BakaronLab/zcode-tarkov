@@ -1,6 +1,6 @@
 {
   "name": "zcode-tarkov",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Escape-from-Tarkov-inspired theme mode for the ZCode desktop client: a fixed Tarkov palette, Monet wallpaper-derived colors, or ZCode's native colors.",
   "author": {
     "name": "zcode-tarkov contributors"

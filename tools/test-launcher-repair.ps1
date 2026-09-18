@@ -3,10 +3,12 @@
   test-launcher-repair.ps1 - bounded end-to-end test of the launcher repair
   (src/core/launchers.ts) against a scratch tree below $env:TEMP.
 
-  It creates a fake ZCode.exe (and a fake notepad.exe decoy), builds real .lnk
+  It creates a fake ZCode.exe (plus a fake notepad.exe decoy and a fake
+  NotZCode.exe decoy whose name merely ends with ZCode.exe), builds real .lnk
   files with WScript.Shell in scratch Desktop / Start Menu / pinned TaskBar
-  directories plus scratch machine-wide directories, seeds one scratch HKCU
-  handler key, and drives the real repair through
+  directories plus scratch machine-wide directories, seeds scratch HKCU handler
+  keys (one real-looking, one decoy whose executable token is NotZCode.exe), and
+  drives the real repair through
   tools/launcher-repair-probe.mjs (the compiled .test-build/core/launchers.js)
   with USERPROFILE, APPDATA, PUBLIC and ProgramData redirected into the scratch
   tree.
@@ -134,8 +136,10 @@ $machineStartMenu = Join-Path $programDataDir 'Microsoft\Windows\Start Menu\Prog
 
 $fakeZcode = Join-Path $fakeAppDir 'ZCode.exe'
 $fakeNotepad = Join-Path $fakeAppDir 'notepad.exe'
+$fakeNotZcode = Join-Path $fakeAppDir 'NotZCode.exe'
 $regPrefix = 'HKCU:\Software\Classes\__zct_launcher_repair_test__'
 $regKey = Join-Path $regPrefix 'zcode\shell\open\command'
+$regDecoyKey = Join-Path $regPrefix 'notzcode\shell\open\command'
 
 $probePath = Join-Path $repo 'tools\launcher-repair-probe.mjs'
 $testBuild = Join-Path $repo '.test-build\core\launchers.js'
@@ -220,7 +224,7 @@ $shortcutDirs = @(
     @{ path = $machineDesktop; scope = 'machine' },
     @{ path = $machineStartMenu; scope = 'machine' }
 )
-$registryKeys = @($regKey)
+$registryKeys = @($regKey, $regDecoyKey)
 
 # The child gets the scratch environment even though every location is passed
 # explicitly: if a default ever leaked into the repair, it would still resolve
@@ -315,10 +319,12 @@ try {
     }
     [System.IO.File]::WriteAllText($fakeZcode, 'fake zcode' + "`r`n", (New-Object System.Text.ASCIIEncoding))
     [System.IO.File]::WriteAllText($fakeNotepad, 'fake notepad' + "`r`n", (New-Object System.Text.ASCIIEncoding))
+    [System.IO.File]::WriteAllText($fakeNotZcode, 'fake not-zcode' + "`r`n", (New-Object System.Text.ASCIIEncoding))
 
     $userDesktopZcode = Join-Path $userDesktop 'ZCode Desktop.lnk'
     $userDesktopOk = Join-Path $userDesktop 'ZCode Already.lnk'
     $userDesktopDecoy = Join-Path $userDesktop 'Notepad Decoy.lnk'
+    $userDesktopZcodeDecoy = Join-Path $userDesktop 'NotZCode Decoy.lnk'
     $userStartMenuZcode = Join-Path $userStartMenu 'ZCode Start Menu.lnk'
     $userStartMenuBroken = Join-Path $userStartMenu 'ZCode Broken.lnk'
     $userTaskBarZcode = Join-Path $userTaskBar 'ZCode Pinned.lnk'
@@ -328,6 +334,7 @@ try {
     New-TestShortcut -Path $userDesktopZcode -TargetPath $fakeZcode
     New-TestShortcut -Path $userDesktopOk -TargetPath $fakeZcode -Arguments ('--remote-debugging-port=' + $CdpPort)
     New-TestShortcut -Path $userDesktopDecoy -TargetPath $fakeNotepad
+    New-TestShortcut -Path $userDesktopZcodeDecoy -TargetPath $fakeNotZcode
     New-TestShortcut -Path $userStartMenuZcode -TargetPath $fakeZcode
     New-TestShortcut -Path $userTaskBarZcode -TargetPath $fakeZcode
     New-TestShortcut -Path $machineDesktopZcode -TargetPath $fakeZcode
@@ -341,6 +348,7 @@ try {
     Add-ShortcutSpec -Path $userTaskBarZcode -Role 'user-pinned-taskbar' -Scope 'user' -Target $fakeZcode
     Add-ShortcutSpec -Path $userDesktopOk -Role 'user-already-ok' -Scope 'user' -Target $fakeZcode -Arguments ('--remote-debugging-port=' + $CdpPort)
     Add-ShortcutSpec -Path $userDesktopDecoy -Role 'decoy-foreign-target' -Scope 'user' -Target $fakeNotepad
+    Add-ShortcutSpec -Path $userDesktopZcodeDecoy -Role 'decoy-zcode-suffix' -Scope 'user' -Target $fakeNotZcode
     Add-ShortcutSpec -Path $machineDesktopZcode -Role 'machine-desktop' -Scope 'machine' -Target $fakeZcode
     Add-ShortcutSpec -Path $machineStartMenuZcode -Role 'machine-start-menu' -Scope 'machine' -Target $fakeZcode
 
@@ -349,6 +357,13 @@ try {
     New-Item -Path $regKey -Force | Out-Null
     Set-ItemProperty -Path $regKey -Name '(default)' -Value ('"' + $fakeZcode + '" "%1"')
     $regBefore = [string](Get-Item -LiteralPath $regKey).GetValue('')
+
+    # Second registry entry: a decoy whose executable token merely ends with
+    # ZCode.exe. The identity gate must reject it, so the value stays untouched
+    # and it is never reported. The expected fix count therefore does not grow.
+    New-Item -Path $regDecoyKey -Force | Out-Null
+    Set-ItemProperty -Path $regDecoyKey -Name '(default)' -Value '"C:\tools\NotZCode.exe" "%1"'
+    $regDecoyBefore = [string](Get-Item -LiteralPath $regDecoyKey).GetValue('')
 
     $allLnkPaths = @(Get-ChildItem -LiteralPath $T -Recurse -Filter '*.lnk' -ErrorAction SilentlyContinue | Sort-Object -Property FullName | ForEach-Object { $_.FullName })
     $writablePaths = @($userDesktopZcode, $userStartMenuZcode, $userTaskBarZcode, $userDesktopOk, $regKey)
@@ -372,8 +387,8 @@ try {
         Assert-LauncherRepair 'dry-fix-count' (@($dry.report.fixes).Count -eq 7) ('fixes: ' + @($dry.report.fixes).Count + ' (expected 7)')
         foreach ($spec in $script:shortcutSpecs) {
             $status = Get-FixStatus $dry.report $spec.path
-            if ($spec.role -eq 'decoy-foreign-target') {
-                Assert-LauncherRepair 'dry-decoy-not-reported' ($status -eq '(not reported)') ('status=' + $status)
+            if ($spec.role.StartsWith('decoy-')) {
+                Assert-LauncherRepair ('dry-' + $spec.role + '-not-reported') ($status -eq '(not reported)') ('status=' + $status)
             } elseif ($spec.scope -eq 'machine') {
                 $fix = Get-Fix $dry.report $spec.path
                 Assert-LauncherRepair ('dry-' + $spec.role + '-reported-failed') ($status -eq 'failed') ('status=' + $status)
@@ -386,14 +401,17 @@ try {
             }
         }
         Assert-LauncherRepair 'dry-registry-planned' ((Get-FixStatus $dry.report $regKey) -eq 'updated') ('status=' + (Get-FixStatus $dry.report $regKey))
+        Assert-LauncherRepair 'dry-registry-decoy-not-reported' ((Get-FixStatus $dry.report $regDecoyKey) -eq '(not reported)') ('status=' + (Get-FixStatus $dry.report $regDecoyKey))
     }
     Assert-LauncherRepair 'dry-wrote-nothing' ((Get-LnkSnapshot $allTrackedPaths) -eq $beforeDry) 'the .lnk files must be byte-identical after a dry run'
     Assert-LauncherRepair 'dry-registry-unchanged' (([string](Get-Item -LiteralPath $regKey).GetValue('')) -eq $regBefore) 'the scratch registry value must be unchanged after a dry run'
+    Assert-LauncherRepair 'dry-registry-decoy-unchanged' (([string](Get-Item -LiteralPath $regDecoyKey).GetValue('')) -eq $regDecoyBefore) 'the scratch registry decoy value must be unchanged after a dry run'
 
     # --------------------------------------------------------- 2. real run ----
     Write-Host ''
     Write-Host '=== 2. a real run repairs the user entries and reports the machine ones ==='
     $beforeReal = Get-LnkSnapshot $allTrackedPaths
+    $decoyZcodeArgumentsBefore = Get-LnkArguments $userDesktopZcodeDecoy
     $real = Invoke-LauncherRepairProbe -DryRun $false -Name 'real'
     Assert-LauncherRepair 'real-exit0' ($real.exitCode -eq 0) ('exit ' + $real.exitCode)
     Assert-LauncherRepair 'real-report-parsed' ($null -ne $real.report) ('stdout: ' + $real.stdout)
@@ -405,12 +423,14 @@ try {
                 $fix = Get-Fix $real.report $spec.path
                 Assert-LauncherRepair ('real-' + $spec.role + '-reported-failed') ((Get-FixStatus $real.report $spec.path) -eq 'failed') ('status=' + (Get-FixStatus $real.report $spec.path))
                 Assert-LauncherRepair ('real-' + $spec.role + '-machine-reason') ($null -ne $fix -and ([string]$fix.reason) -match 'machine-wide') ('reason=' + $(if ($null -ne $fix) { [string]$fix.reason } else { '(none)' }))
-            } elseif ($spec.role -ne 'decoy-foreign-target' -and $spec.role -ne 'user-already-ok') {
+            } elseif (-not $spec.role.StartsWith('decoy-') -and $spec.role -ne 'user-already-ok') {
                 Assert-LauncherRepair ('real-' + $spec.role + '-updated') ((Get-FixStatus $real.report $spec.path) -eq 'updated') ('status=' + (Get-FixStatus $real.report $spec.path))
             }
         }
         Assert-LauncherRepair 'real-registry-updated' ((Get-FixStatus $real.report $regKey) -eq 'updated') ('status=' + (Get-FixStatus $real.report $regKey))
         Assert-LauncherRepair 'real-already-ok-status' ((Get-FixStatus $real.report $userDesktopOk) -eq 'already-ok') ('status=' + (Get-FixStatus $real.report $userDesktopOk))
+        Assert-LauncherRepair 'real-decoy-zcode-suffix-not-reported' ((Get-FixStatus $real.report $userDesktopZcodeDecoy) -eq '(not reported)') ('status=' + (Get-FixStatus $real.report $userDesktopZcodeDecoy))
+        Assert-LauncherRepair 'real-registry-decoy-not-reported' ((Get-FixStatus $real.report $regDecoyKey) -eq '(not reported)') ('status=' + (Get-FixStatus $real.report $regDecoyKey))
     }
     $expectedFlag = '--remote-debugging-port=' + $CdpPort
     Assert-LauncherRepair 'real-user-desktop-flag' ((Get-LnkArguments $userDesktopZcode) -match [regex]::Escape($expectedFlag)) ('arguments=' + (Get-LnkArguments $userDesktopZcode))
@@ -420,12 +440,18 @@ try {
     Assert-LauncherRepair 'real-user-pinned-taskbar-flag' ((Get-LnkArguments $userTaskBarZcode) -match [regex]::Escape($expectedFlag)) ('arguments=' + (Get-LnkArguments $userTaskBarZcode))
     Assert-LauncherRepair 'real-already-ok-untouched' ((Get-LnkArguments $userDesktopOk) -eq $expectedFlag) ('arguments=' + (Get-LnkArguments $userDesktopOk))
     Assert-LauncherRepair 'real-decoy-untouched' ((Get-FileHashText $userDesktopDecoy) -eq (Get-SnapshotHash $beforeReal $userDesktopDecoy)) 'the decoy shortcut must be byte-identical'
+    # The ZCode-named decoy is the regression guard for the exact-file-name gate:
+    # a leading-wildcard identity test would have written to it.
+    Assert-LauncherRepair 'real-decoy-zcode-suffix-untouched' ((Get-FileHashText $userDesktopZcodeDecoy) -eq (Get-SnapshotHash $beforeReal $userDesktopZcodeDecoy)) 'the NotZCode.exe decoy shortcut must be byte-identical'
+    Assert-LauncherRepair 'real-decoy-zcode-suffix-arguments' (((Get-LnkArguments $userDesktopZcodeDecoy) -eq $decoyZcodeArgumentsBefore) -and ((Get-LnkArguments $userDesktopZcodeDecoy) -eq '')) ('arguments=' + (Get-LnkArguments $userDesktopZcodeDecoy))
     Assert-LauncherRepair 'real-malformed-did-not-abort' (Test-Path -LiteralPath $userStartMenuBroken -PathType Leaf) 'the malformed .lnk must still exist and the run must have completed'
     Assert-LauncherRepair 'real-machine-desktop-unchanged' ((Get-FileHashText $machineDesktopZcode) -eq (Get-SnapshotHash $beforeReal $machineDesktopZcode)) 'the machine-wide Desktop shortcut must be byte-identical'
     Assert-LauncherRepair 'real-machine-start-menu-unchanged' ((Get-FileHashText $machineStartMenuZcode) -eq (Get-SnapshotHash $beforeReal $machineStartMenuZcode)) 'the machine-wide Start Menu shortcut must be byte-identical'
     Assert-LauncherRepair 'real-machine-arguments-unchanged' (((Get-LnkArguments $machineDesktopZcode) -eq '') -and ((Get-LnkArguments $machineStartMenuZcode) -eq '')) ('machine desktop=' + (Get-LnkArguments $machineDesktopZcode) + ' start menu=' + (Get-LnkArguments $machineStartMenuZcode))
     $regAfterReal = [string](Get-Item -LiteralPath $regKey).GetValue('')
     Assert-LauncherRepair 'real-registry-value-has-flag' ($regAfterReal -match [regex]::Escape($expectedFlag)) ('value=' + $regAfterReal)
+    $regDecoyAfterReal = [string](Get-Item -LiteralPath $regDecoyKey).GetValue('')
+    Assert-LauncherRepair 'real-registry-decoy-unchanged' ($regDecoyAfterReal -eq $regDecoyBefore) ('value=' + $regDecoyAfterReal)
 
     # -------------------------------------------------------- 3. second run ---
     Write-Host ''
@@ -441,14 +467,16 @@ try {
         foreach ($spec in $script:shortcutSpecs) {
             if ($spec.scope -eq 'machine') {
                 Assert-LauncherRepair ('again-' + $spec.role + '-still-failed') ((Get-FixStatus $again.report $spec.path) -eq 'failed') ('status=' + (Get-FixStatus $again.report $spec.path))
-            } elseif ($spec.role -ne 'decoy-foreign-target') {
+            } elseif (-not $spec.role.StartsWith('decoy-')) {
                 Assert-LauncherRepair ('again-' + $spec.role + '-already-ok') ((Get-FixStatus $again.report $spec.path) -eq 'already-ok') ('status=' + (Get-FixStatus $again.report $spec.path))
             }
         }
         Assert-LauncherRepair 'again-registry-already-ok' ((Get-FixStatus $again.report $regKey) -eq 'already-ok') ('status=' + (Get-FixStatus $again.report $regKey))
+        Assert-LauncherRepair 'again-registry-decoy-not-reported' ((Get-FixStatus $again.report $regDecoyKey) -eq '(not reported)') ('status=' + (Get-FixStatus $again.report $regDecoyKey))
     }
     Assert-LauncherRepair 'again-files-unchanged' ((Get-LnkSnapshot $allTrackedPaths) -eq $beforeAgain) 'a converged run must not rewrite any shortcut'
     Assert-LauncherRepair 'again-registry-unchanged' (([string](Get-Item -LiteralPath $regKey).GetValue('')) -eq $regAfterReal) 'a converged run must not rewrite the registry value'
+    Assert-LauncherRepair 'again-registry-decoy-unchanged' (([string](Get-Item -LiteralPath $regDecoyKey).GetValue('')) -eq $regDecoyBefore) 'a converged run must not rewrite the registry decoy value'
 
     Write-Host ''
     Write-Host '=== summary ==='

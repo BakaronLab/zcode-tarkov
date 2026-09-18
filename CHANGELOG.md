@@ -4,6 +4,38 @@
 history of the upstream project this repository was forked from,
 [zcode-beautify](https://github.com/Logocceai/zcode-beautify) (MIT).
 
+## v0.2.2
+
+A hardening release for the automatic launcher repair introduced in v0.2.1. An
+adversarial review of that release found the identity gate it relied on was too
+loose.
+
+**Identity is now proven before any write.** The repair decided a shortcut
+belonged to ZCode with `$target -notlike '*ZCode.exe'`, which matches any target
+whose path merely *ends* in `ZCode.exe` — an unrelated `C:\tools\MyZCode.exe` or
+`NotZCode.exe` passed the gate and would have had the debug flag appended to its
+shortcut. The registry check had the same looseness: it accepted any command
+value that mentioned `ZCode.exe` anywhere. Both now compare the executable's
+**file name** for exact equality (`[System.IO.Path]::GetFileName(...) -ne
+'ZCode.exe'`), and the registry value is resolved to its executable token first.
+The gate itself was inherited unchanged from upstream — this release is the first
+time the project runs it automatically, which is what made the looseness
+mattering.
+
+**Two new decoys pin it.** `tools/test-launcher-repair.ps1` now carries a
+shortcut decoy whose executable is named `NotZCode.exe` and a matching registry
+decoy, and asserts both are left byte-identical and never reported. Against the
+old gate those assertions fail loudly — the decoy shortcut acquired
+`--remote-debugging-port=9222` and the decoy registry value was rewritten — so
+the suite now pins the exact behaviour that was wrong. The suite grew from 51 to
+61 assertions.
+
+**Nothing else changed.** A shortcut whose executable really is `ZCode.exe` is
+still repaired wherever it lives, a shortcut that already carries a
+`remote-debugging-port` value is still left alone, machine-wide entries are still
+reported but never written, and there is still no `HKLM` write and no elevation
+path anywhere in the generated script.
+
 ## v0.2.1
 
 Launcher resilience for the post-update case, ported from the upstream review
