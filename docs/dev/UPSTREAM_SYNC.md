@@ -118,7 +118,13 @@ never edits this ledger and never makes the change itself.
   is resolved to its executable token first. The looseness was harmless while the
   repair was manual; v0.2.1 made it run automatically, and v0.2.2 tightened the
   gates. `tools/test-launcher-repair.ps1` carries `NotZCode.exe` decoys for both
-  a shortcut and a registry value, and fails loudly against the loose gates.
+  a shortcut and a registry value, and fails loudly against the loose gates. The
+  proof is the file name and nothing more: an unrelated executable physically
+  named `ZCode.exe` still satisfies it, so the gate rejects suffix false
+  positives (`MyZCode.exe`, `NotZCode.exe`) without claiming to establish that
+  the file really is ZCode. That is the deliberate v0.2.2 policy — the same
+  basename is what the upstream project keys on, and a stronger check would need
+  something the shortcut does not carry.
   Known behaviour delta: an unquoted handler value containing spaces now yields
   its first token only (`C:\Program`), so it is rejected rather than accepted.
   Windows handler values are conventionally quoted, and the value ZCode itself

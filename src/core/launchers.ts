@@ -42,7 +42,15 @@ export interface RepairOptions {
   port: number;
   /** Report what would change without writing anything. */
   dryRun?: boolean;
-  /** Overrides for tests/dev harnesses. Defaults to the production locations. */
+  /**
+   * Overrides for tests/dev harnesses; defaults to the production locations.
+   *
+   * A trust boundary rather than an input: no CLI argument or MCP tool argument
+   * reaches these. The caller owns whatever it names — `registryKeys` is still
+   * forced under `HKCU:`, but a `shortcutDirs` path is embedded as given, and
+   * only the exact string `"machine"` marks an entry as non-writable, so any
+   * other value (a typo included) is treated as writable user scope.
+   */
   shortcutDirs?: ReadonlyArray<{ path: string; scope: "user" | "machine" }>;
   registryKeys?: string[];
 }
